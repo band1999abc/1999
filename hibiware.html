@@ -19,13 +19,15 @@
 <h1>ひび割れ</h1>
 
 <div style="text-align:center;">
-    <div class="play-button">
-        ▶︎ PLAY
-    </div>
-</div>
 
-<div class="sub">
-Now Brewing...
+    <button class="play-button" id="playButton">
+        ▶︎ PLAY
+    </button>
+
+    <p id="status" class="sub">
+        Now Brewing...
+    </p>
+
 </div>
 
 <div class="lyrics-title">
@@ -93,7 +95,20 @@ Now Brewing...
 </footer>
 
 </div>
+    
+<script>
 
+const button = document.getElementById("playButton");
+const status = document.getElementById("status");
+
+button.addEventListener("click", () => {
+
+    status.textContent = "Coming Soon...";
+
+});
+
+</script>
+    
 </body>
 
 </html>
