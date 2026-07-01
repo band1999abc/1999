@@ -227,11 +227,11 @@ h2{
 
     font-family:"Noto Serif JP", serif;
 
-    line-height:2.6;
-
     font-size:17px;
 
-    white-space:pre-wrap;
+    line-height:2.6;
+
+    white-space:pre-line;
 
     text-align:left;
 
