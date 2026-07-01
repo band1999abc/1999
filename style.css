@@ -296,14 +296,24 @@ h2{
 }
 
 .lyrics-title{
-
     display:flex;
-
     align-items:center;
+    gap:16px;
+    margin:48px 0 36px;
+}
 
-    gap:18px;
+.lyrics-title::before,
+.lyrics-title::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:#d8d2c8;
+}
 
-    margin:50px 0 35px;
+.lyrics-title span{
+    font-size:16px;
+    letter-spacing:.3em;
+    color:#8d8579;
 
 }
 
