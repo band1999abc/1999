@@ -5,57 +5,12 @@
 }
 
 body{
-    background:#efe8de;
-    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
-    color:#444;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.35) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,.18) 0%, transparent 45%),
+        linear-gradient(180deg,#efe8dc 0%,#e7dfd2 100%);
 
     min-height:100vh;
-    overflow:hidden;
-    position:relative;
-}
-
-/* 光 */
-
-body::before{
-    content:"";
-    position:absolute;
-
-    width:900px;
-    height:900px;
-
-    top:-250px;
-    left:-180px;
-
-    background:
-    radial-gradient(circle,
-    rgba(255,255,255,.45) 0%,
-    rgba(255,255,255,0) 70%);
-
-    filter:blur(30px);
-
-    animation:sunlight 16s ease-in-out infinite alternate;
-}
-
-body::after{
-    content:"";
-    position:absolute;
-
-    width:700px;
-    height:700px;
-
-    right:-220px;
-    bottom:-220px;
-
-    background:
-    radial-gradient(circle,
-    rgba(205,185,150,.18),
-    transparent 70%);
-
-    filter:blur(80px);
 }
 
 .card{
