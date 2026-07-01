@@ -8,7 +8,6 @@
 
 <style>
 
-
 *{
     margin:0;
     padding:0;
@@ -17,8 +16,6 @@
 
 body{
     background:#efe8de;
-    overflow:hidden;
-
     font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
     color:#444;
 
@@ -27,35 +24,34 @@ body{
     align-items:center;
 
     min-height:100vh;
+    overflow:hidden;
     position:relative;
 }
 
-/* 木漏れ日 */
+/* 光 */
 
 body::before{
     content:"";
-
     position:absolute;
+
     width:900px;
     height:900px;
+
+    top:-250px;
+    left:-180px;
 
     background:
     radial-gradient(circle,
     rgba(255,255,255,.45) 0%,
     rgba(255,255,255,0) 70%);
 
-    top:-250px;
-    left:-180px;
-
     filter:blur(30px);
 
-    animation:
-    sunlight 16s ease-in-out infinite alternate;
+    animation:sunlight 16s ease-in-out infinite alternate;
 }
 
 body::after{
     content:"";
-
     position:absolute;
 
     width:700px;
@@ -93,36 +89,26 @@ body::after{
     animation:
     fade 1.2s ease,
     floating 8s ease-in-out infinite;
+
 }
 
 h1{
-
     font-size:64px;
-
     margin-bottom:18px;
-
 }
 
 .sub{
-
     color:#777;
-
     margin-bottom:42px;
-
 }
 
 p{
-
     line-height:2;
-
     margin-bottom:18px;
-
 }
 
 nav{
-
     margin-top:45px;
-
 }
 
 nav a{
@@ -151,148 +137,6 @@ nav a:hover{
 
 footer{
 
-    margin-top:40px;
-
-    color:#999;
-
-}
-
-@keyframes fade{
-
-from{
-
-opacity:0;
-transform:translateY(25px);
-
-}
-
-to{
-
-opacity:1;
-transform:translateY(0);
-
-}
-
-}
-
-@keyframes floating{
-
-0%{
-
-transform:translateY(0px);
-
-}
-
-50%{
-
-transform:translateY(-6px);
-
-}
-
-100%{
-
-transform:translateY(0px);
-
-}
-
-}
-
-@keyframes sunlight{
-
-0%{
-
-transform:
-translate(-20px,-10px)
-scale(1);
-
-}
-
-100%{
-
-transform:
-translate(60px,35px)
-scale(1.15);
-
-}
-
-}
-
-</style>
-}
-
-body{
-    background:#efe8de;
-    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
-    color:#444;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    min-height:100vh;
-}
-
-.card{
-
-    width:min(90%,520px);
-
-    background:white;
-
-    border-radius:24px;
-
-    padding:48px;
-
-    box-shadow:
-    0 15px 40px rgba(0,0,0,.08);
-
-    animation:fade 1s ease;
-}
-
-h1{
-    font-size:64px;
-    margin-bottom:18px;
-    font-weight:700;
-}
-
-.sub{
-    color:#777;
-    margin-bottom:40px;
-}
-
-p{
-    line-height:2;
-    margin-bottom:18px;
-}
-
-nav{
-    margin-top:50px;
-}
-
-nav a{
-
-    display:block;
-
-    text-decoration:none;
-
-    color:#444;
-
-    padding:14px 0;
-
-    border-bottom:1px solid #ececec;
-
-    transition:.3s;
-}
-
-nav a:hover{
-
-    color:#8b6f47;
-
-    padding-left:12px;
-
-}
-
-footer{
-
     margin-top:45px;
 
     color:#999;
@@ -304,17 +148,41 @@ footer{
 @keyframes fade{
 
 from{
-
 opacity:0;
 transform:translateY(20px);
-
 }
 
 to{
-
 opacity:1;
-transform:translateY(0);
+transform:none;
+}
 
+}
+
+@keyframes floating{
+
+0%{
+transform:translateY(0px);
+}
+
+50%{
+transform:translateY(-8px);
+}
+
+100%{
+transform:translateY(0px);
+}
+
+}
+
+@keyframes sunlight{
+
+0%{
+transform:translate(-20px,-10px) scale(1);
+}
+
+100%{
+transform:translate(60px,35px) scale(1.15);
 }
 
 }
@@ -358,9 +226,7 @@ Welcome.
 </nav>
 
 <footer>
-
 ©1999
-
 </footer>
 
 </div>
