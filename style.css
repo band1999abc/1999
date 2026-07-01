@@ -248,13 +248,13 @@ h2{
 
 }
 
-}
-
 .lyrics-title{
     display:flex;
     align-items:center;
     gap:16px;
     margin:48px 0 36px;
+
+    width:100%;
 }
 
 .lyrics-title::before,
