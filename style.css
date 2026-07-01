@@ -253,9 +253,45 @@ h2{
 
 }
 
+.play-button{
+
+    display:inline-block;
+
+    margin:32px auto 16px;
+
+    padding:14px 32px;
+
+    border:1px solid #cbbda8;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.65);
+
+    color:#4b4035;
+
+    font-size:16px;
+
+    letter-spacing:.18em;
+
+    text-decoration:none;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
 .play-button:hover{
 
-    color:#8a6a42;
+    background:#d8c4a3;
+
+    color:#222;
+
+    transform:translateY(-2px);
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
 
 }
 
