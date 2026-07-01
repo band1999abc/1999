@@ -346,3 +346,19 @@ h2{
     transform:translateY(-2px);
 
 }
+
+.song-year{
+
+    text-align:center;
+
+    font-size:16px;
+
+    color:#999;
+
+    margin-top:2px;
+
+    margin-bottom:28px;
+
+    letter-spacing:.08em;
+
+}
