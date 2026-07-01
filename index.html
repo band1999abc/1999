@@ -8,10 +8,217 @@
 
 <style>
 
+*{<style>
+
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
+}
+
+body{
+    background:#efe8de;
+    overflow:hidden;
+
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+    color:#444;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    min-height:100vh;
+    position:relative;
+}
+
+/* 木漏れ日 */
+
+body::before{
+    content:"";
+
+    position:absolute;
+    width:900px;
+    height:900px;
+
+    background:
+    radial-gradient(circle,
+    rgba(255,255,255,.45) 0%,
+    rgba(255,255,255,0) 70%);
+
+    top:-250px;
+    left:-180px;
+
+    filter:blur(30px);
+
+    animation:
+    sunlight 16s ease-in-out infinite alternate;
+}
+
+body::after{
+    content:"";
+
+    position:absolute;
+
+    width:700px;
+    height:700px;
+
+    right:-220px;
+    bottom:-220px;
+
+    background:
+    radial-gradient(circle,
+    rgba(205,185,150,.18),
+    transparent 70%);
+
+    filter:blur(80px);
+}
+
+.card{
+
+    position:relative;
+    z-index:2;
+
+    width:min(90%,520px);
+
+    background:rgba(255,255,255,.78);
+
+    backdrop-filter:blur(18px);
+
+    border-radius:26px;
+
+    padding:48px;
+
+    box-shadow:
+    0 18px 60px rgba(0,0,0,.10);
+
+    animation:
+    fade 1.2s ease,
+    floating 8s ease-in-out infinite;
+}
+
+h1{
+
+    font-size:64px;
+
+    margin-bottom:18px;
+
+}
+
+.sub{
+
+    color:#777;
+
+    margin-bottom:42px;
+
+}
+
+p{
+
+    line-height:2;
+
+    margin-bottom:18px;
+
+}
+
+nav{
+
+    margin-top:45px;
+
+}
+
+nav a{
+
+    display:block;
+
+    text-decoration:none;
+
+    color:#444;
+
+    padding:15px 0;
+
+    border-bottom:1px solid #ececec;
+
+    transition:.35s;
+
+}
+
+nav a:hover{
+
+    color:#8a6a42;
+
+    padding-left:12px;
+
+}
+
+footer{
+
+    margin-top:40px;
+
+    color:#999;
+
+}
+
+@keyframes fade{
+
+from{
+
+opacity:0;
+transform:translateY(25px);
+
+}
+
+to{
+
+opacity:1;
+transform:translateY(0);
+
+}
+
+}
+
+@keyframes floating{
+
+0%{
+
+transform:translateY(0px);
+
+}
+
+50%{
+
+transform:translateY(-6px);
+
+}
+
+100%{
+
+transform:translateY(0px);
+
+}
+
+}
+
+@keyframes sunlight{
+
+0%{
+
+transform:
+translate(-20px,-10px)
+scale(1);
+
+}
+
+100%{
+
+transform:
+translate(60px,35px)
+scale(1.15);
+
+}
+
+}
+
+</style>
 }
 
 body{
