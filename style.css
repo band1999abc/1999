@@ -36,10 +36,23 @@ body{
 
     background:#f7f2ea;
 
-border:1px solid #e6ddd0;
+    background-image:
+    radial-gradient(rgba(255,255,255,.45) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,.02) 1px, transparent 1px);
+
+background-size:
+    18px 18px,
+    22px 22px;
+
+background-position:
+    0 0,
+    9px 11px;
+
+border:1px solid #e2d8ca;
 
 box-shadow:
-    0 10px 35px rgba(0,0,0,.08);
+    0 14px 45px rgba(90,75,45,.08),
+    0 2px 8px rgba(255,255,255,.35) inset;
 
     border-radius:26px;
 
