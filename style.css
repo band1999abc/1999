@@ -370,3 +370,47 @@ h2{
     letter-spacing:.08em;
 
 }
+
+/* =========================
+   Diary
+========================= */
+
+.diary-entry{
+
+    margin-top:40px;
+
+}
+
+.diary-date{
+
+    font-size:14px;
+
+    color:#9a8f83;
+
+    letter-spacing:.15em;
+
+    margin-bottom:18px;
+
+}
+
+.diary-entry p{
+
+    line-height:2.3;
+
+    font-size:17px;
+
+    color:#444;
+
+}
+
+.diary-divider{
+
+    width:100%;
+
+    height:1px;
+
+    background:#ddd;
+
+    margin:45px 0;
+
+}
