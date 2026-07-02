@@ -10,6 +10,14 @@ body{
         radial-gradient(circle at 80% 70%, rgba(255,255,255,.18) 0%, transparent 40%),
         linear-gradient(180deg,#efe8dc 0%,#e7dfd2 100%);
 
+    font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Helvetica Neue",
+    "Noto Sans JP",
+    sans-serif;
+
     min-height:100vh;
 
     display:flex;
