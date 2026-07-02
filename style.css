@@ -449,3 +449,20 @@ h2{
     letter-spacing:.05em;
     text-align:center;
 }
+
+.contact-links{
+    margin-top:24px;
+    text-align:center;
+}
+
+.contact-links a{
+    display:block;
+    margin:10px 0;
+    color:#2f2f2f;
+    text-decoration:none;
+    transition:.2s;
+}
+
+.contact-links a:hover{
+    opacity:.6;
+}
