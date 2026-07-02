@@ -499,6 +499,46 @@ h2{
     opacity: .6;
 }
 
-.contact-note{
-    display: none;
+/* ===== Contact ===== */
+
+.contact-list{
+    margin:50px 0;
+    text-align:center;
+}
+
+.contact-item{
+    margin:38px 0;
+}
+
+.contact-label{
+    font-size:12px;
+    letter-spacing:.22em;
+    color:#9b9b9b;
+    text-transform:uppercase;
+    margin-bottom:10px;
+}
+
+.contact-link{
+    display:inline-block;
+    font-size:20px;
+    font-weight:600;
+    color:#2f2f2f;
+    text-decoration:none;
+    transition:opacity .25s ease;
+}
+
+.contact-link:hover{
+    opacity:.6;
+}
+
+.back-home{
+    display:inline-block;
+    margin-top:10px;
+    color:#666;
+    text-decoration:none;
+    transition:opacity .25s ease;
+}
+
+.back-home:hover{
+    opacity:.6;
 }
