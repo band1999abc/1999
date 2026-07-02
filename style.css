@@ -466,3 +466,39 @@ h2{
 .contact-links a:hover{
     opacity:.6;
 }
+
+/* Contact */
+
+.contact-list{
+    margin: 50px 0;
+    text-align: center;
+}
+
+.contact-item{
+    margin: 36px 0;
+}
+
+.contact-label{
+    font-size: 12px;
+    letter-spacing: .2em;
+    color: #999;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.contact-link{
+    display: inline-block;
+    font-size: 22px;
+    font-weight: 600;
+    color: #2f2f2f;
+    text-decoration: none;
+    transition: opacity .25s ease;
+}
+
+.contact-link:hover{
+    opacity: .6;
+}
+
+.contact-note{
+    display: none;
+}
