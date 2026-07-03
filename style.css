@@ -636,12 +636,22 @@ h2{
     border-top:1px solid rgba(140,120,90,.22);
     margin:18px 0 12px;
 }
-
 .song-header{
     display:flex;
     align-items:center;
     gap:16px;
-
-    width:320px;
     margin:0 auto 18px;
+    
+}.song-header{
+    display:flex;
+    align-items:center;
+    gap:16px
+    margin:0 auto 18px;
+}
+
+.song-info{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    white-space:nowrap;
 }
