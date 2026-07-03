@@ -610,6 +610,9 @@ h2{
 }
 
 .song-title{
+    display:flex;
+    align-items:center;
+
     font-size:24px;
     font-weight:700;
     text-decoration:none;
@@ -643,12 +646,13 @@ h2{
 
 .song-info{
     display:flex;
-    align-items:center;
-    gap:14px;
+    align-items:baseline;
+    gap:16px;
 }
 
 .song-year{
-    font-size:18px;
+    font-size:16px;
     color:#999;
     line-height:1;
+    margin-top:2px;
 }
