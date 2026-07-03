@@ -600,13 +600,15 @@ h2{
     align-items:center;
     justify-content:center;
 
+    position: relative;
+    top: 6px;
+
     color:#8a6a42;
-    font-size:6px;
+    font-size:12px;
 
     flex-shrink:0;
 
     transition:.3s;
-
     text-decoration:none;
 }
 
