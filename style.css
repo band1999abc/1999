@@ -653,6 +653,9 @@ h2{
     color:#999;
     margin-left:12px;
     flex:none;
+
+    position:relative;
+    top:2px;
 }
 
 .song-line{
