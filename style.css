@@ -240,36 +240,6 @@ h2{
     letter-spacing:.2em;
 }
 
-.lyrics{
-
-    font-family:"Noto Serif JP", serif;
-
-    font-size:17px;
-
-    line-height:2.6;
-
-    white-space:pre-line;
-
-    text-align:left;
-
-}
-
-.play-button{
-
-    margin:40px 0;
-
-    text-align:center;
-
-    font-size:24px;
-
-    letter-spacing:.18em;
-
-    cursor:pointer;
-
-    transition:.3s;
-
-}
-
 .play-button{
 
     display:inline-block;
