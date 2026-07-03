@@ -715,3 +715,22 @@ h2{
     font-size:20px;
   }
 }
+
+.member-list .name{
+    font-size: clamp(20px, 5vw, 28px);
+    word-break: keep-all;
+    overflow-wrap: normal;
+    white-space: normal;
+}
+
+@media (max-width: 480px){
+
+    .member{
+        padding: 0 8px;
+    }
+
+    .member-list .name{
+        font-size: 18px;
+    }
+
+}
