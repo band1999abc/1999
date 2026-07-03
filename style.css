@@ -658,6 +658,9 @@ h2{
     text-decoration:none;
     flex-shrink:0;
     transition:.3s;
+
+    position: relative;
+　　 top: 2px;
 }
 
 .play-icon:hover{
