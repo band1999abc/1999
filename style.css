@@ -132,7 +132,6 @@ nav a:hover{
 .song-year{
     font-size:18px;
     color:#999;
-    margin:0;
 }
 
 footer{
@@ -573,10 +572,10 @@ h2{
 
 .song-header{
     display:flex;
+    justify-content:center;
     align-items:center;
-    justify-content:flex-start;
     gap:14px;
-    margin:48px 0 18px;
+    margin-bottom:18px;
 }
 
 .play-icon{
@@ -619,6 +618,9 @@ h2{
 .song-year{
     font-size:18px;
     color:#999;
+    line-height:1;
+    position:relative;
+    top:1px;
 }
 
 .song-line{
