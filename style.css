@@ -692,3 +692,26 @@ h2{
     border-top:1px solid rgba(140,120,90,.22);
     margin:18px 0;
 }
+
+@media (max-width: 600px) {
+
+  .card{
+    width:90%;
+    padding:32px 24px;
+  }
+
+  h1{
+    font-size:64px;
+  }
+
+  .member-name,
+  .contact-email{
+    font-size:clamp(18px, 6vw, 28px);
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+
+  .song-title{
+    font-size:20px;
+  }
+}
