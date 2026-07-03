@@ -3,10 +3,6 @@ alert(hour);
 
 const sub = document.querySelector(".sub");
 
-const hour = new Date().getHours();
-
-const sub = document.querySelector(".sub");
-
 if (!sub) {
   return;
 }
