@@ -737,3 +737,12 @@ h2{
     }
 
 }
+
+@media (max-width: 480px){
+
+    .name{
+        font-size:18px;
+        letter-spacing:-0.02em;
+    }
+
+}
