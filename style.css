@@ -626,9 +626,9 @@ h2{
 .song-year{
     font-size:18px;
     color:#999;
-    line-height:1;
+
     position:relative;
-    top:1px;
+    top:3px;
 }
 
 .song-line{
@@ -641,5 +641,7 @@ h2{
     display:flex;
     align-items:center;
     gap:16px;
-    margin-bottom:18px;
+
+    width:320px;
+    margin:0 auto 18px;
 }
