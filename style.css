@@ -468,6 +468,9 @@ h2{
     font-size:24px;
     font-weight:700;
     color:#2f2f2f;
+
+    white-space: nowrap;
+    font-size: clamp(18px, 5vw, 24px);
 }
 
 .band-info{
