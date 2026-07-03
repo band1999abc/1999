@@ -4,9 +4,8 @@ const hour = new Date().getHours();
 
 alert("hour = " + hour);
 
-alert(sub);
-
 const sub = document.querySelector(".sub");
+alert(sub);
 
 if (!sub) {
     // .sub がなければ何もしない
