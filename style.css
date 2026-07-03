@@ -643,16 +643,3 @@ h2{
     gap:16px;
     margin-bottom:18px;
 }
-
-.song-info{
-    display:flex;
-    align-items:baseline;
-    gap:16px;
-}
-
-.song-year{
-    font-size:16px;
-    color:#999;
-    line-height:1;
-    margin-top:2px;
-}
