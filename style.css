@@ -627,9 +627,7 @@ h2{
 .song-year{
     font-size:18px;
     color:#999;
-
-    position:relative;
-    top:3px;
+    margin-left:auto;
 }
 
 .song-line{
