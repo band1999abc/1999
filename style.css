@@ -628,3 +628,22 @@ h2{
     border-top:1px solid rgba(140,120,90,.22);
     margin:18px 0 12px;
 }
+
+.song-header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px;
+}
+
+.song-info{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.song-year{
+    font-size:18px;
+    color:#999;
+    line-height:1;
+}
