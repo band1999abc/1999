@@ -570,3 +570,57 @@ h2{
 .back-home:hover{
     opacity:.6;
 }
+
+.song-header{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:14px;
+    margin:48px 0 18px;
+}
+
+.play-icon{
+    width:28px;
+    height:28px;
+
+    border:1px solid #8a6a42;
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#8a6a42;
+    font-size:12px;
+
+    flex-shrink:0;
+
+    transition:.3s;
+}
+
+.song-header:hover .play-icon{
+    background:#8a6a42;
+    color:white;
+}
+
+.song-title{
+    font-size:24px;
+    font-weight:700;
+    text-decoration:none;
+    color:#222;
+}
+
+.song-title:hover{
+    color:#8a6a42;
+}
+
+.song-year{
+    font-size:18px;
+    color:#999;
+}
+
+.song-line{
+    border:none;
+    border-top:1px solid rgba(140,120,90,.22);
+    margin:18px 0 12px;
+}
