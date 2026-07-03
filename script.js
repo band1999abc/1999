@@ -1,1 +1,1 @@
-document.querySelector(".sub").textContent = "Good evening.";
+document.querySelector(".sub").textContent = new Date().getHours();
