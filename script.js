@@ -1,11 +1,6 @@
-alert("script loaded");
-
 const hour = new Date().getHours();
 
-alert("hour = " + hour);
-
 const sub = document.querySelector(".sub");
-alert(sub);
 
 if (!sub) {
     return;
