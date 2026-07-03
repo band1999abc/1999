@@ -112,9 +112,8 @@ nav a:hover{
 
 .song-header{
     display:flex;
-    justify-content:center;
-    align-items:baseline;
-    gap:14px;
+    align-items:center;
+    gap:16px;
     margin-bottom:18px;
 }
 
@@ -132,6 +131,12 @@ nav a:hover{
 .song-year{
     font-size:18px;
     color:#999;
+}
+
+.song-info{
+    display:flex;
+    align-items:center;
+    gap:16px;
 }
 
 footer{
