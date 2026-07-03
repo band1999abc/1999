@@ -596,6 +596,8 @@ h2{
     flex-shrink:0;
 
     transition:.3s;
+
+    text-decoration:none;
 }
 
 .song-header:hover .play-icon{
