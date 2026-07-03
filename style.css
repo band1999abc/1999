@@ -213,6 +213,9 @@ transform:translate(60px,35px) scale(1.15);
     font-size:26px;
     letter-spacing:.15em;
     cursor:pointer;
+    
+    position: relative;
+    top: 10px;
 }
 
 .coming{
