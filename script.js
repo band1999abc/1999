@@ -1,3 +1,4 @@
+alert("script loaded");
 const hour = new Date().getHours();
 
 const sub = document.querySelector(".sub");
