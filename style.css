@@ -207,17 +207,6 @@ transform:translate(60px,35px) scale(1.15);
     margin-bottom:32px;
 }
 
-.play-button{
-    margin-top:40px;
-    text-align:center;
-    font-size:26px;
-    letter-spacing:.15em;
-    cursor:pointer;
-    
-    position: relative;
-    top: 20px;
-}
-
 .coming{
     margin-top:10px;
     margin-bottom:40px;
