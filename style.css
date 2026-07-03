@@ -673,6 +673,8 @@ h2{
     font-weight:700;
     color:#222;
     text-decoration:none;
+
+    white-space: nowrap;
 }
 
 .song-title:hover{
