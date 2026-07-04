@@ -502,6 +502,7 @@ h2{
     display:flex;
     align-items:center;
     gap:18px;
+    line-height:1;
 }
 
 .song-link:hover{
