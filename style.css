@@ -510,11 +510,6 @@ h2{
     transition:.3s
 }
 
-.play-icon:hover{
-    background:#8a6a42;
-    color:white;
-}
-
 .song-title{
     display:inline-flex;
     align-items:baseline;
@@ -531,7 +526,12 @@ h2{
     top:12px;
 }
 
-.song-title:hover{
+.song-item:hover .play-icon{
+    background:#8a6a42;
+    color:#fff;
+}
+
+.song-item:hover .song-title{
     color:#8a6a42;
 }
 
