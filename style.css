@@ -32,6 +32,8 @@ body{
     position:relative;
     z-index:2;
 
+　　 overflow:hidden;
+    
     width:min(90%,520px);
 
     background:#f7f2ea;
@@ -110,35 +112,6 @@ nav a:hover{
 
 }
 
-.song-header{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin-bottom:18px;
-}
-
-.song-title{
-    font-size:24px;
-    font-weight:700;
-    color:#222;
-    text-decoration:none;
-}
-
-.song-title:hover{
-    color:#8a6a42;
-}
-
-.song-year{
-    font-size:18px;
-    color:#999;
-}
-
-.song-info{
-    display:flex;
-    align-items:center;
-    gap:16px;
-}
-
 footer{
 
     margin-top:45px;
@@ -175,18 +148,6 @@ transform:translateY(-8px);
 
 100%{
 transform:translateY(0px);
-}
-
-}
-
-@keyframes sunlight{
-
-0%{
-transform:translate(-20px,-10px) scale(1);
-}
-
-100%{
-transform:translate(60px,35px) scale(1.15);
 }
 
 }
@@ -317,54 +278,6 @@ h2{
 
 }
 
-.song-title{
-
-    display:block;
-
-    text-align:center;
-
-    font-size:28px;
-
-    font-weight:700;
-
-    letter-spacing:.08em;
-
-    margin-top:18px;
-
-    margin-bottom:0px;
-
-    color:#2f2f2f;
-
-    text-decoration:none;
-
-    transition:.3s;
-
-}
-
-.song-title:hover{
-
-    color:#8a6a42;
-
-    transform:translateY(-2px);
-
-}
-
-.song-year{
-
-    text-align:center;
-
-    font-size:16px;
-
-    color:#999;
-
-    margin-top:2px;
-
-    margin-bottom:28px;
-
-    letter-spacing:.08em;
-
-}
-
 /* =========================
    Diary
 ========================= */
@@ -427,7 +340,6 @@ h2{
 
 .name{
     margin-top:6px;
-    font-size:24px;
     font-weight:700;
     color:#2f2f2f;
 
@@ -462,38 +374,6 @@ h2{
 
 .contact-links a:hover{
     opacity:.6;
-}
-
-/* Contact */
-
-.contact-list{
-    margin: 50px 0;
-    text-align: center;
-}
-
-.contact-item{
-    margin: 36px 0;
-}
-
-.contact-label{
-    font-size: 12px;
-    letter-spacing: .2em;
-    color: #999;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-}
-
-.contact-link{
-    display: inline-block;
-    font-size: 22px;
-    font-weight: 600;
-    color: #2f2f2f;
-    text-decoration: none;
-    transition: opacity .25s ease;
-}
-
-.contact-link:hover{
-    opacity: .6;
 }
 
 /* ===== Contact ===== */
@@ -729,21 +609,6 @@ h2{
 
 }
 
-.whale-bg{
-    position:absolute;
-    inset:0;
-
-    width:100%;
-    height:100%;
-
-    object-fit:cover;
-    object-position:center;
-
-    opacity:.04;
-    pointer-events:none;
-    z-index:0;
-}
-
 .card > *{
     position:relative;
     z-index:1;
@@ -752,11 +617,6 @@ h2{
 /* ==========================
    Whale Background
 ========================== */
-
-.card{
-    position:relative;
-    overflow:hidden;
-}
 
 .whale-bg{
     position:absolute;
