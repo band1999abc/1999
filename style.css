@@ -485,9 +485,17 @@ h2{
 
 .song-link{
     display:flex;
-    justify-content:space-between;
     align-items:center;
+    justify-content:space-between;
     width:100%;
+
+    text-decoration:none;
+    color:#222;
+
+    .song-name,
+　　.song-year{
+    text-decoration:none;
+}
 }
 
 .song-left{
@@ -506,11 +514,7 @@ h2{
 }
 
 .song-item{
-    display:flex;
-    align-items:center;
-    gap:18px;
-
-    position:relative;
+    display:block;
 }
 
 .play-icon{
