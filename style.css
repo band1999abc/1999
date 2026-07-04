@@ -492,6 +492,8 @@ h2{
     color:#222;
 
     transition:.3s;
+
+    width:100%;
 }
 
 .song-link:hover{
@@ -509,7 +511,6 @@ h2{
     gap:18px;
 
     position:relative;
-    top:8px;
 }
 
 .play-icon{
