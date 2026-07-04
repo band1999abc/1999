@@ -1,7 +1,6 @@
-/* ==================================================
-   1999 Official Style Sheet
-   Part 1 - Base
-================================================== */
+/* =====================================
+   1999 - Common Style
+===================================== */
 
 *{
     margin:0;
@@ -12,19 +11,23 @@
 :root{
 
     --bg:#ece4d7;
+
     --paper:#f8f3eb;
 
     --text:#2f2f2f;
-    --sub:#8a8a8a;
 
-    --line:#ddd3c5;
+    --sub:#888;
+
+    --line:#ddd;
 
     --accent:#8a6a42;
 
 }
 
 html{
+
     scroll-behavior:smooth;
+
 }
 
 body{
@@ -32,7 +35,10 @@ body{
     min-height:100vh;
 
     display:flex;
+
     justify-content:center;
+
+    align-items:flex-start;
 
     padding:40px 20px;
 
@@ -40,9 +46,9 @@ body{
 
     radial-gradient(circle at 20% 20%,rgba(255,255,255,.35),transparent 45%),
 
-    radial-gradient(circle at 80% 70%,rgba(255,255,255,.15),transparent 40%),
+    radial-gradient(circle at 80% 70%,rgba(255,255,255,.18),transparent 40%),
 
-    linear-gradient(180deg,#efe7da,#e5ddd1);
+    linear-gradient(180deg,#efe8dc,#e7dfd2);
 
     font-family:
 
@@ -57,6 +63,10 @@ body{
     color:var(--text);
 
 }
+
+/* ===========================
+   Card
+=========================== */
 
 .card{
 
@@ -76,7 +86,7 @@ body{
 
     box-shadow:
 
-        0 16px 48px rgba(80,60,40,.08),
+        0 16px 48px rgba(70,55,35,.08),
 
         inset 0 1px 0 rgba(255,255,255,.6);
 
@@ -100,27 +110,115 @@ body{
 
 }
 
+/* ===========================
+   Whale
+=========================== */
+
+.whale-bg{
+
+    position:absolute;
+
+    inset:0;
+
+    width:130%;
+
+    height:130%;
+
+    left:-15%;
+
+    top:-15%;
+
+    object-fit:contain;
+
+    opacity:.035;
+
+    pointer-events:none;
+
+    user-select:none;
+
+    z-index:0;
+
+    animation:whaleFloat 18s ease-in-out infinite;
+
+}
+
+.card>*:not(.whale-bg){
+
+    position:relative;
+
+    z-index:1;
+
+}
+
+@keyframes whaleFloat{
+
+    0%{
+
+        transform:translate(0,0) rotate(-2deg);
+
+    }
+
+    50%{
+
+        transform:translate(15px,-8px) rotate(1deg);
+
+    }
+
+    100%{
+
+        transform:translate(0,0) rotate(-2deg);
+
+    }
+
+}
+
+/* ===========================
+   Typography
+=========================== */
+
 h1{
 
     font-size:60px;
 
     font-weight:700;
 
-    letter-spacing:.04em;
+    letter-spacing:.05em;
 
     margin-bottom:56px;
 
 }
 
+h2{
+
+    font-size:20px;
+
+    font-weight:500;
+
+    letter-spacing:.15em;
+
+    margin-bottom:28px;
+
+}
+
+p{
+
+    line-height:2;
+
+}
+
 .sub{
 
-    margin:28px 0;
+    margin:24px 0;
 
     color:var(--sub);
 
     font-size:15px;
 
 }
+
+/* ===========================
+   Navigation
+=========================== */
 
 nav{
 
@@ -152,6 +250,10 @@ nav a:hover{
 
 }
 
+/* ===========================
+   Footer
+=========================== */
+
 footer{
 
     margin-top:48px;
@@ -162,41 +264,21 @@ footer{
 
 }
 
-/* ---------- Whale ---------- */
-
-.whale-bg{
-
-    position:absolute;
-
-    inset:0;
-
-    width:100%;
-
-    height:100%;
-
-    object-fit:cover;
-
-    opacity:.03;
-
-    pointer-events:none;
-
-    z-index:0;
-
-}
-
-.card>*:not(.whale-bg){
-
-    position:relative;
-
-    z-index:1;
-
-}
-
-/* ---------- Mobile ---------- */
+/* ===========================
+   Responsive
+=========================== */
 
 @media (max-width:600px){
 
+    body{
+
+        padding:24px 16px;
+
+    }
+
     .card{
+
+        width:100%;
 
         padding:32px 24px;
 
@@ -204,104 +286,8 @@ footer{
 
     h1{
 
-        font-size:48px;
+        font-size:46px;
 
     }
-
-}
-
-/* ==================================================
-   Music
-================================================== */
-
-.song-list{
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-}
-
-.song-item{
-    display:flex;
-    align-items:center;
-    gap:18px;
-}
-
-.play-icon{
-
-    width:38px;
-    height:38px;
-
-    border:1px solid var(--accent);
-    border-radius:50%;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    color:var(--accent);
-
-    text-decoration:none;
-
-    flex-shrink:0;
-
-    transition:.25s;
-
-}
-
-.play-icon:hover{
-
-    background:var(--accent);
-
-    color:#fff;
-
-}
-
-.song-title{
-
-    display:flex;
-
-    align-items:baseline;
-
-    gap:12px;
-
-    flex:1;
-
-    text-decoration:none;
-
-    color:var(--text);
-
-    font-size:28px;
-
-    font-weight:700;
-
-    transition:.25s;
-
-}
-
-.song-title:hover{
-
-    color:var(--accent);
-
-}
-
-.song-year{
-
-    margin-left:auto;
-
-    font-size:18px;
-
-    color:#999;
-
-    font-weight:400;
-
-}
-
-.song-line{
-
-    border:none;
-
-    border-top:1px solid rgba(140,120,90,.18);
-
-    margin:6px 0;
 
 }
