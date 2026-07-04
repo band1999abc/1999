@@ -611,6 +611,8 @@ h2{
     display:flex;
     align-items:center;
     gap:18px;
+
+    margin-top:12px;
 }
 
 .play-icon{
