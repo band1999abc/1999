@@ -486,13 +486,7 @@ h2{
 .song-link{
     display:flex;
     align-items:center;
-    gap:18px;
-
-    text-decoration:none;
-    color:#222;
-
-    transition:.3s;
-
+    justify-content:space-between;
     width:100%;
 }
 
