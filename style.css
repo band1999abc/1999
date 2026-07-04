@@ -518,17 +518,22 @@ h2{
 }
 
 .play-icon{
+    position:static;
+
     width:34px;
     height:34px;
     border:1px solid #b79d85;
     border-radius:50%;
+
     display:flex;
     align-items:center;
     justify-content:center;
+
     color:#8a6a42;
     text-decoration:none;
     flex-shrink:0;
-    transition:.3s
+
+    transition:.3s;
 }
 
 .song-name{
