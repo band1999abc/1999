@@ -612,7 +612,8 @@ h2{
     align-items:center;
     gap:18px;
 
-    margin-top:12px;
+    position:relative;
+    top:8px;
 }
 
 .play-icon{
@@ -626,10 +627,7 @@ h2{
     color:#8a6a42;
     text-decoration:none;
     flex-shrink:0;
-    transition:.3s;
-
-    position: relative;
-　　 top: 4px;
+    transition:.3s
 }
 
 .play-icon:hover{
