@@ -468,9 +468,9 @@ h2{
 }
 
 .song-year{
+    margin-left:auto;
     font-size:18px;
     color:#999;
-    margin-left:auto;
 }
 
 .song-line{
