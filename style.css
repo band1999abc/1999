@@ -534,13 +534,14 @@ h2{
 }
 
 .song-name{
-
     font-size:24px;
     font-weight:700;
     color:#222;
     text-decoration:none;
-
     white-space:nowrap;
+
+    position:relative;
+    top:-3px;
 }
 
 .song-item:hover .play-icon{
@@ -556,6 +557,10 @@ h2{
     margin-left:auto;
     font-size:18px;
     color:#999;
+
+    position:relative;
+    top:-2px;
+
 }
 
 .song-line{
