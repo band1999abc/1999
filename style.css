@@ -528,9 +528,6 @@ h2{
 }
 
 .song-name{
-    display:inline-flex;
-    align-items:baseline;
-    gap:12px;
 
     font-size:24px;
     font-weight:700;
