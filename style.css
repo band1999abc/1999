@@ -648,6 +648,9 @@ h2{
     text-decoration:none;
 
     white-space:nowrap;
+
+    position:relative;
+    top:4px;
 }
 
 .song-title:hover{
