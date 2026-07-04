@@ -673,3 +673,9 @@ h2{
 
 }
 
+body{
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.35) 0%, transparent 45%),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,.18) 0%, transparent 40%),
+        linear-gradient(180deg,#efe8dc 0%,#e7dfd2 100%) !important;
+}
