@@ -36,9 +36,13 @@ body{
 
     background:#f7f2ea;
 
-    background-image:
+    background-image:url("whale.PNG");
     radial-gradient(rgba(255,255,255,.45) 1px, transparent 1px),
     radial-gradient(rgba(0,0,0,.02) 1px, transparent 1px);
+
+    background-repeat:no-repeat, repeat, repeat;
+background-position:center, 0 0, 9px 11px;
+background-size:75%, 18px 18px, 22px 22px;
 
 background-size:
     18px 18px,
