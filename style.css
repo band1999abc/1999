@@ -467,10 +467,6 @@ h2{
     color:#222;
 }
 
-.song-title:hover{
-    color:#8a6a42;
-}
-
 .song-year{
     font-size:18px;
     color:#999;
@@ -485,6 +481,26 @@ h2{
 
 .song-list{
     margin-top:32px;
+}
+
+.song-link{
+    display:flex;
+    align-items:center;
+    gap:18px;
+
+    text-decoration:none;
+    color:#222;
+
+    transition:.3s;
+}
+
+.song-link:hover{
+    color:#8a6a42;
+}
+
+.song-link:hover .play-icon{
+    background:#8a6a42;
+    color:#fff;
 }
 
 .song-item{
@@ -510,7 +526,7 @@ h2{
     transition:.3s
 }
 
-.song-title{
+.song-name{
     display:inline-flex;
     align-items:baseline;
     gap:12px;
