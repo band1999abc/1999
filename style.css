@@ -636,12 +636,16 @@ h2{
 }
 
 .song-title{
+    display:inline-flex;
+    align-items:baseline;
+    gap:12px;
+
     font-size:24px;
     font-weight:700;
     color:#222;
     text-decoration:none;
 
-    white-space: nowrap;
+    white-space:nowrap;
 }
 
 .song-title:hover{
@@ -653,9 +657,6 @@ h2{
     color:#999;
     margin-left:12px;
     flex:none;
-
-    position:relative;
-    top:4px;
 }
 
 .song-line{
