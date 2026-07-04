@@ -485,9 +485,15 @@ h2{
 
 .song-link{
     display:flex;
-    align-items:center;
     justify-content:space-between;
+    align-items:center;
     width:100%;
+}
+
+.song-left{
+    display:flex;
+    align-items:center;
+    gap:18px;
 }
 
 .song-link:hover{
