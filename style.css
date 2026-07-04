@@ -728,3 +728,41 @@ h2{
     }
 
 }
+
+/* ===== Whale in Card ===== */
+
+.card{
+    position:relative;
+    overflow:hidden;
+}
+
+.card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    width:120%;
+    height:120%;
+
+    transform:translate(-50%,-50%);
+
+    background-image:url("images/whale.png");
+    background-repeat:no-repeat;
+    background-position:center;
+    background-size:contain;
+
+    opacity:.045;
+
+    pointer-events:none;
+
+    z-index:0;
+}
+
+.card > *{
+    position:relative;
+    z-index:1;
+}
