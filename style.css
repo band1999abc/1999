@@ -78,6 +78,21 @@ body {
     z-index: 1;
 }
 
+/* Whale: top is driven by whale.js to stay visually fixed on screen */
+.whale-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 85vh;
+    object-fit: contain;
+    object-position: center;
+    opacity: .18;
+    filter: grayscale(100%) contrast(.85);
+    pointer-events: none;
+    z-index: 0;
+}
+
 /* ==============================
    Typography
 ============================== */
@@ -427,14 +442,13 @@ footer {
 /* ==============================
    Whale Background
 ============================== */
-.whale-bg {
+/* Whale: fixed to the viewport, clipped by the card */
+.card::before {
+    content: '';
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: center;
-    opacity: .12;
+    background: url('whale.PNG') center / auto 90% no-repeat fixed;
+    opacity: .18;
     filter: grayscale(100%) contrast(.85);
     pointer-events: none;
     z-index: 0;
