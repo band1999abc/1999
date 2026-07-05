@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -10,8 +8,8 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-    
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP&display=swap">
+
 <link rel="stylesheet" href="style.css">
 
 </head>
@@ -22,24 +20,21 @@
 
 <h1>ひび割れ</h1>
 
-<div style="text-align:center; margin-top:60px;">
+<div class="play-button-wrap">
     <button class="play-button" id="playButton">
         ▶ PLAY
     </button>
 </div>
 
-    <p id="status" class="sub">
-        Now Brewing...
-    </p>
+<p id="status" class="sub">
+    Now Brewing...
+</p>
 
 <div class="lyrics-title">
-
     <span>Lyrics</span>
-
 </div>
 
 <div class="lyrics">
-
 才能なんてさ、
 どこに行けば買えるのか？
 平凡なんてさ、
@@ -81,32 +76,17 @@
 </div>
 
 <nav>
-
 <a href="music.html">← Music</a>
-
 </nav>
 
 <footer>
-
 ©1999
-
 </footer>
 
 </div>
-    
-<script>
 
-const button = document.getElementById("playButton");
-const status = document.getElementById("status");
+<script src="hibiware.js"></script>
 
-button.addEventListener("click", () => {
-
-    status.textContent = "Coming Soon...";
-
-});
-
-</script>
-    
 </body>
 
 </html>

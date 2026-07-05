@@ -1,691 +1,560 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+/* ==============================
+   Custom Properties
+============================== */
+:root {
+    --accent:     #8a6a42;
+    --card-bg:    #f7f2ea;
+    --text-dark:  #2f2f2f;
+    --text-muted: #999;
+    --border:     #ddd;
+    --song-line:  rgba(140, 120, 90, .22);
 }
 
-body{
+/* ==============================
+   Reset
+============================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ==============================
+   Body
+============================== */
+body {
     background:
         radial-gradient(circle at 20% 20%, rgba(255,255,255,.35) 0%, transparent 45%),
         radial-gradient(circle at 80% 70%, rgba(255,255,255,.18) 0%, transparent 40%),
-        linear-gradient(180deg,#efe8dc 0%,#e7dfd2 100%);
+        linear-gradient(180deg, #efe8dc 0%, #e7dfd2 100%);
 
     font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    "Helvetica Neue",
-    "Noto Sans JP",
-    sans-serif;
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Helvetica Neue",
+        "Noto Sans JP",
+        sans-serif;
 
-    min-height:100vh;
-
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-
-    padding:40px 20px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 20px;
 }
 
-.card{
-
-    position:relative;
-    z-index:2;
-
-    overflow:hidden;
-    
-    width:min(90%,520px);
-
-    background:#f7f2ea;
-
+/* ==============================
+   Card
+============================== */
+.card {
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    width: min(90%, 520px);
+    background: var(--card-bg);
     background-image:
-    radial-gradient(rgba(255,255,255,.45) 1px, transparent 1px),
-    radial-gradient(rgba(0,0,0,.02) 1px, transparent 1px);
-
-background-size:
-    18px 18px,
-    22px 22px;
-
-background-position:
-    0 0,
-    9px 11px;
-
-border:1px solid #e2d8ca;
-
-box-shadow:
-    0 14px 45px rgba(90,75,45,.08),
-    0 2px 8px rgba(255,255,255,.35) inset;
-
-    border-radius:26px;
-
-    padding:48px;
-
+        radial-gradient(rgba(255,255,255,.45) 1px, transparent 1px),
+        radial-gradient(rgba(0,0,0,.02) 1px, transparent 1px);
+    background-size:
+        18px 18px,
+        22px 22px;
+    background-position:
+        0 0,
+        9px 11px;
+    border: 1px solid #e2d8ca;
+    box-shadow:
+        0 14px 45px rgba(90,75,45,.08),
+        0 2px 8px rgba(255,255,255,.35) inset;
+    border-radius: 26px;
+    padding: 48px;
     animation:
-    fade 1.2s ease,
-    floating 8s ease-in-out infinite;
-
+        fade 1.2s ease,
+        floating 8s ease-in-out infinite;
 }
 
-h1{
-    font-size:64px;
-    margin-bottom:72px;
+/* All card children sit above the whale background */
+.card > * {
+    position: relative;
+    z-index: 1;
 }
 
-.sub{
-    color:#777;
-    font-size:15px;
-    margin-top:18px;
-    margin-bottom:36px;
-    text-align:center;
+/* ==============================
+   Typography
+============================== */
+h1 {
+    font-size: 64px;
+    margin-bottom: 72px;
 }
 
-p{
-    line-height:2;
-    margin-bottom:18px;
+h2 {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: .2em;
 }
 
-nav{
-    margin-top:45px;
+p {
+    line-height: 2;
+    margin-bottom: 18px;
 }
 
-nav a{
-
-    display:block;
-
-    text-decoration:none;
-
-    color:#444;
-
-    padding:15px 0;
-
-    border-bottom:1px solid #dddddd;
-
-    transition:.35s;
-
+/* ==============================
+   Sub-heading / greeting
+============================== */
+.sub {
+    color: #777;
+    font-size: 15px;
+    margin-top: 18px;
+    margin-bottom: 36px;
+    text-align: center;
 }
 
-nav a:hover{
-
-    color:#8a6a42;
-
-    padding-left:12px;
-
+/* ==============================
+   Navigation
+============================== */
+nav {
+    margin-top: 45px;
 }
 
-footer{
-
-    margin-top:45px;
-
-    color:#999;
-
-    font-size:14px;
-
+nav a {
+    display: block;
+    text-decoration: none;
+    color: #444;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border);
+    transition: .35s;
 }
 
-@keyframes fade{
-
-from{
-opacity:0;
-transform:translateY(20px);
+nav a:hover {
+    color: var(--accent);
+    padding-left: 12px;
 }
 
-to{
-opacity:1;
-transform:none;
+/* ==============================
+   Footer
+============================== */
+footer {
+    margin-top: 45px;
+    color: var(--text-muted);
+    font-size: 14px;
 }
 
+/* ==============================
+   Animations
+============================== */
+@keyframes fade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
 }
 
-@keyframes floating{
-
-0%{
-transform:translateY(0px);
+@keyframes floating {
+    0%   { transform: translateY(0px); }
+    50%  { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
 }
 
-50%{
-transform:translateY(-8px);
+/* ==============================
+   Dividers
+============================== */
+.divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 32px 0;
 }
 
-100%{
-transform:translateY(0px);
+/* ==============================
+   Music — Song List
+============================== */
+.song-list {
+    margin-top: 32px;
 }
 
+.song-item {
+    display: block;
 }
 
-.song-title{
-    font-size:40px;
-    font-weight:700;
-    letter-spacing:0.15em;
-    text-align:center;
-    margin-top:24px;
-    margin-bottom:8px;
-    color:#2f2f2f;
+.song-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    text-decoration: none;
+    color: #222;
 }
 
-.song-year{
-    text-align:center;
-    color:#999;
-    margin-bottom:32px;
+.song-link:hover,
+.song-item:hover .song-name {
+    color: var(--accent);
 }
 
-.coming{
-    margin-top:10px;
-    margin-bottom:40px;
-    text-align:center;
-    color:#9a8f83;
-    font-size:14px;
+.song-link:hover .play-icon,
+.song-item:hover .play-icon {
+    background: var(--accent);
+    color: #fff;
 }
 
-.divider{
-    width:100%;
-    height:1px;
-    background:#ddd;
-    margin:32px 0;
+.song-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    line-height: 1;
 }
 
-h2{
-    text-align:center;
-    font-size:18px;
-    font-weight:400;
-    letter-spacing:.2em;
+.play-icon {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #b79d85;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: .3s;
 }
 
-.play-button{
-
-    display:inline-block;
-
-    margin:32px auto 16px;
-
-    padding:14px 32px;
-
-    border:1px solid #cbbda8;
-
-    border-radius:999px;
-
-    background:rgba(255,255,255,.65);
-
-    color:#4b4035;
-
-    font-size:16px;
-
-    letter-spacing:.18em;
-
-    text-decoration:none;
-
-    cursor:pointer;
-
-    transition:.3s;
-
+.song-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #222;
+    text-decoration: none;
+    white-space: nowrap;
+    position: relative;
+    top: -3px;
 }
 
-.play-button:hover{
-
-    background:#d8c4a3;
-
-    color:#222;
-
-    transform:translateY(-2px);
-
-    box-shadow:0 8px 20px rgba(0,0,0,.08);
-
+.song-year {
+    margin-left: auto;
+    font-size: 18px;
+    color: var(--text-muted);
+    position: relative;
+    top: 5px;
 }
 
-.lyrics-title{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin:48px 0 36px;
+.song-line {
+    border: none;
+    border-top: 1px solid var(--song-line);
+    margin: 18px 0;
+}
 
-    width:100%;
+/* Used by song detail page header */
+.song-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 24px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #222;
+}
+
+/* ==============================
+   Music — Song header (detail page)
+============================== */
+.song-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.song-header:hover .play-icon {
+    background: var(--accent);
+    color: white;
+}
+
+/* ==============================
+   Music — Play button (detail page)
+============================== */
+.play-button-wrap {
+    text-align: center;
+    margin-top: 60px;
+}
+
+.play-button {
+    display: inline-block;
+    margin: 32px auto 16px;
+    padding: 14px 32px;
+    border: 1px solid #cbbda8;
+    border-radius: 999px;
+    background: rgba(255,255,255,.65);
+    color: #4b4035;
+    font-size: 16px;
+    letter-spacing: .18em;
+    text-decoration: none;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.play-button:hover {
+    background: #d8c4a3;
+    color: #222;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+
+/* ==============================
+   Music — Coming soon
+============================== */
+.coming {
+    margin-top: 10px;
+    margin-bottom: 40px;
+    text-align: center;
+    color: #9a8f83;
+    font-size: 14px;
+}
+
+/* ==============================
+   Lyrics
+============================== */
+.lyrics-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 48px 0 36px;
+    width: 100%;
 }
 
 .lyrics-title::before,
-.lyrics-title::after{
-    content:"";
-    flex:1;
-    height:1px;
-    background:#a99783;
+.lyrics-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #a99783;
 }
 
-.lyrics-title span{
-    font-size:16px;
-    letter-spacing:.3em;
-    color:#8d8579;
-
+.lyrics-title span {
+    font-size: 16px;
+    letter-spacing: .3em;
+    color: #8d8579;
 }
 
-.lyrics{
-
-    font-family:"Noto Serif JP",serif;
-
-    white-space:pre-wrap;
-
-    line-height:2.6;
-
-    font-size:17px;
-
-    color:#444;
-
-    margin-bottom:50px;
-
+.lyrics {
+    font-family: "Noto Serif JP", serif;
+    white-space: pre-wrap;
+    line-height: 2.6;
+    font-size: 17px;
+    color: #444;
+    margin-bottom: 50px;
 }
 
-.lyrics::selection{
-
-    background:#d8c4a3;
-
-    color:#222;
-
+.lyrics::selection {
+    background: #d8c4a3;
+    color: #222;
 }
 
-/* =========================
+/* ==============================
    Diary
-========================= */
-
-.diary-entry{
-
-    margin-top:40px;
-
+============================== */
+.diary-entry {
+    margin-top: 40px;
 }
 
-.diary-date{
-
-    font-size:14px;
-
-    color:#9a8f83;
-
-    letter-spacing:.15em;
-
-    margin-bottom:18px;
-
+.diary-date {
+    font-size: 14px;
+    color: #9a8f83;
+    letter-spacing: .15em;
+    margin-bottom: 18px;
 }
 
-.diary-entry p{
-
-    line-height:2.3;
-
-    font-size:17px;
-
-    color:#444;
-
+.diary-entry p {
+    line-height: 2.3;
+    font-size: 17px;
+    color: #444;
 }
 
-.diary-divider{
-
-    width:100%;
-
-    height:1px;
-
-    background:#ddd;
-
-    margin:45px 0;
-
+.diary-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 45px 0;
 }
 
-.member-list{
-    margin-top:40px;
+/* ==============================
+   Members
+============================== */
+.member-list {
+    margin-top: 40px;
 }
 
-.member{
-    margin-bottom:28px;
-    text-align:center;
+.member {
+    margin-bottom: 28px;
+    text-align: center;
 }
 
-.role{
-    color:#888;
-    font-size:13px;
-    letter-spacing:.18em;
-    text-transform:uppercase;
+.role {
+    color: #888;
+    font-size: 13px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
 }
 
-.name{
-    margin-top:6px;
-    font-weight:700;
-    color:#2f2f2f;
-
-    white-space: nowrap;
+.name {
+    margin-top: 6px;
+    font-weight: 700;
+    color: var(--text-dark);
     font-size: clamp(18px, 5vw, 24px);
+    white-space: nowrap;
 }
 
-.band-info{
-    margin-top:40px;
-    padding-top:24px;
-    border-top:1px solid #ddd;
-
-    color:#888;
-    font-size:14px;
-    line-height:1.8;
-    letter-spacing:.05em;
-    text-align:center;
-}
-
-.contact-links{
-    margin-top:24px;
-    text-align:center;
-}
-
-.contact-links a{
-    display:block;
-    margin:10px 0;
-    color:#2f2f2f;
-    text-decoration:none;
-    transition:.2s;
-}
-
-.contact-links a:hover{
-    opacity:.6;
-}
-
-/* ===== Contact ===== */
-
-.contact-list{
-    margin:50px 0;
-    text-align:center;
-}
-
-.contact-item{
-    margin:38px 0;
-}
-
-.contact-label{
-    font-size:12px;
-    letter-spacing:.22em;
-    color:#9b9b9b;
-    text-transform:uppercase;
-    margin-bottom:10px;
-}
-
-.contact-link{
-    display:inline-block;
-    font-size:20px;
-    font-weight:600;
-    color:#2f2f2f;
-    text-decoration:none;
-    transition:opacity .25s ease;
-}
-
-.contact-link:hover{
-    opacity:.6;
-}
-
-.back-home{
-    display:inline-block;
-    margin-top:10px;
-    color:#666;
-    text-decoration:none;
-    transition:opacity .25s ease;
-}
-
-.back-home:hover{
-    opacity:.6;
-}
-
-.song-header{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:14px;
-    margin-bottom:18px;
-}
-
-.play-icon{
-    width:28px;
-    height:28px;
-
-    border:1px solid #8a6a42;
-    border-radius:50%;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    position: relative;
-    top: 7px;
-
-    color:#8a6a42;
-    font-size:12px;
-
-    flex-shrink:0;
-
-    transition:.3s;
-    text-decoration:none;
-}
-
-.song-header:hover .play-icon{
-    background:#8a6a42;
-    color:white;
-}
-
-.song-title{
-    display:inline-flex;
-    align-items:center;
-    gap:16px;
-
-    font-size:24px;
-    font-weight:700;
-    text-decoration:none;
-    color:#222;
-}
-
-.song-year{
-    margin-left:auto;
-    font-size:18px;
-    color:#999;
-}
-
-.song-line{
-    border:none;
-    border-top:1px solid rgba(140,120,90,.22);
-    margin:18px 0 12px;
-}
-
-.song-list{
-    margin-top:32px;
-}
-
-.song-link{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    width:100%;
-
-    text-decoration:none;
-    color:#222;
-}
-
-.song-left{
-    display:flex;
-    align-items:center;
-    gap:18px;
-    line-height:1;
-}
-
-.song-link:hover{
-    color:#8a6a42;
-}
-
-.song-link:hover .play-icon{
-    background:#8a6a42;
-    color:#fff;
-}
-
-.song-item{
-    display:block;
-}
-
-.play-icon{
-    position:static;
-
-    width:34px;
-    height:34px;
-    border:1px solid #b79d85;
-    border-radius:50%;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    color:#8a6a42;
-    text-decoration:none;
-    flex-shrink:0;
-
-    transition:.3s;
-}
-
-.song-name{
-    font-size:24px;
-    font-weight:700;
-    color:#222;
-    text-decoration:none;
-    white-space:nowrap;
-
-    position:relative;
-    top:-3px;
-}
-
-.song-item:hover .play-icon{
-    background:#8a6a42;
-    color:#fff;
-}
-
-.song-item:hover .song-name{
-    color:#8a6a42;
-}
-
-.song-year{
-    margin-left:auto;
-    font-size:18px;
-    color:#999;
-
-    position:relative;
-    top:5px;
-
-}
-
-.song-line{
-    border:none;
-    border-top:1px solid rgba(140,120,90,.22);
-    margin:18px 0;
-}
-
-@media (max-width: 600px) {
-
-  .card{
-    width:90%;
-    padding:32px 24px;
-  }
-
-  h1{
-    font-size:64px;
-  }
-
-  .member-name,
-  .contact-email{
-    font-size:clamp(18px, 6vw, 28px);
-    overflow-wrap:anywhere;
-    word-break:break-word;
-  }
-
-  .song-title{
-    font-size:20px;
-  }
-}
-
-.member-list .name{
+.member-list .name {
     font-size: clamp(20px, 5vw, 28px);
     word-break: keep-all;
     overflow-wrap: normal;
     white-space: normal;
 }
 
-@media (max-width: 480px){
+.band-info {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: #888;
+    font-size: 14px;
+    line-height: 1.8;
+    letter-spacing: .05em;
+    text-align: center;
+}
 
-    .member{
+/* ==============================
+   Contact
+============================== */
+.contact-list {
+    margin: 50px 0;
+    text-align: center;
+}
+
+.contact-item {
+    margin: 38px 0;
+}
+
+.contact-label {
+    font-size: 12px;
+    letter-spacing: .22em;
+    color: #9b9b9b;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.contact-link {
+    display: inline-block;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: opacity .25s ease;
+}
+
+.contact-link:hover {
+    opacity: .6;
+}
+
+.contact-links {
+    margin-top: 24px;
+    text-align: center;
+}
+
+.contact-links a {
+    display: block;
+    margin: 10px 0;
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: .2s;
+}
+
+.contact-links a:hover {
+    opacity: .6;
+}
+
+.back-home {
+    display: inline-block;
+    margin-top: 10px;
+    color: #666;
+    text-decoration: none;
+    transition: opacity .25s ease;
+}
+
+.back-home:hover {
+    opacity: .6;
+}
+
+/* ==============================
+   Whale Background
+============================== */
+.whale-bg {
+    position: absolute;
+    inset: 0;
+    width: 140%;
+    height: 140%;
+    left: -20%;
+    top: -20%;
+    object-fit: contain;
+    opacity: .035;
+    filter: grayscale(100%) contrast(.9);
+    pointer-events: none;
+    z-index: 0;
+    animation: whaleFloat 18s ease-in-out infinite;
+}
+
+@keyframes whaleFloat {
+    0%   { transform: translate(0, 0) rotate(-2deg); }
+    50%  { transform: translate(18px, -10px) rotate(1deg); }
+    100% { transform: translate(0, 0) rotate(-2deg); }
+}
+
+/* ==============================
+   Responsive — 600px
+============================== */
+@media (max-width: 600px) {
+    .card {
+        width: 90%;
+        padding: 32px 24px;
+    }
+
+    h1 {
+        font-size: 64px;
+    }
+
+    .member-name,
+    .contact-email {
+        font-size: clamp(18px, 6vw, 28px);
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .song-title {
+        font-size: 20px;
+    }
+}
+
+/* ==============================
+   Responsive — 480px
+============================== */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 48px;
+        line-height: 1;
+        word-break: keep-all;
+    }
+
+    .name {
+        font-size: 18px;
+        letter-spacing: -0.02em;
+    }
+
+    .member {
         padding: 0 8px;
     }
 
-    .member-list .name{
+    .member-list .name {
         font-size: 18px;
     }
-
-}
-
-@media (max-width: 480px){
-
-    .name{
-        font-size:18px;
-        letter-spacing:-0.02em;
-    }
-
-}
-
-@media (max-width:480px){
-
-    h1{
-        font-size:48px;
-        line-height:1;
-        word-break:keep-all;
-    }
-
-}
-
-.card > *{
-    position:relative;
-    z-index:1;
-}
-
-/* ==========================
-   Whale Background
-========================== */
-
-.whale-bg{
-    position:absolute;
-
-    inset:0;
-
-    width:140%;
-    height:140%;
-
-    left:-20%;
-    top:-20%;
-
-    object-fit:contain;
-
-    opacity:.035;
-
-    filter:grayscale(100%) contrast(.9);
-
-    pointer-events:none;
-
-    z-index:0;
-
-    animation:whaleFloat 18s ease-in-out infinite;
-}
-
-.card>*:not(.whale-bg){
-    position:relative;
-    z-index:1;
-}
-
-@keyframes whaleFloat{
-
-    0%{
-        transform:translate(0,0) rotate(-2deg);
-    }
-
-    50%{
-        transform:translate(18px,-10px) rotate(1deg);
-    }
-
-    100%{
-        transform:translate(0,0) rotate(-2deg);
-    }
-
-}
-
-body{
-    background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,.35) 0%, transparent 45%),
-        radial-gradient(circle at 80% 70%, rgba(255,255,255,.18) 0%, transparent 40%),
-        linear-gradient(180deg,#efe8dc 0%,#e7dfd2 100%) !important;
 }
