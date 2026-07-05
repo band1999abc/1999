@@ -86,13 +86,6 @@ h1 {
     margin-bottom: 72px;
 }
 
-h2 {
-    text-align: center;
-    font-size: 18px;
-    font-weight: 400;
-    letter-spacing: .2em;
-}
-
 p {
     line-height: 2;
     margin-bottom: 18px;
@@ -189,8 +182,7 @@ footer {
     color: #222;
 }
 
-.song-link:hover,
-.song-item:hover .song-name {
+.song-link:hover {
     color: var(--accent);
 }
 
@@ -231,6 +223,7 @@ footer {
 }
 
 .song-item:hover .song-name {
+    color: var(--accent);
     transform: translateY(-3px);
 }
 
@@ -244,33 +237,6 @@ footer {
     border: none;
     border-top: 1px solid var(--song-line);
     margin: 18px 0;
-}
-
-/* Used by song detail page header */
-.song-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 16px;
-    font-size: 24px;
-    font-weight: 700;
-    text-decoration: none;
-    color: #222;
-}
-
-/* ==============================
-   Music — Song header (detail page)
-============================== */
-.song-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 18px;
-}
-
-.song-header:hover .play-icon {
-    background: var(--accent);
-    color: white;
 }
 
 /* ==============================
@@ -291,7 +257,6 @@ footer {
     color: #4b4035;
     font-size: 16px;
     letter-spacing: .18em;
-    text-decoration: none;
     cursor: pointer;
     transition: .3s;
 }
@@ -301,17 +266,6 @@ footer {
     color: #222;
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0,0,0,.08);
-}
-
-/* ==============================
-   Music — Coming soon
-============================== */
-.coming {
-    margin-top: 10px;
-    margin-bottom: 40px;
-    text-align: center;
-    color: #9a8f83;
-    font-size: 14px;
 }
 
 /* ==============================
@@ -458,23 +412,6 @@ footer {
     opacity: .6;
 }
 
-.contact-links {
-    margin-top: 24px;
-    text-align: center;
-}
-
-.contact-links a {
-    display: block;
-    margin: 10px 0;
-    color: var(--text-dark);
-    text-decoration: none;
-    transition: .2s;
-}
-
-.contact-links a:hover {
-    opacity: .6;
-}
-
 .back-home {
     display: inline-block;
     margin-top: 10px;
@@ -524,14 +461,7 @@ footer {
         font-size: 64px;
     }
 
-    .member-name,
-    .contact-email {
-        font-size: clamp(18px, 6vw, 28px);
-        overflow-wrap: anywhere;
-        word-break: break-word;
-    }
-
-    .song-title {
+    .song-name {
         font-size: 20px;
     }
 }
