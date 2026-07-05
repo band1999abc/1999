@@ -429,23 +429,15 @@ footer {
 ============================== */
 .whale-bg {
     position: absolute;
-    inset: 0;
-    width: 140%;
-    height: 140%;
-    left: -20%;
-    top: -20%;
+    width: 115%;
+    height: auto;
+    top: 5%;
+    left: -10%;
     object-fit: contain;
-    opacity: .035;
-    filter: grayscale(100%) contrast(.9);
+    opacity: .07;
+    filter: grayscale(100%) contrast(.85);
     pointer-events: none;
     z-index: 0;
-    animation: whaleFloat 18s ease-in-out infinite;
-}
-
-@keyframes whaleFloat {
-    0%   { transform: translate(0, 0) rotate(-2deg); }
-    50%  { transform: translate(18px, -10px) rotate(1deg); }
-    100% { transform: translate(0, 0) rotate(-2deg); }
 }
 
 /* ==============================
