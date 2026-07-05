@@ -227,16 +227,12 @@ footer {
     color: #222;
     text-decoration: none;
     white-space: nowrap;
-    position: relative;
-    top: -3px;
 }
 
 .song-year {
     margin-left: auto;
     font-size: 18px;
     color: var(--text-muted);
-    position: relative;
-    top: 5px;
 }
 
 .song-line {
