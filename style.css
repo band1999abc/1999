@@ -87,7 +87,7 @@ body {
     height: 85vh;
     object-fit: contain;
     object-position: center;
-    opacity: .18;
+    opacity: .26;
     filter: grayscale(100%) contrast(.85);
     pointer-events: none;
     z-index: 0;
@@ -442,17 +442,6 @@ footer {
 /* ==============================
    Whale Background
 ============================== */
-/* Whale: fixed to the viewport, clipped by the card */
-.card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url('whale.PNG') center / auto 90% no-repeat fixed;
-    opacity: .18;
-    filter: grayscale(100%) contrast(.85);
-    pointer-events: none;
-    z-index: 0;
-}
 
 /* ==============================
    Responsive — 600px
