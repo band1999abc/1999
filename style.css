@@ -227,6 +227,11 @@ footer {
     color: #222;
     text-decoration: none;
     white-space: nowrap;
+    transition: transform .25s ease, color .25s ease;
+}
+
+.song-item:hover .song-name {
+    transform: translateY(-3px);
 }
 
 .song-year {
