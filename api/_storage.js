@@ -1,56 +1,122 @@
 /**
- * Shared filesystem storage helpers for Vercel serverless functions.
+ * Persistent storage for Vercel serverless functions.
  *
- * Vercel's Lambda environment has a read-only /var/task (process.cwd()).
- * We try writing there first (works on Replit / local dev), then fall back
- * to /tmp (always writable on Lambda, but ephemeral per cold-start).
+ * When UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set:
+ *   → reads/writes use Upstash KV (persistent across cold-starts)
+ *   → on first read (null from KV), the bundled data/*.json file seeds the KV store
  *
- * Read order: /tmp/<file>  →  process.cwd()/<file>
- * Write order: process.cwd()/<file>  →  /tmp/<file>  (first success wins)
+ * Otherwise (local dev / unconfigured):
+ *   → falls back to filesystem (/tmp → process.cwd())
+ *
+ * All exports are async.
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 
-/**
- * Read JSON array from a project-relative path.
- * Falls back to [] on any error.
- * @param {string} relPath  e.g. 'data/lives.json'
- * @returns {Array}
- */
-export function readJsonArray(relPath) {
-    const tmpPath    = join('/tmp', relPath);
-    const bundlePath = join(process.cwd(), relPath);
+// ── Upstash REST helpers ──────────────────────────────────────────────────────
 
-    for (const path of [tmpPath, bundlePath]) {
+function upstashConfigured() {
+    return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
+
+async function upstashCmd(commands) {
+    const url   = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    const res = await fetch(`${url}/pipeline`, {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify(commands),
+    });
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Upstash error ${res.status}: ${text}`);
+    }
+    return res.json();          // Array of { result, error } objects
+}
+
+// KV key from relative path: 'data/lives.json' → 'lives'
+function kvKey(relPath) {
+    return relPath.replace(/^data\//, '').replace(/\.json$/, '');
+}
+
+// ── Filesystem helpers (local dev fallback) ───────────────────────────────────
+
+function readBundled(relPath) {
+    try {
+        const data = JSON.parse(readFileSync(join(process.cwd(), relPath), 'utf-8'));
+        return Array.isArray(data) ? data : [];
+    } catch { return []; }
+}
+
+function readFs(relPath) {
+    // /tmp has recent writes; bundle is the cold-start baseline
+    for (const base of ['/tmp', process.cwd()]) {
         try {
-            const data = JSON.parse(readFileSync(path, 'utf-8'));
+            const data = JSON.parse(readFileSync(join(base, relPath), 'utf-8'));
             if (Array.isArray(data)) return data;
         } catch { /* try next */ }
     }
     return [];
 }
 
+function writeFs(relPath, data) {
+    const json = JSON.stringify(data, null, 2);
+    for (const base of [process.cwd(), '/tmp']) {
+        try {
+            const p = join(base, relPath);
+            mkdirSync(dirname(p), { recursive: true });
+            writeFileSync(p, json, 'utf-8');
+            return;
+        } catch { /* try next */ }
+    }
+    throw new Error(`Failed to write ${relPath} to any writable path`);
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
 /**
- * Write JSON array to a project-relative path.
- * Tries process.cwd() first (Replit / local), then /tmp (Vercel Lambda).
- * Throws only if both fail.
+ * Read a JSON array from persistent storage.
+ * @param {string} relPath  e.g. 'data/lives.json'
+ * @returns {Promise<Array>}
+ */
+export async function readJsonArray(relPath) {
+    if (upstashConfigured()) {
+        const key     = kvKey(relPath);
+        const results = await upstashCmd([['GET', key]]);
+        const raw     = results[0].result;
+
+        if (raw !== null && raw !== undefined) {
+            try {
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch { return []; }
+        }
+
+        // First access: seed KV from bundled JSON file
+        const seed = readBundled(relPath);
+        await upstashCmd([['SET', key, JSON.stringify(seed)]]);
+        console.log(`[storage] Seeded KV key "${key}" with ${seed.length} item(s) from bundle`);
+        return seed;
+    }
+
+    // Local dev: use filesystem
+    return readFs(relPath);
+}
+
+/**
+ * Write a JSON array to persistent storage.
  * @param {string} relPath  e.g. 'data/lives.json'
  * @param {Array}  data
+ * @returns {Promise<void>}
  */
-export function writeJsonArray(relPath, data) {
-    const json = JSON.stringify(data, null, 2);
-
-    // 1. Try the bundle/project path (persists on Replit, read-only on Vercel)
-    try {
-        const bundlePath = join(process.cwd(), relPath);
-        mkdirSync(dirname(bundlePath), { recursive: true });
-        writeFileSync(bundlePath, json, 'utf-8');
+export async function writeJsonArray(relPath, data) {
+    if (upstashConfigured()) {
+        const key = kvKey(relPath);
+        await upstashCmd([['SET', key, JSON.stringify(data)]]);
         return;
-    } catch { /* fall through to /tmp */ }
+    }
 
-    // 2. Fall back to /tmp (writable on Vercel Lambda, ephemeral on cold-start)
-    const tmpPath = join('/tmp', relPath);
-    mkdirSync(dirname(tmpPath), { recursive: true });
-    writeFileSync(tmpPath, json, 'utf-8');
+    // Local dev: use filesystem
+    writeFs(relPath, data);
 }

@@ -4,8 +4,6 @@
  * GET    — fetch single live
  * PUT    — update live (auth required)
  * DELETE — delete live (auth required)
- *
- * Body is read manually from the stream (same pattern as api/auth.js).
  */
 
 import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
@@ -40,7 +38,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
     const { id } = req.query;
-    const lives  = readJsonArray(FILE);
+    const lives  = await readJsonArray(FILE);
     const idx    = lives.findIndex(l => l.id === id);
 
     // ── GET /api/live/:id ─────────────────────────────────────────────────────
@@ -68,21 +66,21 @@ export default async function handler(req, res) {
 
         const updated = {
             ...prev,
-            date:       date       !== undefined ? String(date)              : prev.date,
-            venue:      venue      !== undefined ? String(venue).trim()      : prev.venue,
-            open:       open       !== undefined ? validTime(open)           : prev.open,
-            start:      start      !== undefined ? validTime(start)          : prev.start,
-            ticket:     ticket     !== undefined ? String(ticket).trim()     : prev.ticket,
+            date:       date       !== undefined ? String(date)          : prev.date,
+            venue:      venue      !== undefined ? String(venue).trim()  : prev.venue,
+            open:       open       !== undefined ? validTime(open)       : prev.open,
+            start:      start      !== undefined ? validTime(start)      : prev.start,
+            ticket:     ticket     !== undefined ? String(ticket).trim() : prev.ticket,
             status:     status && ['published','draft'].includes(status) ? status : prev.status,
-            sort_order: sort_order !== undefined ? Number(sort_order)        : prev.sort_order,
+            sort_order: sort_order !== undefined ? Number(sort_order)    : prev.sort_order,
             updatedAt:  new Date().toISOString(),
         };
 
         try {
             lives[idx] = updated;
-            writeJsonArray(FILE, lives);
+            await writeJsonArray(FILE, lives);
         } catch (e) {
-            console.error('[live] save error:', e);
+            console.error('[live] update error:', e);
             return res.status(500).json({ error: 'Failed to save' });
         }
         return res.status(200).json(updated);
@@ -95,7 +93,7 @@ export default async function handler(req, res) {
 
         try {
             lives.splice(idx, 1);
-            writeJsonArray(FILE, lives);
+            await writeJsonArray(FILE, lives);
         } catch (e) {
             console.error('[live] delete error:', e);
             return res.status(500).json({ error: 'Failed to delete' });

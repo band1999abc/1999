@@ -3,8 +3,6 @@
  *
  * GET  — list posts (published only when not authed; all when authed)
  * POST — create post (auth required)
- *
- * Body is read manually from the stream (same pattern as api/auth.js).
  */
 
 import { randomUUID } from 'crypto';
@@ -35,7 +33,7 @@ export default async function handler(req, res) {
 
     // ── GET /api/diary ────────────────────────────────────────────────────────
     if (req.method === 'GET') {
-        let posts = readJsonArray(FILE);
+        let posts = await readJsonArray(FILE);
         if (!isAuthed(req)) posts = posts.filter(p => p.status === 'published');
         posts.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
         return res.status(200).json(posts);
@@ -63,9 +61,9 @@ export default async function handler(req, res) {
         };
 
         try {
-            const posts = readJsonArray(FILE);
+            const posts = await readJsonArray(FILE);
             posts.unshift(post);
-            writeJsonArray(FILE, posts);
+            await writeJsonArray(FILE, posts);
         } catch (e) {
             console.error('[diary] save error:', e);
             return res.status(500).json({ error: 'Failed to save' });

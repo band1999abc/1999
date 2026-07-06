@@ -3,9 +3,6 @@
  *
  * GET  — list lives (published only when not authed; all when authed)
  * POST — create live (auth required)
- *
- * Body is read manually from the stream (same pattern as api/auth.js) because
- * Vercel's framework:null config does not auto-parse request bodies.
  */
 
 import { randomUUID } from 'crypto';
@@ -42,7 +39,7 @@ export default async function handler(req, res) {
 
     // ── GET /api/live ─────────────────────────────────────────────────────────
     if (req.method === 'GET') {
-        let lives = readJsonArray(FILE);
+        let lives = await readJsonArray(FILE);
         if (!isAuthed(req)) lives = lives.filter(l => l.status === 'published');
         return res.status(200).json(lives);
     }
@@ -59,7 +56,7 @@ export default async function handler(req, res) {
         if (sort_order !== undefined && !Number.isFinite(Number(sort_order)))
             return res.status(400).json({ error: 'sort_order must be an integer' });
 
-        const lives    = readJsonArray(FILE);
+        const lives    = await readJsonArray(FILE);
         const maxOrder = lives.reduce((m, l) => Math.max(m, l.sort_order ?? 0), -1);
         const now      = new Date().toISOString();
         const live = {
@@ -77,7 +74,7 @@ export default async function handler(req, res) {
 
         try {
             lives.push(live);
-            writeJsonArray(FILE, lives);
+            await writeJsonArray(FILE, lives);
         } catch (e) {
             console.error('[live] save error:', e);
             return res.status(500).json({ error: 'Failed to save' });

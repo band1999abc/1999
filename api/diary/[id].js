@@ -4,8 +4,6 @@
  * GET    — fetch single post
  * PUT    — update post (auth required)
  * DELETE — delete post (auth required)
- *
- * Body is read manually from the stream (same pattern as api/auth.js).
  */
 
 import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
@@ -34,7 +32,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
     const { id } = req.query;
-    const posts  = readJsonArray(FILE);
+    const posts  = await readJsonArray(FILE);
     const idx    = posts.findIndex(p => p.id === id);
 
     // ── GET /api/diary/:id ────────────────────────────────────────────────────
@@ -69,9 +67,9 @@ export default async function handler(req, res) {
 
         try {
             posts[idx] = updated;
-            writeJsonArray(FILE, posts);
+            await writeJsonArray(FILE, posts);
         } catch (e) {
-            console.error('[diary] save error:', e);
+            console.error('[diary] update error:', e);
             return res.status(500).json({ error: 'Failed to save' });
         }
         return res.status(200).json(updated);
@@ -84,7 +82,7 @@ export default async function handler(req, res) {
 
         try {
             posts.splice(idx, 1);
-            writeJsonArray(FILE, posts);
+            await writeJsonArray(FILE, posts);
         } catch (e) {
             console.error('[diary] delete error:', e);
             return res.status(500).json({ error: 'Failed to delete' });
