@@ -7,9 +7,35 @@
     const listEl = document.getElementById('live-list');
     if (!listEl) return;
 
+    // ── Flyer helpers ─────────────────────────────────────────────────────────
+
+    /**
+     * Normalise live.flyer → string[]
+     *   false / null / undefined → []
+     *   true                     → ['0']  (legacy single-image)
+     *   string[]                 → as-is
+     */
+    function getFlyerSlots(live) {
+        const f = live.flyer;
+        if (!f) return [];
+        if (f === true) return ['0'];
+        if (Array.isArray(f)) return f;
+        return [];
+    }
+
+    function flyerUrl(liveId, slotId) {
+        return '/api/flyer/' + liveId + '?s=' + encodeURIComponent(slotId);
+    }
+
     // ── Flyer modal ───────────────────────────────────────────────────────────
-    let modal = null;
+    let modal    = null;
     let modalImg = null;
+    let closeBtn = null;
+    let prevBtn  = null;
+    let nextBtn  = null;
+
+    let currentUrls = [];
+    let currentIdx  = 0;
 
     function buildModal() {
         modal = document.createElement('div');
@@ -18,27 +44,74 @@
         modal.setAttribute('aria-modal', 'true');
         modal.setAttribute('aria-label', 'フライヤー拡大表示');
 
+        // Close button
+        closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'live-flyer-modal-close';
+        closeBtn.setAttribute('aria-label', '閉じる');
+        closeBtn.innerHTML = '&#215;';
+        closeBtn.addEventListener('click', closeModal);
+        modal.appendChild(closeBtn);
+
+        // Prev button
+        prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'live-flyer-modal-nav live-flyer-modal-prev';
+        prevBtn.setAttribute('aria-label', '前の画像');
+        prevBtn.innerHTML = '&#8249;';
+        prevBtn.addEventListener('click', function () { navigate(-1); });
+        modal.appendChild(prevBtn);
+
+        // Main image
         modalImg = document.createElement('img');
         modalImg.className = 'live-flyer-modal-img';
         modalImg.alt = 'フライヤー';
         modal.appendChild(modalImg);
+
+        // Next button
+        nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'live-flyer-modal-nav live-flyer-modal-next';
+        nextBtn.setAttribute('aria-label', '次の画像');
+        nextBtn.innerHTML = '&#8250;';
+        nextBtn.addEventListener('click', function () { navigate(1); });
+        modal.appendChild(nextBtn);
 
         // Close on backdrop click
         modal.addEventListener('click', function (e) {
             if (e.target === modal) closeModal();
         });
 
-        // Close on Escape key
+        // Keyboard navigation
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeModal();
+            if (!modal || !modal.classList.contains('is-open')) return;
+            if (e.key === 'Escape')      closeModal();
+            if (e.key === 'ArrowLeft')   navigate(-1);
+            if (e.key === 'ArrowRight')  navigate(1);
         });
 
         document.body.appendChild(modal);
     }
 
-    function openModal(src) {
+    function syncModal() {
+        modalImg.src = currentUrls[currentIdx];
+        const multi = currentUrls.length > 1;
+        prevBtn.style.visibility = (multi && currentIdx > 0) ? 'visible' : 'hidden';
+        nextBtn.style.visibility = (multi && currentIdx < currentUrls.length - 1) ? 'visible' : 'hidden';
+    }
+
+    function navigate(dir) {
+        const next = currentIdx + dir;
+        if (next < 0 || next >= currentUrls.length) return;
+        currentIdx = next;
+        syncModal();
+    }
+
+    function openModal(urls, idx) {
         if (!modal) buildModal();
-        modalImg.src = src;
+        currentUrls = urls;
+        currentIdx  = idx;
+        syncModal();
         modal.classList.add('is-open');
         document.body.style.overflow = 'hidden';
     }
@@ -47,7 +120,10 @@
         if (!modal) return;
         modal.classList.remove('is-open');
         document.body.style.overflow = '';
-        setTimeout(function () { modalImg.src = ''; }, 300);
+        setTimeout(function () {
+            modalImg.src = '';
+            currentUrls  = [];
+        }, 300);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -65,17 +141,39 @@
         return `${y}.${m}.${d}`;
     }
 
-    // ── Build flyer image element ─────────────────────────────────────────────
-    function buildFlyerImg(liveId) {
-        const img = document.createElement('img');
-        img.className = 'live-flyer-img';
-        img.alt = 'フライヤー';
-        img.src = '/api/flyer/' + liveId;
-        img.title = 'クリックで拡大';
-        img.addEventListener('click', function () {
-            openModal('/api/flyer/' + liveId);
+    // ── Build flyer element(s) ────────────────────────────────────────────────
+    function buildFlyerElement(live) {
+        const slots = getFlyerSlots(live);
+        if (slots.length === 0) return null;
+
+        const urls = slots.map(function (s) { return flyerUrl(live.id, s); });
+
+        if (slots.length === 1) {
+            // Single image — full-width, same as original
+            const img = document.createElement('img');
+            img.className = 'live-flyer-img';
+            img.alt = 'フライヤー';
+            img.src = urls[0];
+            img.title = 'クリックで拡大';
+            img.addEventListener('click', function () { openModal(urls, 0); });
+            return img;
+        }
+
+        // Multiple images — thumbnail grid
+        const gallery = document.createElement('div');
+        gallery.className = 'live-flyer-gallery';
+        slots.forEach(function (_, i) {
+            const img = document.createElement('img');
+            img.className = 'live-flyer-gallery-img';
+            img.alt = 'フライヤー ' + (i + 1);
+            img.src = urls[i];
+            img.title = 'クリックで拡大';
+            img.addEventListener('click', (function (idx) {
+                return function () { openModal(urls, idx); };
+            }(i)));
+            gallery.appendChild(img);
         });
-        return img;
+        return gallery;
     }
 
     // ── Render upcoming entry ─────────────────────────────────────────────────
@@ -83,10 +181,9 @@
         const el = document.createElement('div');
         el.className = 'live-entry' + (badge ? ' live-entry-next' : '');
 
-        // Flyer image at top
-        if (live.flyer) {
-            el.appendChild(buildFlyerImg(live.id));
-        }
+        // Flyer image(s) at top
+        const flyerEl = buildFlyerElement(live);
+        if (flyerEl) el.appendChild(flyerEl);
 
         if (badge) {
             const b = document.createElement('span');
@@ -132,10 +229,8 @@
         const el = document.createElement('div');
         el.className = 'live-entry live-entry-past';
 
-        // Flyer image for past entries too
-        if (live.flyer) {
-            el.appendChild(buildFlyerImg(live.id));
-        }
+        const flyerEl = buildFlyerElement(live);
+        if (flyerEl) el.appendChild(flyerEl);
 
         const dateEl = document.createElement('div');
         dateEl.className = 'live-date';

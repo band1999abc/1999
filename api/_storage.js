@@ -122,66 +122,122 @@ export async function writeJsonArray(relPath, data) {
 }
 
 // ── Flyer image storage ───────────────────────────────────────────────────────
-// Flyers are stored separately from the lives array to avoid bloating it.
-// KV key: "flyer:{liveId}"  (base64 data URL string)
-// Filesystem fallback: data/flyers/{liveId}.b64
+// Each flyer slot is stored independently.
+// KV key per slot : "flyer:{liveId}:{slotId}"
+// Legacy KV key   : "flyer:{liveId}"          (slot '0' fallback for old entries)
+// FS per slot     : data/flyers/{liveId}/{slotId}.b64
+// FS legacy       : data/flyers/{liveId}.b64   (slot '0' fallback)
 
 /**
- * Read a flyer image for a live entry.
+ * Read a single flyer slot.
+ * For slot '0', falls back to the legacy "flyer:{liveId}" key / file.
  * @param {string} liveId
+ * @param {string} slotId
  * @returns {Promise<string|null>}  base64 data URL or null
  */
-export async function readFlyer(liveId) {
+export async function readFlyerSlot(liveId, slotId) {
     if (upstashConfigured()) {
-        const results = await upstashCmd([['GET', `flyer:${liveId}`]]);
-        return results[0].result || null;
+        const slotKey = `flyer:${liveId}:${slotId}`;
+        const results = await upstashCmd([['GET', slotKey]]);
+        if (results[0].result !== null && results[0].result !== undefined)
+            return results[0].result || null;
+        // Legacy fallback for slot '0'
+        if (slotId === '0') {
+            const leg = await upstashCmd([['GET', `flyer:${liveId}`]]);
+            return leg[0].result || null;
+        }
+        return null;
     }
-    // Mirror JSON storage: check /tmp first (recent writes), then cwd (bundle)
+    // Filesystem: new path first
     for (const base of ['/tmp', process.cwd()]) {
         try {
-            return readFileSync(join(base, 'data/flyers', `${liveId}.b64`), 'utf-8');
+            return readFileSync(
+                join(base, 'data', 'flyers', liveId, `${slotId}.b64`), 'utf-8');
         } catch { /* try next */ }
+    }
+    // Legacy fallback for slot '0'
+    if (slotId === '0') {
+        for (const base of ['/tmp', process.cwd()]) {
+            try {
+                return readFileSync(
+                    join(base, 'data', 'flyers', `${liveId}.b64`), 'utf-8');
+            } catch { /* try next */ }
+        }
     }
     return null;
 }
 
 /**
- * Store a flyer image for a live entry.
+ * Write a flyer slot.
  * @param {string} liveId
- * @param {string} dataUrl  base64 data URL (e.g. "data:image/jpeg;base64,...")
+ * @param {string} slotId
+ * @param {string} dataUrl  base64 data URL
  * @returns {Promise<void>}
  */
-export async function writeFlyer(liveId, dataUrl) {
+export async function writeFlyerSlot(liveId, slotId, dataUrl) {
     if (upstashConfigured()) {
-        await upstashCmd([['SET', `flyer:${liveId}`, dataUrl]]);
+        await upstashCmd([['SET', `flyer:${liveId}:${slotId}`, dataUrl]]);
         return;
     }
-    // Mirror JSON storage: try cwd first, fall back to /tmp
     for (const base of [process.cwd(), '/tmp']) {
         try {
-            const dir = join(base, 'data/flyers');
+            const dir = join(base, 'data', 'flyers', liveId);
             mkdirSync(dir, { recursive: true });
-            writeFileSync(join(dir, `${liveId}.b64`), dataUrl, 'utf-8');
+            writeFileSync(join(dir, `${slotId}.b64`), dataUrl, 'utf-8');
             return;
         } catch { /* try next */ }
     }
-    throw new Error(`Failed to write flyer ${liveId} to any writable path`);
+    throw new Error(`Failed to write flyer slot ${liveId}/${slotId}`);
 }
 
 /**
- * Delete a flyer image for a live entry.
+ * Delete a flyer slot.
+ * For slot '0', also cleans up any legacy key.
  * @param {string} liveId
+ * @param {string} slotId
  * @returns {Promise<void>}
  */
-export async function deleteFlyer(liveId) {
+export async function deleteFlyerSlot(liveId, slotId) {
     if (upstashConfigured()) {
-        await upstashCmd([['DEL', `flyer:${liveId}`]]);
+        const cmds = [['DEL', `flyer:${liveId}:${slotId}`]];
+        if (slotId === '0') cmds.push(['DEL', `flyer:${liveId}`]);
+        await upstashCmd(cmds);
         return;
     }
-    // Remove from both possible locations
     for (const base of [process.cwd(), '/tmp']) {
         try {
-            unlinkSync(join(base, 'data/flyers', `${liveId}.b64`));
+            unlinkSync(join(base, 'data', 'flyers', liveId, `${slotId}.b64`));
         } catch { /* ignore */ }
+    }
+    if (slotId === '0') {
+        // Also remove legacy file
+        for (const base of [process.cwd(), '/tmp']) {
+            try {
+                unlinkSync(join(base, 'data', 'flyers', `${liveId}.b64`));
+            } catch { /* ignore */ }
+        }
+    }
+}
+
+/**
+ * Delete ALL flyer slots for a live entry (used when deleting a live).
+ * @param {string} liveId
+ * @param {string[]} slotIds  Array of slot IDs stored in live.flyer
+ * @returns {Promise<void>}
+ */
+export async function deleteAllFlyerSlots(liveId, slotIds) {
+    if (upstashConfigured()) {
+        const cmds = slotIds.map(s => ['DEL', `flyer:${liveId}:${s}`]);
+        // Also delete legacy key just in case
+        cmds.push(['DEL', `flyer:${liveId}`]);
+        if (cmds.length) await upstashCmd(cmds);
+        return;
+    }
+    for (const slotId of slotIds) {
+        await deleteFlyerSlot(liveId, slotId);
+    }
+    // Legacy file
+    for (const base of [process.cwd(), '/tmp']) {
+        try { unlinkSync(join(base, 'data', 'flyers', `${liveId}.b64`)); } catch {}
     }
 }

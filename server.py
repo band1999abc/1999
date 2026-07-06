@@ -233,7 +233,10 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         elif path.startswith('/api/flyer/'):
             item_id = path[len('/api/flyer/'):]
             if item_id and '/' not in item_id:
-                self._handle_flyer_get(item_id)
+                parsed_qs = urllib.parse.urlparse(self.path)
+                qs_params = urllib.parse.parse_qs(parsed_qs.query)
+                slot_id   = qs_params.get('s', [None])[0]
+                self._handle_flyer_get(item_id, slot_id)
             else:
                 self.send_error(404)
         else:
@@ -247,6 +250,12 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_diary_create()
         elif path == '/api/live':
             self._handle_live_create()
+        elif path.startswith('/api/flyer/'):
+            item_id = path[len('/api/flyer/'):]
+            if item_id and '/' not in item_id:
+                self._handle_flyer_post(item_id)
+            else:
+                self.send_error(404)
         else:
             self.send_error(404)
 
@@ -284,7 +293,10 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         elif path.startswith('/api/flyer/'):
             item_id = path[len('/api/flyer/'):]
             if item_id and '/' not in item_id:
-                self._handle_flyer_delete(item_id)
+                parsed_qs = urllib.parse.urlparse(self.path)
+                qs_params = urllib.parse.parse_qs(parsed_qs.query)
+                slot_id   = qs_params.get('s', [None])[0]
+                self._handle_flyer_delete(item_id, slot_id)
                 return
         self.send_error(404)
 
@@ -631,11 +643,71 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         _save_lives(lives)
         self._write_json(200, {'ok': True})
 
-    # ── GET /api/flyer/<id> ───────────────────────────────────────────────────
+    # ── Flyer storage helpers ─────────────────────────────────────────────────
 
-    def _handle_flyer_get(self, item_id):
+    def _normalize_flyer(self, live):
+        """Normalise live['flyer'] → list of slot IDs."""
+        f = live.get('flyer')
+        if not f:
+            return []
+        if f is True:
+            return ['0']
+        if isinstance(f, list):
+            return f
+        return []
+
+    def _read_flyer_slot(self, item_id, slot_id):
+        """Read data URL for a slot; falls back to legacy file for slot '0'."""
+        for base in ['/tmp', os.getcwd()]:
+            p = os.path.join(base, 'data', 'flyers', item_id, slot_id + '.b64')
+            if os.path.exists(p):
+                try:
+                    return open(p, 'r', encoding='utf-8').read().strip()
+                except OSError:
+                    pass
+        if slot_id == '0':
+            for base in ['/tmp', os.getcwd()]:
+                p = os.path.join(base, 'data', 'flyers', item_id + '.b64')
+                if os.path.exists(p):
+                    try:
+                        return open(p, 'r', encoding='utf-8').read().strip()
+                    except OSError:
+                        pass
+        return None
+
+    def _write_flyer_slot(self, item_id, slot_id, data_url):
+        """Write data URL for a slot."""
+        for base in [_DATA_DIR, '/tmp']:
+            try:
+                d = os.path.join(base, 'flyers', item_id)
+                os.makedirs(d, exist_ok=True)
+                with open(os.path.join(d, slot_id + '.b64'), 'w', encoding='utf-8') as fh:
+                    fh.write(data_url)
+                return
+            except OSError:
+                pass
+        raise OSError('Could not write flyer slot %s/%s' % (item_id, slot_id))
+
+    def _delete_flyer_slot(self, item_id, slot_id):
+        """Delete data for a slot (including legacy file for slot '0')."""
+        for base in [_DATA_DIR, '/tmp']:
+            p = os.path.join(base, 'flyers', item_id, slot_id + '.b64')
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        if slot_id == '0':
+            for base in [_DATA_DIR, '/tmp']:
+                p = os.path.join(base, 'flyers', item_id + '.b64')
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+
+    # ── GET /api/flyer/<id>[?s=SLOT] ─────────────────────────────────────────
+
+    def _handle_flyer_get(self, item_id, slot_id=None):
         import base64 as _b64
-        # Enforce same publish/auth guard as /api/live/<id>
         lives = _load_lives()
         live  = next((l for l in lives if l.get('id') == item_id), None)
         if not live:
@@ -645,16 +717,17 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
             return
 
-        # Find flyer file: check /tmp first then cwd
-        flyer_data = None
-        for base in ['/tmp', os.getcwd()]:
-            p = os.path.join(base, 'data', 'flyers', item_id + '.b64')
-            if os.path.exists(p):
-                try:
-                    flyer_data = open(p, 'r', encoding='utf-8').read().strip()
-                    break
-                except OSError:
-                    pass
+        images = self._normalize_flyer(live)
+        if not images:
+            self.send_error(404)
+            return
+
+        target_slot = slot_id if slot_id else images[0]
+        if target_slot not in images:
+            self.send_error(404)
+            return
+
+        flyer_data = self._read_flyer_slot(item_id, target_slot)
         if not flyer_data:
             self.send_error(404)
             return
@@ -677,7 +750,53 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             print('[flyer] GET error: %s' % e)
             self.send_error(500)
 
-    # ── PUT /api/flyer/<id> ───────────────────────────────────────────────────
+    # ── POST /api/flyer/<id> — add new image ──────────────────────────────────
+
+    def _handle_flyer_post(self, item_id):
+        import random
+        import string as _string
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        length = int(self.headers.get('Content-Length', 0))
+        if length > 6 * 1024 * 1024:
+            self._write_json(413, {'error': 'Image too large (max ~4 MB)'})
+            return
+        try:
+            body = json.loads(self.rfile.read(length))
+        except Exception:
+            self._write_json(400, {'error': 'Bad request'})
+            return
+        data_url = body.get('dataUrl', '')
+        if not isinstance(data_url, str) or not data_url.startswith('data:image/'):
+            self._write_json(400, {'error': 'Invalid image dataUrl'})
+            return
+        if ';base64,' not in data_url:
+            self._write_json(400, {'error': 'dataUrl must be base64 encoded'})
+            return
+        lives = _load_lives()
+        idx = next((i for i, l in enumerate(lives) if l.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Live not found'})
+            return
+        current_images = self._normalize_flyer(lives[idx])
+        if len(current_images) >= 20:
+            self._write_json(400, {'error': '画像は最大20枚までです'})
+            return
+        slot_id = ''.join(random.choices(_string.ascii_lowercase + _string.digits, k=6))
+        try:
+            self._write_flyer_slot(item_id, slot_id, data_url)
+        except OSError as e:
+            print('[flyer] POST write error: %s' % e)
+            self._write_json(500, {'error': 'Failed to save image'})
+            return
+        new_images = current_images + [slot_id]
+        lives[idx] = dict(lives[idx], flyer=new_images,
+                          updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        _save_lives(lives)
+        self._write_json(200, {'ok': True, 'slotId': slot_id, 'images': new_images})
+
+    # ── PUT /api/flyer/<id> — backward compat: set slot '0' ──────────────────
 
     def _handle_flyer_put(self, item_id):
         if not self._is_authed():
@@ -704,38 +823,53 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         if idx < 0:
             self._write_json(404, {'error': 'Live not found'})
             return
-        flyer_dir = os.path.join(_DATA_DIR, 'flyers')
-        os.makedirs(flyer_dir, exist_ok=True)
-        flyer_path = os.path.join(flyer_dir, item_id + '.b64')
         try:
-            with open(flyer_path, 'w', encoding='utf-8') as f:
-                f.write(data_url)
+            self._write_flyer_slot(item_id, '0', data_url)
         except OSError as e:
             print('[flyer] PUT write error: %s' % e)
             self._write_json(500, {'error': 'Failed to save flyer'})
             return
-        lives[idx] = dict(lives[idx], flyer=True, updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        current_images = self._normalize_flyer(lives[idx])
+        new_images = current_images if '0' in current_images else ['0'] + current_images
+        lives[idx] = dict(lives[idx], flyer=new_images,
+                          updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
         _save_lives(lives)
-        self._write_json(200, {'ok': True})
+        self._write_json(200, {'ok': True, 'images': new_images})
 
-    # ── DELETE /api/flyer/<id> ────────────────────────────────────────────────
+    # ── DELETE /api/flyer/<id>[?s=SLOT] ──────────────────────────────────────
 
-    def _handle_flyer_delete(self, item_id):
+    def _handle_flyer_delete(self, item_id, slot_id=None):
         if not self._is_authed():
             self._write_json(401, {'error': 'Unauthorized'})
             return
-        flyer_dir  = os.path.join(_DATA_DIR, 'flyers')
-        flyer_path = os.path.join(flyer_dir, item_id + '.b64')
-        try:
-            os.remove(flyer_path)
-        except OSError:
-            pass
         lives = _load_lives()
         idx = next((i for i, l in enumerate(lives) if l.get('id') == item_id), -1)
-        if idx >= 0:
-            lives[idx] = dict(lives[idx], flyer=False, updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
-            _save_lives(lives)
-        self._write_json(200, {'ok': True})
+        if idx < 0:
+            self._write_json(404, {'error': 'Live not found'})
+            return
+        current_images = self._normalize_flyer(lives[idx])
+        if slot_id:
+            if slot_id not in current_images:
+                self._write_json(404, {'error': 'Slot not found'})
+                return
+            self._delete_flyer_slot(item_id, slot_id)
+            new_images = [s for s in current_images if s != slot_id]
+        else:
+            # Delete ALL slots
+            for s in current_images:
+                self._delete_flyer_slot(item_id, s)
+            # Also clean up any legacy file
+            for base in [_DATA_DIR, '/tmp']:
+                p = os.path.join(base, 'flyers', item_id + '.b64')
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+            new_images = []
+        lives[idx] = dict(lives[idx], flyer=new_images,
+                          updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        _save_lives(lives)
+        self._write_json(200, {'ok': True, 'images': new_images})
 
     # ── Shared helpers ────────────────────────────────────────────────────────
 

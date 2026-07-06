@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
-    <link rel="stylesheet" href="/style.css?v=14">
+    <link rel="stylesheet" href="/style.css?v=15">
 </head>
 <body data-page="afterhours-live" class="auth-hidden">
 
@@ -79,12 +79,11 @@
 
             <div class="admin-label">フライヤー画像</div>
             <div class="la-flyer-section">
-                <img id="la-flyer-preview" class="la-flyer-preview la-hidden" alt="フライヤープレビュー">
-                <div class="la-flyer-empty" id="la-flyer-empty">画像なし</div>
+                <div class="la-flyer-grid" id="la-flyer-grid"></div>
+                <div class="la-flyer-empty la-hidden" id="la-flyer-empty">画像なし</div>
                 <div class="la-flyer-actions">
-                    <button type="button" class="admin-btn la-flyer-action-btn" id="la-flyer-select">画像を選択</button>
-                    <button type="button" class="admin-btn da-btn-delete la-flyer-action-btn la-hidden" id="la-flyer-remove">削除</button>
-                    <input type="file" id="la-flyer-file" accept="image/*" class="la-hidden">
+                    <button type="button" class="admin-btn la-flyer-action-btn" id="la-flyer-add">＋ 画像を追加</button>
+                    <input type="file" id="la-flyer-file" accept="image/*" multiple class="la-hidden">
                 </div>
             </div>
 
@@ -119,7 +118,7 @@
 <script src="/whale.js"></script>
 <script src="/script.js?v=2"></script>
 <script src="/admin.js?v=2"></script>
-<script src="/live-admin.js?v=4"></script>
+<script src="/live-admin.js?v=5"></script>
 
 </body>
 </html>
