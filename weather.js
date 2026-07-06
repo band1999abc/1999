@@ -29,6 +29,33 @@
     Tornado:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
   };
 
+  /* ── Weather text: fade-in or crossfade ────────────────────── */
+  function setWeatherText(text) {
+    var el = document.getElementById('weather-text');
+    if (!el) { console.log('[weather] #weather-text not found in DOM'); return; }
+
+    if (!el.classList.contains('visible')) {
+      // Not yet shown — set text and fade in directly
+      el.textContent = text;
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          el.classList.add('visible');
+        });
+      });
+    } else {
+      // Already visible (loading text) — crossfade: out → swap → in
+      el.classList.remove('visible');
+      setTimeout(function () {
+        el.textContent = text;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            el.classList.add('visible');
+          });
+        });
+      }, 450); // slightly longer than the 0.4s CSS transition
+    }
+  }
+
   /* ── Apply weather to DOM ───────────────────────────────────── */
   function applyWeather(condition) {
     console.log('[weather] applyWeather: condition=' + JSON.stringify(condition));
@@ -39,18 +66,7 @@
     document.body.classList.add(info.cls);
     console.log('[weather] body.className:', document.body.className);
 
-    var el = document.getElementById('weather-text');
-    if (el) {
-      el.textContent = info.text;
-      // Double rAF ensures transition fires after paint
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          el.classList.add('visible');
-        });
-      });
-    } else {
-      console.log('[weather] #weather-text not found in DOM');
-    }
+    setWeatherText(info.text);
 
     if (info.cls === 'weather-rain') { console.log('[weather] → startRain()'); startRain(); }
     if (info.cls === 'weather-snow') { console.log('[weather] → startSnow()'); startSnow(); }
@@ -108,6 +124,11 @@
     }
 
     canvas.style.display = 'block';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        canvas.style.opacity = '1'; // triggers CSS 0.5s ease fade-in
+      });
+    });
     console.log('[weather] canvas.style.display set to block');
     draw();
   }
@@ -163,6 +184,11 @@
     }
 
     canvas.style.display = 'block';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        canvas.style.opacity = '1'; // triggers CSS 0.5s ease fade-in
+      });
+    });
     console.log('[weather] canvas.style.display set to block');
     draw();
   }
@@ -177,6 +203,9 @@
     var debugParam = new URLSearchParams(window.location.search).get('weather');
     if (debugParam) { applyWeather(debugParam); return; }
 
+    // Show gentle loading text immediately while the API resolves
+    setWeatherText('Checking today\u2019s sky\u2026');
+
     // Fetch immediately — server resolves location from client IP.
     // No browser Geolocation needed: no permission dialog, no GPS wait.
     var t0 = performance.now();
@@ -185,11 +214,19 @@
       .then(function (data) {
         var ms = Math.round(performance.now() - t0);
         console.log('[weather] fetch: ' + ms + 'ms  condition: ' + (data && data.condition));
-        if (data && data.condition) applyWeather(data.condition);
+        if (data && data.condition) {
+          applyWeather(data.condition);
+        } else {
+          // No condition returned — gently fade out the loading text
+          var el = document.getElementById('weather-text');
+          if (el) el.classList.remove('visible');
+        }
       })
       .catch(function () {
         var ms = Math.round(performance.now() - t0);
         console.log('[weather] fetch failed after ' + ms + 'ms');
+        var el = document.getElementById('weather-text');
+        if (el) el.classList.remove('visible');
       });
   }
 
