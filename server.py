@@ -25,25 +25,36 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         """Proxy to OpenWeatherMap; returns {"condition": "<Main>"} or {"condition": null}."""
         parsed = urllib.parse.urlparse(self.path)
         params = urllib.parse.parse_qs(parsed.query)
-        lat = params.get('lat', [None])[0]
-        lon = params.get('lon', [None])[0]
+        lat_raw = params.get('lat', [None])[0]
+        lon_raw = params.get('lon', [None])[0]
         api_key = os.environ.get('OPENWEATHERMAP_API_KEY', '')
 
+        # Validate lat/lon are numeric and within geographic bounds
         condition = None
-        if lat and lon and api_key:
+        try:
+            lat = float(lat_raw)
+            lon = float(lon_raw)
+            if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+                raise ValueError('out of bounds')
+        except (TypeError, ValueError):
+            self._write_json(400, {'condition': None})
+            return
+
+        if api_key:
             try:
-                url = (
-                    'https://api.openweathermap.org/data/2.5/weather'
-                    '?lat=' + lat + '&lon=' + lon + '&appid=' + api_key
-                )
+                qs = urllib.parse.urlencode({'lat': lat, 'lon': lon, 'appid': api_key})
+                url = 'https://api.openweathermap.org/data/2.5/weather?' + qs
                 with urllib.request.urlopen(url, timeout=5) as resp:
                     data = json.loads(resp.read())
                 condition = data['weather'][0]['main']
             except Exception:
                 pass  # Network error or bad response → silent fallback
 
-        body = json.dumps({'condition': condition}).encode()
-        self.send_response(200)
+        self._write_json(200, {'condition': condition})
+
+    def _write_json(self, status, payload):
+        body = json.dumps(payload).encode()
+        self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')

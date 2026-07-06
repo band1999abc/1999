@@ -145,8 +145,16 @@
     draw();
   }
 
-  /* ── Entry point ────────────────────────────────────────────── */
+  /* ── Entry point (guarded against duplicate calls) ─────────── */
+  var _initialized = false;
   function init() {
+    if (_initialized) return;
+    _initialized = true;
+
+    // Dev-only: ?weather=Clear|Clouds|Rain|Snow|Mist forces a condition locally
+    var debugParam = new URLSearchParams(window.location.search).get('weather');
+    if (debugParam) { applyWeather(debugParam); return; }
+
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
