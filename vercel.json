@@ -1,6 +1,9 @@
 {
   "framework": null,
   "outputDirectory": ".",
+  "functions": {
+    "api/afterhours.js": { "includeFiles": "templates/**" }
+  },
   "rewrites": [
     { "source": "/afterhours", "destination": "/api/afterhours" }
   ],
