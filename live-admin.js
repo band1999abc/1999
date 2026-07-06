@@ -275,7 +275,7 @@
 
         } catch (e) {
             console.error('[live-admin] saveLive:', e);
-            alert('保存に失敗しました。もう一度お試しください。');
+            alert('保存に失敗しました: ' + e.message);
         } finally {
             setBusy(false);
         }
@@ -295,7 +295,7 @@
             clearEditor();
         } catch (e) {
             console.error('[live-admin] deleteLive:', e);
-            alert('削除に失敗しました。もう一度お試しください。');
+            alert('削除に失敗しました: ' + e.message);
         } finally {
             setBusy(false);
         }

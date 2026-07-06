@@ -4,6 +4,8 @@
  * GET    — fetch single post
  * PUT    — update post (auth required)
  * DELETE — delete post (auth required)
+ *
+ * Body is read manually from the stream (same pattern as api/auth.js).
  */
 
 import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
@@ -11,6 +13,13 @@ import { readJsonArray, writeJsonArray } from '../_storage.js';
 
 const FILE    = 'data/diary.json';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+async function readBody(req) {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    try { return JSON.parse(Buffer.concat(chunks).toString()); }
+    catch { return {}; }
+}
 
 function isAuthed(req) {
     const auth = req.headers['authorization'] || '';
@@ -21,7 +30,7 @@ function isAuthed(req) {
     return verifyToken(cookies[COOKIE_NAME] || '') !== null;
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
     const { id } = req.query;
@@ -42,8 +51,9 @@ export default function handler(req, res) {
         if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
         if (idx < 0)        return res.status(404).json({ error: 'Not found' });
 
+        const body = await readBody(req);
+        const { title, body: text, date, status } = body;
         const prev = posts[idx];
-        const { title, body, date, status } = req.body || {};
 
         if (date !== undefined && !DATE_RE.test(String(date)))
             return res.status(400).json({ error: 'Invalid date format; expected YYYY-MM-DD' });
@@ -51,7 +61,7 @@ export default function handler(req, res) {
         const updated = {
             ...prev,
             title:     title  !== undefined ? String(title).trim() : prev.title,
-            body:      body   !== undefined ? String(body).trim()  : prev.body,
+            body:      text   !== undefined ? String(text).trim()  : prev.body,
             date:      date   !== undefined ? String(date)         : prev.date,
             status:    status && ['published','draft'].includes(status) ? status : prev.status,
             updatedAt: new Date().toISOString(),

@@ -3,6 +3,9 @@
  *
  * GET  — list lives (published only when not authed; all when authed)
  * POST — create live (auth required)
+ *
+ * Body is read manually from the stream (same pattern as api/auth.js) because
+ * Vercel's framework:null config does not auto-parse request bodies.
  */
 
 import { randomUUID } from 'crypto';
@@ -12,6 +15,13 @@ import { readJsonArray, writeJsonArray } from './_storage.js';
 const FILE    = 'data/lives.json';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{1,2}:\d{2}$/;
+
+async function readBody(req) {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    try { return JSON.parse(Buffer.concat(chunks).toString()); }
+    catch { return {}; }
+}
 
 function validTime(s) {
     const str = String(s || '').trim();
@@ -27,7 +37,7 @@ function isAuthed(req) {
     return verifyToken(cookies[COOKIE_NAME] || '') !== null;
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
     // ── GET /api/live ─────────────────────────────────────────────────────────
@@ -41,7 +51,8 @@ export default function handler(req, res) {
     if (req.method === 'POST') {
         if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-        const { date, venue = '', open = '', start = '', ticket = '', status = 'draft', sort_order } = req.body || {};
+        const body = await readBody(req);
+        const { date, venue = '', open = '', start = '', ticket = '', status = 'draft', sort_order } = body;
 
         if (date && !DATE_RE.test(String(date)))
             return res.status(400).json({ error: 'Invalid date format; expected YYYY-MM-DD' });

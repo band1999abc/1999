@@ -3,6 +3,8 @@
  *
  * GET  — list posts (published only when not authed; all when authed)
  * POST — create post (auth required)
+ *
+ * Body is read manually from the stream (same pattern as api/auth.js).
  */
 
 import { randomUUID } from 'crypto';
@@ -11,6 +13,13 @@ import { readJsonArray, writeJsonArray } from './_storage.js';
 
 const FILE    = 'data/diary.json';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+async function readBody(req) {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    try { return JSON.parse(Buffer.concat(chunks).toString()); }
+    catch { return {}; }
+}
 
 function isAuthed(req) {
     const auth = req.headers['authorization'] || '';
@@ -21,7 +30,7 @@ function isAuthed(req) {
     return verifyToken(cookies[COOKIE_NAME] || '') !== null;
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
     // ── GET /api/diary ────────────────────────────────────────────────────────
@@ -36,7 +45,9 @@ export default function handler(req, res) {
     if (req.method === 'POST') {
         if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-        const { title = '', body = '', date, status = 'draft' } = req.body || {};
+        const body   = await readBody(req);
+        const { title = '', body: text = '', date, status = 'draft' } = body;
+
         if (date && !DATE_RE.test(String(date)))
             return res.status(400).json({ error: 'Invalid date format; expected YYYY-MM-DD' });
 
@@ -44,7 +55,7 @@ export default function handler(req, res) {
         const post = {
             id:        randomUUID(),
             title:     String(title).trim(),
-            body:      String(body).trim(),
+            body:      String(text).trim(),
             date:      (date && DATE_RE.test(String(date))) ? String(date) : now.slice(0, 10),
             status:    ['published', 'draft'].includes(status) ? status : 'draft',
             createdAt: now,

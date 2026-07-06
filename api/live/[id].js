@@ -4,6 +4,8 @@
  * GET    — fetch single live
  * PUT    — update live (auth required)
  * DELETE — delete live (auth required)
+ *
+ * Body is read manually from the stream (same pattern as api/auth.js).
  */
 
 import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
@@ -12,6 +14,13 @@ import { readJsonArray, writeJsonArray } from '../_storage.js';
 const FILE    = 'data/lives.json';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{1,2}:\d{2}$/;
+
+async function readBody(req) {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    try { return JSON.parse(Buffer.concat(chunks).toString()); }
+    catch { return {}; }
+}
 
 function validTime(s) {
     const str = String(s || '').trim();
@@ -27,7 +36,7 @@ function isAuthed(req) {
     return verifyToken(cookies[COOKIE_NAME] || '') !== null;
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
     const { id } = req.query;
@@ -48,8 +57,9 @@ export default function handler(req, res) {
         if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
         if (idx < 0)        return res.status(404).json({ error: 'Not found' });
 
+        const body = await readBody(req);
+        const { date, venue, open, start, ticket, status, sort_order } = body;
         const prev = lives[idx];
-        const { date, venue, open, start, ticket, status, sort_order } = req.body || {};
 
         if (date !== undefined && !DATE_RE.test(String(date)))
             return res.status(400).json({ error: 'Invalid date format; expected YYYY-MM-DD' });
