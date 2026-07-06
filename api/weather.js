@@ -6,10 +6,13 @@
 export default async function handler(req, res) {
   const { lat, lon } = req.query;
 
-  // Validate lat/lon are finite numbers within geographic bounds
-  const latNum = parseFloat(lat);
-  const lonNum = parseFloat(lon);
+  // Validate: must be a pure numeric string (no trailing garbage like "12abc")
+  // String(Number(x)) round-trips cleanly only for valid numerics.
+  const latNum = Number(lat);
+  const lonNum = Number(lon);
   if (
+    typeof lat !== 'string' || typeof lon !== 'string' ||
+    lat.trim() === '' || lon.trim() === '' ||
     !isFinite(latNum) || !isFinite(lonNum) ||
     latNum < -90  || latNum > 90 ||
     lonNum < -180 || lonNum > 180
