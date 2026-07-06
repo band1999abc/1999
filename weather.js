@@ -31,10 +31,13 @@
 
   /* ── Apply weather to DOM ───────────────────────────────────── */
   function applyWeather(condition) {
+    console.log('[weather] applyWeather: condition=' + JSON.stringify(condition));
     var info = CONDITIONS[condition];
+    console.log('[weather] matched cls: ' + (info ? info.cls : 'NO MATCH — skipping'));
     if (!info) return;
 
     document.body.classList.add(info.cls);
+    console.log('[weather] body.className:', document.body.className);
 
     var el = document.getElementById('weather-text');
     if (el) {
@@ -45,15 +48,18 @@
           el.classList.add('visible');
         });
       });
+    } else {
+      console.log('[weather] #weather-text not found in DOM');
     }
 
-    if (info.cls === 'weather-rain') startRain();
-    if (info.cls === 'weather-snow') startSnow();
+    if (info.cls === 'weather-rain') { console.log('[weather] → startRain()'); startRain(); }
+    if (info.cls === 'weather-snow') { console.log('[weather] → startSnow()'); startSnow(); }
   }
 
   /* ── Rain canvas ────────────────────────────────────────────── */
   function startRain() {
     var canvas = document.getElementById('weather-canvas');
+    console.log('[weather] startRain: canvas=' + (canvas ? 'found' : 'NOT FOUND'));
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
 
@@ -62,31 +68,37 @@
       canvas.height = window.innerHeight;
     }
     resize();
+    console.log('[weather] canvas buffer: ' + canvas.width + 'x' + canvas.height);
     window.addEventListener('resize', resize, { passive: true });
 
     var drops = [];
-    for (var i = 0; i < 45; i++) {
+    for (var i = 0; i < 55; i++) {
       drops.push({
         x:       Math.random() * canvas.width,
         y:       Math.random() * canvas.height,
-        len:     Math.random() * 14 + 8,
-        speed:   Math.random() * 2  + 1.5,
-        opacity: Math.random() * 0.11 + 0.03,
+        len:     Math.random() * 18 + 10,
+        speed:   Math.random() * 3  + 2,
+        opacity: Math.random() * 0.30 + 0.18,
       });
     }
 
+    var _firstDraw = true;
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (_firstDraw) {
+        console.log('[weather] rain draw() running, drops=' + drops.length);
+        _firstDraw = false;
+      }
       for (var j = 0; j < drops.length; j++) {
         var d = drops[j];
-        ctx.strokeStyle = 'rgba(170,180,200,' + d.opacity + ')';
-        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = 'rgba(150,170,205,' + d.opacity + ')';
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(d.x, d.y);
-        ctx.lineTo(d.x + d.len * 0.25, d.y + d.len);
+        ctx.lineTo(d.x + d.len * 0.28, d.y + d.len);
         ctx.stroke();
         d.y += d.speed;
-        d.x += d.speed * 0.2;
+        d.x += d.speed * 0.22;
         if (d.y > canvas.height) {
           d.y = -d.len;
           d.x = Math.random() * canvas.width;
@@ -96,12 +108,14 @@
     }
 
     canvas.style.display = 'block';
+    console.log('[weather] canvas.style.display set to block');
     draw();
   }
 
   /* ── Snow canvas ────────────────────────────────────────────── */
   function startSnow() {
     var canvas = document.getElementById('weather-canvas');
+    console.log('[weather] startSnow: canvas=' + (canvas ? 'found' : 'NOT FOUND'));
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
 
@@ -110,27 +124,33 @@
       canvas.height = window.innerHeight;
     }
     resize();
+    console.log('[weather] canvas buffer: ' + canvas.width + 'x' + canvas.height);
     window.addEventListener('resize', resize, { passive: true });
 
     var flakes = [];
-    for (var i = 0; i < 18; i++) {
+    for (var i = 0; i < 25; i++) {
       flakes.push({
         x:       Math.random() * canvas.width,
         y:       Math.random() * canvas.height,
-        r:       Math.random() * 2 + 1,
-        speed:   Math.random() * 0.6 + 0.2,
-        drift:   (Math.random() - 0.5) * 0.4,
-        opacity: Math.random() * 0.35 + 0.15,
+        r:       Math.random() * 3 + 1.5,
+        speed:   Math.random() * 0.8 + 0.3,
+        drift:   (Math.random() - 0.5) * 0.5,
+        opacity: Math.random() * 0.40 + 0.25,
       });
     }
 
+    var _firstDraw = true;
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (_firstDraw) {
+        console.log('[weather] snow draw() running, flakes=' + flakes.length);
+        _firstDraw = false;
+      }
       for (var j = 0; j < flakes.length; j++) {
         var f = flakes[j];
         ctx.beginPath();
         ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(220,230,240,' + f.opacity + ')';
+        ctx.fillStyle = 'rgba(210,225,245,' + f.opacity + ')';
         ctx.fill();
         f.y += f.speed;
         f.x += f.drift;
@@ -143,6 +163,7 @@
     }
 
     canvas.style.display = 'block';
+    console.log('[weather] canvas.style.display set to block');
     draw();
   }
 

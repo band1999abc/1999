@@ -44,29 +44,50 @@ export default async function handler(req, res) {
     const ip = forwarded.split(',')[0].trim();
 
     const tGeo = Date.now();
+    let geoOk = false;
+
+    // Primary: ipapi.co (HTTPS, free 30k/month)
     try {
-      // ipapi.co: free tier (30k/month), HTTPS, no API key required
-      const geoAbort = new AbortController();
-      const geoTimer = setTimeout(() => geoAbort.abort(), 3000);
-      const geoRes = await fetch(
-        'https://ipapi.co/' + (ip || 'json') + '/json/',
-        { signal: geoAbort.signal }
-      );
-      clearTimeout(geoTimer);
-      const geo    = await geoRes.json();
-      const geoMs  = Date.now() - tGeo;
-
-      if (!geo.latitude || !geo.longitude) {
-        console.log('[weather/geo] ' + geoMs + 'ms  no coords (fallback null)');
-        return res.status(200).json({ condition: null });
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 3000);
+      const r     = await fetch('https://ipapi.co/' + (ip || 'json') + '/json/', { signal: ctrl.signal });
+      clearTimeout(timer);
+      const geo = await r.json();
+      if (geo.latitude != null && geo.longitude != null && !geo.error) {
+        latNum = geo.latitude;
+        lonNum = geo.longitude;
+        geoOk  = true;
+        console.log('[weather/geo] ipapi.co ' + (Date.now() - tGeo) + 'ms  lat=' + latNum + ' lon=' + lonNum);
+      } else {
+        console.log('[weather/geo] ipapi.co no coords, reason=' + (geo.reason || geo.error || '?'));
       }
-
-      latNum = geo.latitude;
-      lonNum = geo.longitude;
-      console.log('[weather/geo] ' + geoMs + 'ms  lat=' + latNum + ' lon=' + lonNum);
     } catch (err) {
-      const geoMs = Date.now() - tGeo;
-      console.log('[weather/geo] ' + geoMs + 'ms  error: ' + err.message);
+      console.log('[weather/geo] ipapi.co error: ' + err.message);
+    }
+
+    // Fallback: freeipapi.com (HTTPS, free, no key)
+    if (!geoOk) {
+      try {
+        const ctrl  = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 3000);
+        const r     = await fetch('https://freeipapi.com/api/json/' + (ip || ''), { signal: ctrl.signal });
+        clearTimeout(timer);
+        const geo = await r.json();
+        if (geo.latitude != null && geo.longitude != null) {
+          latNum = geo.latitude;
+          lonNum = geo.longitude;
+          geoOk  = true;
+          console.log('[weather/geo] freeipapi.com ' + (Date.now() - tGeo) + 'ms  lat=' + latNum + ' lon=' + lonNum);
+        } else {
+          console.log('[weather/geo] freeipapi.com no coords');
+        }
+      } catch (err) {
+        console.log('[weather/geo] freeipapi.com error: ' + err.message);
+      }
+    }
+
+    if (!geoOk) {
+      console.log('[weather/geo] both services failed after ' + (Date.now() - tGeo) + 'ms');
       return res.status(200).json({ condition: null });
     }
   }

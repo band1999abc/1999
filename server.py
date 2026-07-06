@@ -54,23 +54,41 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             forwarded = self.headers.get('X-Forwarded-For', '')
             ip = forwarded.split(',')[0].strip() if forwarded else self.client_address[0]
             t_geo = time.monotonic()
+            geo_ok = False
+
+            # Primary: ipapi.co
             try:
-                # ipapi.co: free (30k/month), HTTPS, no API key required
                 path = ip if ip else 'json'
-                geo_url = 'https://ipapi.co/%s/json/' % path
-                with urllib.request.urlopen(geo_url, timeout=3) as resp:
+                with urllib.request.urlopen('https://ipapi.co/%s/json/' % path, timeout=3) as resp:
                     geo = json.loads(resp.read())
-                geo_ms = int((time.monotonic() - t_geo) * 1000)
-                if not geo.get('latitude') or not geo.get('longitude'):
-                    print('[weather/geo]   %dms  no coords (fallback null)' % geo_ms)
-                    self._write_json(200, {'condition': None})
-                    return
-                lat = geo['latitude']
-                lon = geo['longitude']
-                print('[weather/geo]   %dms  lat=%s lon=%s' % (geo_ms, lat, lon))
+                if geo.get('latitude') is not None and geo.get('longitude') is not None and not geo.get('error'):
+                    lat = geo['latitude']
+                    lon = geo['longitude']
+                    geo_ok = True
+                    print('[weather/geo]   %dms  ipapi.co lat=%s lon=%s' % (int((time.monotonic()-t_geo)*1000), lat, lon))
+                else:
+                    print('[weather/geo]   ipapi.co no coords: %s' % geo.get('reason', '?'))
             except Exception as e:
-                geo_ms = int((time.monotonic() - t_geo) * 1000)
-                print('[weather/geo]   %dms  error: %s' % (geo_ms, e))
+                print('[weather/geo]   ipapi.co error: %s' % e)
+
+            # Fallback: freeipapi.com
+            if not geo_ok:
+                try:
+                    url2 = 'https://freeipapi.com/api/json/%s' % (ip or '')
+                    with urllib.request.urlopen(url2, timeout=3) as resp:
+                        geo2 = json.loads(resp.read())
+                    if geo2.get('latitude') is not None and geo2.get('longitude') is not None:
+                        lat = geo2['latitude']
+                        lon = geo2['longitude']
+                        geo_ok = True
+                        print('[weather/geo]   %dms  freeipapi lat=%s lon=%s' % (int((time.monotonic()-t_geo)*1000), lat, lon))
+                    else:
+                        print('[weather/geo]   freeipapi.com no coords')
+                except Exception as e:
+                    print('[weather/geo]   freeipapi.com error: %s' % e)
+
+            if not geo_ok:
+                print('[weather/geo]   both services failed')
                 self._write_json(200, {'condition': None})
                 return
 

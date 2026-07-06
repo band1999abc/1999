@@ -510,6 +510,29 @@ body.weather-cloudy::before {
     z-index: 3; /* above card */
 }
 
+/* Rain: cooler, darker background + blue-grey overlay */
+body.weather-rain {
+    background:
+        radial-gradient(circle at 30% 10%, rgba(190,205,225,.30) 0%, transparent 50%),
+        linear-gradient(180deg, #dce0e8 0%, #d3d7e0 100%);
+}
+
+body.weather-rain::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(100, 120, 155, 0.10);
+    pointer-events: none;
+    z-index: 3; /* above card */
+}
+
+/* Snow: cooler, brighter background */
+body.weather-snow {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(235,240,255,.45) 0%, transparent 55%),
+        linear-gradient(180deg, #eaedf5 0%, #e2e6f0 100%);
+}
+
 /* Foggy: milky overlay */
 body.weather-foggy::before {
     content: '';
