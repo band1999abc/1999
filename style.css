@@ -1156,6 +1156,56 @@ body.auth-hidden { visibility: hidden; }
     /* spacing handled by .live-entry padding */
 }
 
+/* ── Flyer image (public page) ─────────────────────────────── */
+.live-flyer-img {
+    display: block;
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    cursor: zoom-in;
+    box-shadow: 0 4px 18px rgba(0,0,0,.10);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    object-fit: cover;
+}
+
+.live-flyer-img:hover {
+    opacity: 0.93;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(0,0,0,.15);
+}
+
+/* ── Flyer modal ────────────────────────────────────────────── */
+.live-flyer-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, .88);
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+    padding: 20px;
+    animation: flyer-modal-in 0.2s ease;
+}
+
+.live-flyer-modal.is-open {
+    display: flex;
+}
+
+.live-flyer-modal-img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.6);
+    cursor: default;
+    object-fit: contain;
+}
+
+@keyframes flyer-modal-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
 /* Night mode */
 body.night .live-entry          { border-bottom-color: var(--border); }
 body.night .live-date           { color: var(--text-dark); }
@@ -1249,6 +1299,51 @@ body.night .live-archive-label  { border-bottom-color: var(--border); }
     color: var(--text-muted);
     font-size: 14px;
     padding: 16px 0;
+}
+
+/* ── Flyer section (admin) ──────────────────────────────────── */
+.la-flyer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.la-flyer-preview {
+    display: block;
+    width: 100%;
+    border-radius: 8px;
+    object-fit: cover;
+    max-height: 220px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.10);
+}
+
+.la-flyer-empty {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    padding: 10px 0 2px;
+}
+
+.la-flyer-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.la-flyer-action-btn {
+    margin-top: 0;
+    padding: 7px 16px;
+    font-size: 11px;
+}
+
+/* Flyer indicator on list item */
+.la-flyer-badge {
+    font-size: 12px;
+    opacity: 0.6;
+    flex-shrink: 0;
+    margin-right: 2px;
 }
 
 /* Night mode */

@@ -230,6 +230,12 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_live_get(item_id)
             else:
                 self.send_error(404)
+        elif path.startswith('/api/flyer/'):
+            item_id = path[len('/api/flyer/'):]
+            if item_id and '/' not in item_id:
+                self._handle_flyer_get(item_id)
+            else:
+                self.send_error(404)
         else:
             super().do_GET()
 
@@ -256,6 +262,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             if item_id and '/' not in item_id:
                 self._handle_live_update(item_id)
                 return
+        elif path.startswith('/api/flyer/'):
+            item_id = path[len('/api/flyer/'):]
+            if item_id and '/' not in item_id:
+                self._handle_flyer_put(item_id)
+                return
         self.send_error(404)
 
     def do_DELETE(self):
@@ -269,6 +280,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             item_id = path[len('/api/live/'):]
             if item_id and '/' not in item_id:
                 self._handle_live_delete(item_id)
+                return
+        elif path.startswith('/api/flyer/'):
+            item_id = path[len('/api/flyer/'):]
+            if item_id and '/' not in item_id:
+                self._handle_flyer_delete(item_id)
                 return
         self.send_error(404)
 
@@ -613,6 +629,112 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             return
         lives.pop(idx)
         _save_lives(lives)
+        self._write_json(200, {'ok': True})
+
+    # ── GET /api/flyer/<id> ───────────────────────────────────────────────────
+
+    def _handle_flyer_get(self, item_id):
+        import base64 as _b64
+        # Enforce same publish/auth guard as /api/live/<id>
+        lives = _load_lives()
+        live  = next((l for l in lives if l.get('id') == item_id), None)
+        if not live:
+            self.send_error(404)
+            return
+        if live.get('status') != 'published' and not self._is_authed():
+            self.send_error(404)
+            return
+
+        # Find flyer file: check /tmp first then cwd
+        flyer_data = None
+        for base in ['/tmp', os.getcwd()]:
+            p = os.path.join(base, 'data', 'flyers', item_id + '.b64')
+            if os.path.exists(p):
+                try:
+                    flyer_data = open(p, 'r', encoding='utf-8').read().strip()
+                    break
+                except OSError:
+                    pass
+        if not flyer_data:
+            self.send_error(404)
+            return
+
+        try:
+            sep = ';base64,'
+            if not flyer_data.startswith('data:') or sep not in flyer_data:
+                self.send_error(500)
+                return
+            header, b64data = flyer_data.split(sep, 1)
+            mime_type = header[len('data:'):]
+            img_data  = _b64.b64decode(b64data)
+            self.send_response(200)
+            self.send_header('Content-Type', mime_type)
+            self.send_header('Content-Length', str(len(img_data)))
+            self.send_header('Cache-Control', 'public, max-age=86400')
+            http.server.BaseHTTPRequestHandler.end_headers(self)
+            self.wfile.write(img_data)
+        except Exception as e:
+            print('[flyer] GET error: %s' % e)
+            self.send_error(500)
+
+    # ── PUT /api/flyer/<id> ───────────────────────────────────────────────────
+
+    def _handle_flyer_put(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        length = int(self.headers.get('Content-Length', 0))
+        if length > 6 * 1024 * 1024:
+            self._write_json(413, {'error': 'Image too large (max ~4 MB)'})
+            return
+        try:
+            body = json.loads(self.rfile.read(length))
+        except Exception:
+            self._write_json(400, {'error': 'Bad request'})
+            return
+        data_url = body.get('dataUrl', '')
+        if not isinstance(data_url, str) or not data_url.startswith('data:image/'):
+            self._write_json(400, {'error': 'Invalid image dataUrl'})
+            return
+        if ';base64,' not in data_url:
+            self._write_json(400, {'error': 'dataUrl must be base64 encoded'})
+            return
+        lives = _load_lives()
+        idx = next((i for i, l in enumerate(lives) if l.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Live not found'})
+            return
+        flyer_dir = os.path.join(_DATA_DIR, 'flyers')
+        os.makedirs(flyer_dir, exist_ok=True)
+        flyer_path = os.path.join(flyer_dir, item_id + '.b64')
+        try:
+            with open(flyer_path, 'w', encoding='utf-8') as f:
+                f.write(data_url)
+        except OSError as e:
+            print('[flyer] PUT write error: %s' % e)
+            self._write_json(500, {'error': 'Failed to save flyer'})
+            return
+        lives[idx] = dict(lives[idx], flyer=True, updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        _save_lives(lives)
+        self._write_json(200, {'ok': True})
+
+    # ── DELETE /api/flyer/<id> ────────────────────────────────────────────────
+
+    def _handle_flyer_delete(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        flyer_dir  = os.path.join(_DATA_DIR, 'flyers')
+        flyer_path = os.path.join(flyer_dir, item_id + '.b64')
+        try:
+            os.remove(flyer_path)
+        except OSError:
+            pass
+        lives = _load_lives()
+        idx = next((i for i, l in enumerate(lives) if l.get('id') == item_id), -1)
+        if idx >= 0:
+            lives[idx] = dict(lives[idx], flyer=False, updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+            _save_lives(lives)
         self._write_json(200, {'ok': True})
 
     # ── Shared helpers ────────────────────────────────────────────────────────

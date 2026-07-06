@@ -7,6 +7,51 @@
     const listEl = document.getElementById('live-list');
     if (!listEl) return;
 
+    // ── Flyer modal ───────────────────────────────────────────────────────────
+    let modal = null;
+    let modalImg = null;
+
+    function buildModal() {
+        modal = document.createElement('div');
+        modal.className = 'live-flyer-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', 'フライヤー拡大表示');
+
+        modalImg = document.createElement('img');
+        modalImg.className = 'live-flyer-modal-img';
+        modalImg.alt = 'フライヤー';
+        modal.appendChild(modalImg);
+
+        // Close on backdrop click
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeModal();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        document.body.appendChild(modal);
+    }
+
+    function openModal(src) {
+        if (!modal) buildModal();
+        modalImg.src = src;
+        modal.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        if (!modal) return;
+        modal.classList.remove('is-open');
+        document.body.style.overflow = '';
+        setTimeout(function () { modalImg.src = ''; }, 300);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
     function todayIso() {
         const d = new Date();
         return d.getFullYear() + '-' +
@@ -20,17 +65,28 @@
         return `${y}.${m}.${d}`;
     }
 
-    function esc(s) {
-        return String(s || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+    // ── Build flyer image element ─────────────────────────────────────────────
+    function buildFlyerImg(liveId) {
+        const img = document.createElement('img');
+        img.className = 'live-flyer-img';
+        img.alt = 'フライヤー';
+        img.src = '/api/flyer/' + liveId;
+        img.title = 'クリックで拡大';
+        img.addEventListener('click', function () {
+            openModal('/api/flyer/' + liveId);
+        });
+        return img;
     }
 
+    // ── Render upcoming entry ─────────────────────────────────────────────────
     function renderEntry(live, badge) {
         const el = document.createElement('div');
         el.className = 'live-entry' + (badge ? ' live-entry-next' : '');
+
+        // Flyer image at top
+        if (live.flyer) {
+            el.appendChild(buildFlyerImg(live.id));
+        }
 
         if (badge) {
             const b = document.createElement('span');
@@ -45,7 +101,7 @@
         el.appendChild(dateEl);
 
         const venueEl = document.createElement('div');
-        venueEl.className = 'live-venue' + (badge ? '' : '');
+        venueEl.className = 'live-venue';
         venueEl.textContent = live.venue || '';
         el.appendChild(venueEl);
 
@@ -71,9 +127,15 @@
         return el;
     }
 
+    // ── Render past entry ─────────────────────────────────────────────────────
     function renderPastEntry(live) {
         const el = document.createElement('div');
         el.className = 'live-entry live-entry-past';
+
+        // Flyer image for past entries too
+        if (live.flyer) {
+            el.appendChild(buildFlyerImg(live.id));
+        }
 
         const dateEl = document.createElement('div');
         dateEl.className = 'live-date';
@@ -97,6 +159,7 @@
         return el;
     }
 
+    // ── Load & render ─────────────────────────────────────────────────────────
     async function load() {
         try {
             const res = await fetch('/api/live');

@@ -11,7 +11,7 @@
  * All exports are async.
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 
 // ── Upstash REST helpers ──────────────────────────────────────────────────────
@@ -119,4 +119,69 @@ export async function writeJsonArray(relPath, data) {
 
     // Local dev: use filesystem
     writeFs(relPath, data);
+}
+
+// ── Flyer image storage ───────────────────────────────────────────────────────
+// Flyers are stored separately from the lives array to avoid bloating it.
+// KV key: "flyer:{liveId}"  (base64 data URL string)
+// Filesystem fallback: data/flyers/{liveId}.b64
+
+/**
+ * Read a flyer image for a live entry.
+ * @param {string} liveId
+ * @returns {Promise<string|null>}  base64 data URL or null
+ */
+export async function readFlyer(liveId) {
+    if (upstashConfigured()) {
+        const results = await upstashCmd([['GET', `flyer:${liveId}`]]);
+        return results[0].result || null;
+    }
+    // Mirror JSON storage: check /tmp first (recent writes), then cwd (bundle)
+    for (const base of ['/tmp', process.cwd()]) {
+        try {
+            return readFileSync(join(base, 'data/flyers', `${liveId}.b64`), 'utf-8');
+        } catch { /* try next */ }
+    }
+    return null;
+}
+
+/**
+ * Store a flyer image for a live entry.
+ * @param {string} liveId
+ * @param {string} dataUrl  base64 data URL (e.g. "data:image/jpeg;base64,...")
+ * @returns {Promise<void>}
+ */
+export async function writeFlyer(liveId, dataUrl) {
+    if (upstashConfigured()) {
+        await upstashCmd([['SET', `flyer:${liveId}`, dataUrl]]);
+        return;
+    }
+    // Mirror JSON storage: try cwd first, fall back to /tmp
+    for (const base of [process.cwd(), '/tmp']) {
+        try {
+            const dir = join(base, 'data/flyers');
+            mkdirSync(dir, { recursive: true });
+            writeFileSync(join(dir, `${liveId}.b64`), dataUrl, 'utf-8');
+            return;
+        } catch { /* try next */ }
+    }
+    throw new Error(`Failed to write flyer ${liveId} to any writable path`);
+}
+
+/**
+ * Delete a flyer image for a live entry.
+ * @param {string} liveId
+ * @returns {Promise<void>}
+ */
+export async function deleteFlyer(liveId) {
+    if (upstashConfigured()) {
+        await upstashCmd([['DEL', `flyer:${liveId}`]]);
+        return;
+    }
+    // Remove from both possible locations
+    for (const base of [process.cwd(), '/tmp']) {
+        try {
+            unlinkSync(join(base, 'data/flyers', `${liveId}.b64`));
+        } catch { /* ignore */ }
+    }
 }

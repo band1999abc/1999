@@ -9,23 +9,32 @@
     if (document.body.dataset.page !== 'afterhours-live') return;
 
     // ── DOM refs ──────────────────────────────────────────────────────────────
-    const countEl    = document.getElementById('la-count');
-    const listEl     = document.getElementById('la-list');
-    const headingEl  = document.getElementById('la-editor-heading');
-    const formEl     = document.getElementById('la-form');
-    const dateEl     = document.getElementById('la-date');
-    const venueEl    = document.getElementById('la-venue');
-    const openEl     = document.getElementById('la-open');
-    const startEl    = document.getElementById('la-start');
-    const ticketEl   = document.getElementById('la-ticket');
-    const saveBtn    = document.getElementById('la-save');
-    const publishBtn = document.getElementById('la-publish');
-    const deleteBtn  = document.getElementById('la-delete');
-    const newBtn     = document.getElementById('la-new');
+    const countEl       = document.getElementById('la-count');
+    const listEl        = document.getElementById('la-list');
+    const headingEl     = document.getElementById('la-editor-heading');
+    const formEl        = document.getElementById('la-form');
+    const dateEl        = document.getElementById('la-date');
+    const venueEl       = document.getElementById('la-venue');
+    const openEl        = document.getElementById('la-open');
+    const startEl       = document.getElementById('la-start');
+    const ticketEl      = document.getElementById('la-ticket');
+    const saveBtn       = document.getElementById('la-save');
+    const publishBtn    = document.getElementById('la-publish');
+    const deleteBtn     = document.getElementById('la-delete');
+    const newBtn        = document.getElementById('la-new');
+
+    // Flyer elements
+    const flyerPreviewEl  = document.getElementById('la-flyer-preview');
+    const flyerFileEl     = document.getElementById('la-flyer-file');
+    const flyerSelectBtn  = document.getElementById('la-flyer-select');
+    const flyerRemoveBtn  = document.getElementById('la-flyer-remove');
+    const flyerEmptyEl    = document.getElementById('la-flyer-empty');
 
     // ── State ─────────────────────────────────────────────────────────────────
-    let allLives  = [];   // sorted by sort_order
-    let editingId = null;
+    let allLives         = [];   // sorted by sort_order
+    let editingId        = null;
+    let pendingFlyerFile = null; // File object waiting to be uploaded after save
+    let pendingFlyerDel  = false; // whether to DELETE existing flyer on save
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -66,6 +75,111 @@
         return fetch(url, opts);
     }
 
+    // ── Flyer UI helpers ──────────────────────────────────────────────────────
+
+    // Show flyer preview (from URL or data URL)
+    function showFlyerPreview(src) {
+        flyerPreviewEl.src = src;
+        flyerPreviewEl.classList.remove('la-hidden');
+        flyerEmptyEl.classList.add('la-hidden');
+        flyerRemoveBtn.classList.remove('la-hidden');
+    }
+
+    // Hide flyer preview (no flyer state)
+    function hideFlyerPreview() {
+        flyerPreviewEl.classList.add('la-hidden');
+        flyerPreviewEl.src = '';
+        flyerEmptyEl.classList.remove('la-hidden');
+        flyerRemoveBtn.classList.add('la-hidden');
+    }
+
+    // Reset flyer section completely (new entry)
+    function resetFlyer() {
+        pendingFlyerFile = null;
+        pendingFlyerDel  = false;
+        flyerFileEl.value = '';
+        hideFlyerPreview();
+    }
+
+    // When user selects a file
+    flyerFileEl.addEventListener('change', function () {
+        const file = flyerFileEl.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            alert('画像ファイルを選択してください。');
+            flyerFileEl.value = '';
+            return;
+        }
+
+        // 5MB hard limit on file size before encoding
+        if (file.size > 5 * 1024 * 1024) {
+            alert('ファイルサイズが大きすぎます（5MB以下にしてください）。');
+            flyerFileEl.value = '';
+            return;
+        }
+
+        pendingFlyerFile = file;
+        pendingFlyerDel  = false;
+
+        // Show local preview
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            showFlyerPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // "画像を選択" button triggers the hidden file input
+    flyerSelectBtn.addEventListener('click', function () {
+        flyerFileEl.click();
+    });
+
+    // "フライヤーを削除" button
+    flyerRemoveBtn.addEventListener('click', function () {
+        if (!confirm('フライヤー画像を削除しますか？')) return;
+        pendingFlyerDel  = true;
+        pendingFlyerFile = null;
+        flyerFileEl.value = '';
+        hideFlyerPreview();
+    });
+
+    // ── Upload flyer after live save ──────────────────────────────────────────
+    function fileToDataUrl(file) {
+        return new Promise(function (resolve, reject) {
+            const reader = new FileReader();
+            reader.onload  = e => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function syncFlyer(liveId) {
+        // If pending delete: remove flyer from server
+        if (pendingFlyerDel) {
+            const res = await authFetch('/api/flyer/' + liveId, { method: 'DELETE' });
+            if (!res.ok) throw new Error('DELETE /api/flyer failed: HTTP ' + res.status);
+            pendingFlyerDel = false;
+            return false; // no flyer
+        }
+
+        // If pending upload: upload new flyer
+        if (pendingFlyerFile) {
+            const dataUrl = await fileToDataUrl(pendingFlyerFile);
+            const res = await authFetch('/api/flyer/' + liveId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dataUrl })
+            });
+            if (!res.ok) throw new Error('PUT /api/flyer failed: HTTP ' + res.status);
+            pendingFlyerFile = null;
+            flyerFileEl.value = '';
+            return true; // has flyer
+        }
+
+        return null; // no change
+    }
+
     // ── Render list ───────────────────────────────────────────────────────────
     function renderList() {
         const n = allLives.length;
@@ -95,6 +209,15 @@
             venueSpan.className = 'la-item-venue';
             venueSpan.textContent = live.venue || '（会場未設定）';
             row.appendChild(venueSpan);
+
+            // Flyer indicator
+            if (live.flyer) {
+                const fi = document.createElement('span');
+                fi.className = 'la-flyer-badge';
+                fi.title = 'フライヤーあり';
+                fi.textContent = '🖼';
+                row.appendChild(fi);
+            }
 
             // ↑↓ reorder buttons
             const btns = document.createElement('span');
@@ -175,6 +298,14 @@
         ticketEl.value = live.ticket || '';
         setStatusRadio(live.status || 'draft');
         deleteBtn.classList.remove('la-hidden');
+
+        // Flyer preview
+        resetFlyer();
+        if (live.flyer) {
+            // Show current flyer from server (cache-bust to reflect recent uploads)
+            showFlyerPreview('/api/flyer/' + id + '?t=' + Date.now());
+        }
+
         renderList();
         formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         venueEl.focus();
@@ -190,6 +321,7 @@
         ticketEl.value = '';
         setStatusRadio('draft');
         deleteBtn.classList.add('la-hidden');
+        resetFlyer();
         renderList();
         dateEl.focus();
     }
@@ -218,6 +350,8 @@
         saveBtn.disabled    = busy;
         publishBtn.disabled = busy;
         deleteBtn.disabled  = busy;
+        flyerSelectBtn.disabled = busy;
+        flyerRemoveBtn.disabled = busy;
     }
 
     async function saveLive(forcedStatus) {
@@ -240,20 +374,40 @@
 
         setBusy(true);
         try {
+            // Step 1: save live metadata
             const res = await authFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const saved = await res.json();
+            let saved = await res.json();
 
+            // Immediately reflect saved metadata in allLives so retries
+            // don't create duplicate entries if flyer upload later fails.
             if (editingId) {
                 allLives = allLives.map(l => l.id === editingId ? saved : l);
             } else {
                 allLives = [...allLives, saved];
-                editingId = saved.id;
+                editingId = saved.id;  // set before flyer sync
             }
+            headingEl.textContent = '編集';
+            deleteBtn.classList.remove('la-hidden');
+
+            // Step 2: sync flyer (upload/delete if pending)
+            let flyerResult = null;
+            try {
+                flyerResult = await syncFlyer(saved.id);
+            } catch (flyerErr) {
+                console.error('[live-admin] flyer sync failed (metadata saved):', flyerErr);
+                alert('ライブ情報は保存しましたが、フライヤー画像の処理に失敗しました: ' + flyerErr.message);
+            }
+
+            if (flyerResult === true)  saved = { ...saved, flyer: true };
+            if (flyerResult === false) saved = { ...saved, flyer: false };
+
+            // Update allLives with final flyer state
+            allLives = allLives.map(l => l.id === saved.id ? saved : l);
 
             // Re-sort
             allLives.sort((a, b) => {
@@ -269,8 +423,14 @@
             startEl.value  = saved.start  || '';
             ticketEl.value = saved.ticket || '';
             setStatusRadio(saved.status || 'draft');
-            headingEl.textContent = '編集';
-            deleteBtn.classList.remove('la-hidden');
+
+            // Update flyer preview to reflect server state
+            if (flyerResult === false) {
+                hideFlyerPreview();
+            } else if (flyerResult === true) {
+                showFlyerPreview('/api/flyer/' + saved.id + '?t=' + Date.now());
+            }
+
             renderList();
 
         } catch (e) {
@@ -291,6 +451,12 @@
         try {
             const res = await authFetch(`/api/live/${editingId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            // Also delete flyer if it exists
+            if (live && live.flyer) {
+                await authFetch('/api/flyer/' + editingId, { method: 'DELETE' }).catch(() => {});
+            }
+
             allLives = allLives.filter(l => l.id !== editingId);
             clearEditor();
         } catch (e) {

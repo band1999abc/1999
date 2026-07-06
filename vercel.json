@@ -8,6 +8,7 @@
     "api/afterhours-login.js":  { "includeFiles": "templates/**" },
     "api/live.js":              { "includeFiles": "data/**" },
     "api/live/[id].js":         { "includeFiles": "data/**" },
+    "api/flyer/[id].js":        { "includeFiles": "data/**" },
     "api/diary.js":             { "includeFiles": "data/**" },
     "api/diary/[id].js":        { "includeFiles": "data/**" }
   },
