@@ -5,26 +5,13 @@
  * POST — create live (auth required)
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { join }       from 'path';
 import { randomUUID } from 'crypto';
 import { COOKIE_NAME, verifyToken, parseCookies } from './_auth.js';
+import { readJsonArray, writeJsonArray } from './_storage.js';
 
-const DATA_PATH = join(process.cwd(), 'data', 'lives.json');
-const DATE_RE   = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_RE   = /^\d{1,2}:\d{2}$/;
-
-function loadLives() {
-    try {
-        const data = JSON.parse(readFileSync(DATA_PATH, 'utf-8'));
-        return Array.isArray(data) ? data : [];
-    } catch { return []; }
-}
-
-function saveLives(lives) {
-    mkdirSync(join(process.cwd(), 'data'), { recursive: true });
-    writeFileSync(DATA_PATH, JSON.stringify(lives, null, 2), 'utf-8');
-}
+const FILE    = 'data/lives.json';
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^\d{1,2}:\d{2}$/;
 
 function validTime(s) {
     const str = String(s || '').trim();
@@ -45,10 +32,8 @@ export default function handler(req, res) {
 
     // ── GET /api/live ─────────────────────────────────────────────────────────
     if (req.method === 'GET') {
-        let lives = loadLives();
-        if (!isAuthed(req)) {
-            lives = lives.filter(l => l.status === 'published');
-        }
+        let lives = readJsonArray(FILE);
+        if (!isAuthed(req)) lives = lives.filter(l => l.status === 'published');
         return res.status(200).json(lives);
     }
 
@@ -58,17 +43,14 @@ export default function handler(req, res) {
 
         const { date, venue = '', open = '', start = '', ticket = '', status = 'draft', sort_order } = req.body || {};
 
-        if (date && !DATE_RE.test(String(date))) {
+        if (date && !DATE_RE.test(String(date)))
             return res.status(400).json({ error: 'Invalid date format; expected YYYY-MM-DD' });
-        }
-        if (sort_order !== undefined && !Number.isFinite(Number(sort_order))) {
+        if (sort_order !== undefined && !Number.isFinite(Number(sort_order)))
             return res.status(400).json({ error: 'sort_order must be an integer' });
-        }
 
-        const lives    = loadLives();
+        const lives    = readJsonArray(FILE);
         const maxOrder = lives.reduce((m, l) => Math.max(m, l.sort_order ?? 0), -1);
         const now      = new Date().toISOString();
-
         const live = {
             id:         randomUUID(),
             date:       (date && DATE_RE.test(String(date))) ? String(date) : now.slice(0, 10),
@@ -82,8 +64,13 @@ export default function handler(req, res) {
             updatedAt:  now,
         };
 
-        lives.push(live);
-        saveLives(lives);
+        try {
+            lives.push(live);
+            writeJsonArray(FILE, lives);
+        } catch (e) {
+            console.error('[live] save error:', e);
+            return res.status(500).json({ error: 'Failed to save' });
+        }
         return res.status(201).json(live);
     }
 
