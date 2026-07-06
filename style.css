@@ -462,7 +462,7 @@ footer {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 1; /* behind card (z-index: 2), above body bg */
+    z-index: 3; /* above card (z-index: 2) */
 }
 
 /* ==============================
@@ -479,12 +479,12 @@ body.weather-sunny::before {
     height: 90vh;
     background: radial-gradient(
         ellipse at 70% 20%,
-        rgba(255, 220, 120, 0.10) 0%,
-        rgba(255, 200,  80, 0.04) 40%,
+        rgba(255, 220, 120, 0.18) 0%,
+        rgba(255, 200,  80, 0.07) 40%,
         transparent 70%
     );
     pointer-events: none;
-    z-index: 0;
+    z-index: 3; /* above card */
     animation: sunbeam 9s ease-in-out infinite;
 }
 
@@ -493,7 +493,7 @@ body.weather-sunny::before {
     50%       { opacity: 1;   transform: scale(1.06); }
 }
 
-/* Cloudy: slightly cooler background */
+/* Cloudy: slightly cooler background + subtle cool overlay */
 body.weather-cloudy {
     background:
         radial-gradient(circle at 20% 20%, rgba(255,255,255,.20) 0%, transparent 45%),
@@ -501,14 +501,23 @@ body.weather-cloudy {
         linear-gradient(180deg, #e5e0da 0%, #dddad5 100%);
 }
 
+body.weather-cloudy::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(180, 185, 195, 0.12);
+    pointer-events: none;
+    z-index: 3; /* above card */
+}
+
 /* Foggy: milky overlay */
 body.weather-foggy::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: rgba(238, 235, 230, 0.38);
+    background: rgba(238, 235, 230, 0.45);
     pointer-events: none;
-    z-index: 0;
+    z-index: 3; /* above card */
     animation: fog-drift 12s ease-in-out infinite;
 }
 
