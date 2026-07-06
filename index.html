@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -19,6 +19,8 @@
     <div class="sub" id="greeting">
         Good evening.
     </div>
+
+    <div id="weather-text" class="weather-subtext"></div>
 
     <p>好きなように過ごしてください。</p>
     <p>一緒に歌ってもいいし、</p>
@@ -35,8 +37,11 @@
 
 </div>
 
+<canvas id="weather-canvas" aria-hidden="true"></canvas>
+
 <script src="whale.js"></script>
 <script src="script.js"></script>
+<script src="weather.js"></script>
 
 </body>
 </html>
