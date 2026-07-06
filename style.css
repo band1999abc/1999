@@ -1062,6 +1062,9 @@ body.night .diary-entry-title { color: var(--text-dark); }
     color: #fff;
 }
 
+/* Auth gate — hide gated pages until JS confirms session */
+body.auth-hidden { visibility: hidden; }
+
 /* — Night mode — */
 body.night .da-item:hover,
 body.night .da-item.is-active  { background: rgba(255,255,255,.05); }

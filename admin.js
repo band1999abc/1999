@@ -118,7 +118,7 @@
                     return;
                 }
                 // Auth confirmed — reveal the page
-                document.body.style.visibility = 'visible';
+                document.body.classList.remove('auth-hidden');
                 // Show personalized greeting on the dashboard
                 if (page === 'afterhours') {
                     try {
@@ -132,7 +132,7 @@
                 }
             } catch {
                 // Network hiccup — reveal anyway so the page isn't stuck hidden
-                document.body.style.visibility = 'visible';
+                document.body.classList.remove('auth-hidden');
             }
         })();
 
