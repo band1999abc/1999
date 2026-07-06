@@ -1163,21 +1163,22 @@ body.auth-hidden { visibility: hidden; }
     cursor: pointer;
 }
 
+/* Day mode hover */
 .live-entry.has-flyer:hover {
-    background: rgba(255,255,255,.04);
+    background: rgba(0,0,0,.03);
     transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,0,0,.10);
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
 }
 
-/* FLYER badge */
+/* FLYER badge — day mode default */
 .live-flyer-indicator {
     display: inline-block;
     margin-top: 12px;
     padding: 3px 8px;
     font-size: 9px;
     letter-spacing: .16em;
-    color: rgba(255,255,255,.38);
-    border: 1px solid rgba(255,255,255,.20);
+    color: rgba(0,0,0,.32);
+    border: 1px solid rgba(0,0,0,.18);
     border-radius: 3px;
     font-family: inherit;
     pointer-events: none;
@@ -1185,8 +1186,8 @@ body.auth-hidden { visibility: hidden; }
 }
 
 .live-entry.has-flyer:hover .live-flyer-indicator {
-    color: rgba(255,255,255,.70);
-    border-color: rgba(255,255,255,.42);
+    color: rgba(0,0,0,.60);
+    border-color: rgba(0,0,0,.38);
     transform: scale(1.04);
 }
 
@@ -1329,11 +1330,14 @@ body.auth-hidden { visibility: hidden; }
 }
 
 /* Night mode */
-body.night .live-entry          { border-bottom-color: var(--border); }
-body.night .live-date           { color: var(--text-dark); }
-body.night .live-venue          { color: var(--text-dark); }
-body.night .live-next-badge     { color: #b09a7a; border-color: #b09a7a; }
-body.night .live-archive-label  { border-bottom-color: var(--border); }
+body.night .live-entry                              { border-bottom-color: var(--border); }
+body.night .live-date                               { color: var(--text-dark); }
+body.night .live-venue                              { color: var(--text-dark); }
+body.night .live-next-badge                         { color: #b09a7a; border-color: #b09a7a; }
+body.night .live-archive-label                      { border-bottom-color: var(--border); }
+body.night .live-entry.has-flyer:hover              { background: rgba(255,255,255,.04); }
+body.night .live-flyer-indicator                    { color: rgba(255,255,255,.38); border-color: rgba(255,255,255,.20); }
+body.night .live-entry.has-flyer:hover .live-flyer-indicator { color: rgba(255,255,255,.70); border-color: rgba(255,255,255,.42); }
 
 /* ==============================
    Live Admin — /afterhours/live
