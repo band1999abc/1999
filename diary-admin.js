@@ -129,11 +129,21 @@
         titleEl.focus();
     }
 
+    // ── Auth-aware fetch helper ───────────────────────────────────────────────
+
+    function authFetch(url, opts) {
+        const token = sessionStorage.getItem('admin_token') || '';
+        opts = opts || {};
+        opts.headers = Object.assign({}, opts.headers || {});
+        if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+        return fetch(url, opts);
+    }
+
     // ── API calls ─────────────────────────────────────────────────────────────
 
     async function loadPosts() {
         try {
-            const res = await fetch('/api/diary');
+            const res = await authFetch('/api/diary');
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             allPosts = await res.json();
             renderList();
@@ -161,7 +171,7 @@
 
         setBusy(true);
         try {
-            const res = await fetch(url, {
+            const res = await authFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -201,7 +211,7 @@
 
         setBusy(true);
         try {
-            const res = await fetch(`/api/diary/${editingId}`, { method: 'DELETE' });
+            const res = await authFetch(`/api/diary/${editingId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             allPosts = allPosts.filter(p => p.id !== editingId);
             clearEditor();

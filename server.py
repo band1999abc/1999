@@ -138,6 +138,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_auth_get()
         elif path == '/afterhours/diary':
             self._handle_afterhours_diary()
+        elif path == '/afterhours/login':
+            self._serve_template('login.html')
         elif path == '/afterhours':
             self._handle_afterhours()
         elif path == '/api/diary':
@@ -191,20 +193,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     # ── /afterhours ───────────────────────────────────────────────────────────
 
     def _handle_afterhours(self):
-        cookies  = _parse_cookies(self.headers.get('Cookie', ''))
-        token    = cookies.get(_COOKIE_NAME, '')
-        filename = 'afterhours.html' if _verify_token(token) else 'login.html'
-        self._serve_template(filename)
+        # Always serve the shell; JS does the auth check via /api/auth
+        self._serve_template('afterhours.html')
 
     def _handle_afterhours_diary(self):
-        cookies = _parse_cookies(self.headers.get('Cookie', ''))
-        token   = cookies.get(_COOKIE_NAME, '')
-        if not _verify_token(token):
-            self.send_response(302)
-            self.send_header('Location', '/afterhours')
-            self.send_header('Cache-Control', 'no-store')
-            http.server.BaseHTTPRequestHandler.end_headers(self)
-            return
+        # Always serve the shell; JS does the auth check via /api/auth
         self._serve_template('afterhours-diary.html')
 
     def _serve_template(self, filename):
@@ -224,9 +217,7 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     # ── GET /api/auth  (session check) ────────────────────────────────────────
 
     def _handle_auth_get(self):
-        cookies = _parse_cookies(self.headers.get('Cookie', ''))
-        token   = cookies.get(_COOKIE_NAME, '')
-        ok      = _verify_token(token)
+        ok = self._is_authed()
         self._write_json(200 if ok else 401, {'ok': ok})
 
     # ── POST /api/auth  (login / logout) ──────────────────────────────────────
@@ -253,7 +244,9 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._write_json(401, {'ok': False})
                 return
             token = _make_token()
-            self._write_json_with_cookie(200, {'ok': True}, _cookie_header(token))
+            # Return token in body so client can store it in sessionStorage
+            # (cookie also set as a fallback for direct-tab access)
+            self._write_json_with_cookie(200, {'ok': True, 'token': token}, _cookie_header(token))
             return
 
         if action == 'logout':
@@ -265,6 +258,12 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     # ── Auth shortcut ─────────────────────────────────────────────────────────
 
     def _is_authed(self):
+        # 1. Authorization: Bearer <token>  (sessionStorage path — works in iframes)
+        auth_header = self.headers.get('Authorization', '')
+        if auth_header.startswith('Bearer '):
+            if _verify_token(auth_header[7:]):
+                return True
+        # 2. Cookie fallback (direct browser tab access)
         cookies = _parse_cookies(self.headers.get('Cookie', ''))
         return _verify_token(cookies.get(_COOKIE_NAME, ''))
 
