@@ -1,0 +1,1 @@
+- [Upstash KV storage](upstash-storage.md) — Vercel uses Upstash REST API for Live/Diary persistence; filesystem is fallback for local dev
