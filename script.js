@@ -1,5 +1,5 @@
 // Time-based greeting and night mode
-// Night: 19:00 – 06:59  |  Day: 07:00 – 18:59
+// Night: 18:00 – 05:59  |  Day: 06:00 – 17:59
 // Debug: append ?night=1 to any page URL to force night mode
 
 (function () {
@@ -7,7 +7,7 @@
 
     // ?night=1 forces night mode regardless of time (dev/preview only)
     const debugNight = new URLSearchParams(window.location.search).get('night');
-    const isNight = debugNight === '1' || hour >= 19 || hour < 7;
+    const isNight = debugNight === '1' || hour >= 18 || hour < 6;
 
     if (isNight) {
         document.body.classList.add('night');
