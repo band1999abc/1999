@@ -22,15 +22,40 @@ async function readBody(req) {
     catch { return {}; }
 }
 
-function isAuthed(req) {
+/**
+ * Returns list of {name, password, comment} members.
+ * Reads MEMBERS env var (JSON array) or falls back to ADMIN_PASSWORD.
+ */
+function getMembers() {
+    const raw = (process.env.MEMBERS || '').trim();
+    if (raw) {
+        try {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr) && arr.length) return arr;
+        } catch {}
+    }
+    const pw = process.env.ADMIN_PASSWORD || '';
+    return pw ? [{ name: 'Admin', password: pw, comment: 'おかえりなさい。' }] : [];
+}
+
+function getMemberComment(name) {
+    const m = getMembers().find(m => m.name === name);
+    return m ? (m.comment || '') : '';
+}
+
+/** Returns member name (str) if authenticated, null otherwise. */
+function getAuthedMember(req) {
     // 1. Bearer token (sessionStorage path — works in iframes)
     const auth = req.headers['authorization'] || '';
     if (auth.startsWith('Bearer ')) {
-        if (verifyToken(auth.slice(7))) return true;
+        const result = verifyToken(auth.slice(7));
+        if (result !== null) return result;
     }
     // 2. Cookie fallback
     const cookies = parseCookies(req.headers.cookie);
-    return verifyToken(cookies[COOKIE_NAME] || '');
+    const result = verifyToken(cookies[COOKIE_NAME] || '');
+    if (result !== null) return result;
+    return null;
 }
 
 export default async function handler(req, res) {
@@ -38,8 +63,10 @@ export default async function handler(req, res) {
 
     /* ── GET — session check ──────────────────────────────────── */
     if (req.method === 'GET') {
-        const ok = isAuthed(req);
-        return res.status(ok ? 200 : 401).json({ ok });
+        const member = getAuthedMember(req);
+        if (member === null) return res.status(401).json({ ok: false });
+        const comment = getMemberComment(member);
+        return res.status(200).json({ ok: true, member, comment });
     }
 
     if (req.method !== 'POST') {
@@ -51,23 +78,24 @@ export default async function handler(req, res) {
 
     /* ── POST login ───────────────────────────────────────────── */
     if (action === 'login') {
-        const adminPw = process.env.ADMIN_PASSWORD || '';
         const given   = String(body.password ?? '');
-
-        const a = Buffer.from(given);
-        const b = Buffer.from(adminPw);
-        const ok = adminPw.length > 0 &&
-                   a.length === b.length &&
-                   timingSafeEqual(a, b);
-
-        if (!ok) {
-            return res.status(401).json({ ok: false });
+        const members = getMembers();
+        let matched   = null;
+        for (const m of members) {
+            const pw = String(m.password ?? '');
+            const a  = Buffer.from(given);
+            const b  = Buffer.from(pw || '\x00');
+            // Always call timingSafeEqual; only count as match if pw non-empty
+            // and lengths are equal (required by timingSafeEqual).
+            const sameLen = pw.length > 0 && a.length === b.length;
+            const isMatch = sameLen && timingSafeEqual(a, b);
+            if (isMatch && matched === null) matched = m;
+            // No break — always iterate all members to avoid timing leaks
         }
-        const token = makeToken();
-        // Return token in body so client stores it in sessionStorage
-        // (cookie also set as fallback for direct-tab access)
+        if (!matched) return res.status(401).json({ ok: false });
+        const token = makeToken(matched.name || '');
         res.setHeader('Set-Cookie', cookieHeader(token));
-        return res.status(200).json({ ok: true, token });
+        return res.status(200).json({ ok: true, token, member: matched.name || '' });
     }
 
     /* ── POST logout ──────────────────────────────────────────── */

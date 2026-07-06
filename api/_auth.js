@@ -12,29 +12,31 @@ import { createHmac, timingSafeEqual } from 'crypto';
 export const COOKIE_NAME = 'admin_session';
 export const MAX_AGE     = 7 * 24 * 60 * 60; // 7 days in seconds
 
-export function makeToken() {
+export function makeToken(memberName = '') {
     const exp     = Date.now() + MAX_AGE * 1000;
-    const payload = Buffer.from(JSON.stringify({ exp })).toString('base64url');
+    const payload = Buffer.from(JSON.stringify({ exp, member: memberName })).toString('base64url');
     const secret  = process.env.SESSION_SECRET || '';
     const sig     = createHmac('sha256', secret).update(payload).digest('hex');
     return `${payload}.${sig}`;
 }
 
+/** Returns member name (string, possibly '') if valid, null if invalid/expired. */
 export function verifyToken(token) {
     try {
         const dot = token.lastIndexOf('.');
-        if (dot < 1) return false;
+        if (dot < 1) return null;
         const payload  = token.slice(0, dot);
         const sig      = token.slice(dot + 1);
         const secret   = process.env.SESSION_SECRET || '';
         const expected = createHmac('sha256', secret).update(payload).digest('hex');
         const a = Buffer.from(sig,      'hex');
         const b = Buffer.from(expected, 'hex');
-        if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+        if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
         const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
-        return Date.now() < data.exp;
+        if (Date.now() >= data.exp) return null;
+        return data.member ?? '';
     } catch {
-        return false;
+        return null;
     }
 }
 

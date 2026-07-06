@@ -115,6 +115,18 @@
                 if (!res.ok) {
                     sessionStorage.removeItem(SESSION_KEY);
                     window.location.replace(LOGIN_URL);
+                    return;
+                }
+                // Show personalized greeting on the dashboard
+                if (page === 'afterhours') {
+                    try {
+                        const data = await res.json();
+                        const el = document.getElementById('member-greeting');
+                        if (el) {
+                            el.textContent = data.comment ||
+                                (data.member ? `おかえり、${data.member}さん。` : '');
+                        }
+                    } catch { /* ignore parse errors */ }
                 }
             } catch {
                 // Network hiccup — stay on page; next API call will re-check

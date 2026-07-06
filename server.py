@@ -41,10 +41,37 @@ _COOKIE_NAME = 'admin_session'
 _MAX_AGE     = 7 * 24 * 3600          # 7 days in seconds
 
 
-def _make_token():
+def _get_members():
+    """Return list of {name, password, comment} dicts.
+
+    Reads MEMBERS env var (JSON array), e.g.:
+      [{"name":"Alice","password":"pw1","comment":"おかえり、Aliceさん。"},
+       {"name":"Bob",  "password":"pw2","comment":"こんばんは、Bobさん。"}]
+    Falls back to ADMIN_PASSWORD with name "Admin".
+    """
+    raw = os.environ.get('MEMBERS', '').strip()
+    if raw:
+        try:
+            arr = json.loads(raw)
+            if isinstance(arr, list) and arr:
+                return arr
+        except json.JSONDecodeError:
+            pass
+    pw = os.environ.get('ADMIN_PASSWORD', '')
+    return [{'name': 'Admin', 'password': pw, 'comment': 'おかえりなさい。'}] if pw else []
+
+
+def _get_member_comment(name):
+    for m in _get_members():
+        if m.get('name') == name:
+            return m.get('comment', '')
+    return ''
+
+
+def _make_token(member_name=''):
     exp     = time.time() + _MAX_AGE
     payload = base64.urlsafe_b64encode(
-        json.dumps({'exp': exp}).encode()
+        json.dumps({'exp': exp, 'member': member_name}).encode()
     ).decode().rstrip('=')
     secret  = os.environ.get('SESSION_SECRET', '')
     sig     = hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
@@ -52,21 +79,24 @@ def _make_token():
 
 
 def _verify_token(token):
+    """Returns member name (str, possibly '') if valid, None if invalid/expired."""
     try:
         dot = token.rfind('.')
         if dot < 1:
-            return False
+            return None
         payload  = token[:dot]
         sig      = token[dot + 1:]
         secret   = os.environ.get('SESSION_SECRET', '')
         expected = hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(sig, expected):
-            return False
+            return None
         padded = payload + '=' * (-len(payload) % 4)
         data   = json.loads(base64.urlsafe_b64decode(padded))
-        return time.time() < data['exp']
+        if time.time() >= data['exp']:
+            return None
+        return data.get('member', '')
     except Exception:
-        return False
+        return None
 
 
 def _parse_cookies(header):
@@ -230,8 +260,12 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     # ── GET /api/auth  (session check) ────────────────────────────────────────
 
     def _handle_auth_get(self):
-        ok = self._is_authed()
-        self._write_json(200 if ok else 401, {'ok': ok})
+        member = self._get_authed_member()
+        if member is None:
+            self._write_json(401, {'ok': False})
+            return
+        comment = _get_member_comment(member)
+        self._write_json(200, {'ok': True, 'member': member, 'comment': comment})
 
     # ── POST /api/auth  (login / logout) ──────────────────────────────────────
 
@@ -246,20 +280,29 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         action = body.get('action')
 
         if action == 'login':
-            admin_pw = os.environ.get('ADMIN_PASSWORD', '')
-            given    = str(body.get('password', ''))
-            a        = given.encode()
-            b        = admin_pw.encode()
-            ok       = (len(admin_pw) > 0 and
-                        len(a) == len(b) and
-                        hmac.compare_digest(a, b))
-            if not ok:
+            given   = str(body.get('password', ''))
+            matched = None
+            for m in _get_members():
+                pw = str(m.get('password', ''))
+                g  = given.encode()
+                p  = pw.encode() if pw else b'\x00'
+                # Always call compare_digest (constant-time); match only if pw
+                # non-empty and lengths equal so the digest comparison is valid.
+                same_len = bool(pw) and len(g) == len(p)
+                is_match = same_len and hmac.compare_digest(g, p)
+                if is_match and matched is None:
+                    matched = m
+                # No break — always iterate all members to avoid timing leaks
+            if not matched:
                 self._write_json(401, {'ok': False})
                 return
-            token = _make_token()
-            # Return token in body so client can store it in sessionStorage
-            # (cookie also set as a fallback for direct-tab access)
-            self._write_json_with_cookie(200, {'ok': True, 'token': token}, _cookie_header(token))
+            member_name = matched.get('name', '')
+            token = _make_token(member_name)
+            self._write_json_with_cookie(
+                200,
+                {'ok': True, 'token': token, 'member': member_name},
+                _cookie_header(token)
+            )
             return
 
         if action == 'logout':
@@ -270,15 +313,21 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
     # ── Auth shortcut ─────────────────────────────────────────────────────────
 
-    def _is_authed(self):
-        # 1. Authorization: Bearer <token>  (sessionStorage path — works in iframes)
+    def _get_authed_member(self):
+        """Returns member name (str) if authenticated, None otherwise."""
         auth_header = self.headers.get('Authorization', '')
         if auth_header.startswith('Bearer '):
-            if _verify_token(auth_header[7:]):
-                return True
-        # 2. Cookie fallback (direct browser tab access)
+            result = _verify_token(auth_header[7:])
+            if result is not None:
+                return result
         cookies = _parse_cookies(self.headers.get('Cookie', ''))
-        return _verify_token(cookies.get(_COOKIE_NAME, ''))
+        result = _verify_token(cookies.get(_COOKIE_NAME, ''))
+        if result is not None:
+            return result
+        return None
+
+    def _is_authed(self):
+        return self._get_authed_member() is not None
 
     # ── GET /api/diary ────────────────────────────────────────────────────────
 

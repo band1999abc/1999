@@ -27,8 +27,14 @@ function savePosts(posts) {
 }
 
 function isAuthed(req) {
+    // Bearer header (sessionStorage path)
+    const auth = req.headers['authorization'] || '';
+    if (auth.startsWith('Bearer ')) {
+        if (verifyToken(auth.slice(7)) !== null) return true;
+    }
+    // Cookie fallback
     const cookies = parseCookies(req.headers.cookie);
-    return verifyToken(cookies[COOKIE_NAME] || '');
+    return verifyToken(cookies[COOKIE_NAME] || '') !== null;
 }
 
 export default function handler(req, res) {

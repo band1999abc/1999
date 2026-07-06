@@ -116,8 +116,18 @@ p {
     color: #777;
     font-size: 15px;
     margin-top: 18px;
-    margin-bottom: 36px;
+    margin-bottom: 18px;
     text-align: center;
+    transition: color 0.5s ease;
+}
+
+.member-greeting {
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+    margin: 0 0 24px;
+    min-height: 1.4em;
+    letter-spacing: 0.03em;
     transition: color 0.5s ease;
 }
 
