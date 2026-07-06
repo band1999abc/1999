@@ -46,8 +46,8 @@
         });
     }
 
-    /* ── Admin dashboard ──────────────────────────────────────── */
-    if (page === 'afterhours') {
+    /* ── Admin dashboard + sub-pages (signout) ───────────────── */
+    if (page === 'afterhours' || page === 'afterhours-diary') {
         const signoutBtn = document.getElementById('signout-btn');
 
         if (signoutBtn) {

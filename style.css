@@ -799,6 +799,12 @@ body.night .back-home       { color: #8a9ab2; }
     border-color: var(--accent);
 }
 
+/* link variant — resets <a> decoration */
+a.admin-module-link {
+    text-decoration: none;
+    cursor: pointer;
+}
+
 .admin-module-icon {
     font-size: 17px;
     line-height: 1;
@@ -856,3 +862,194 @@ body.night .admin-error { color: #c08878; }
 @media (max-width: 480px) {
     .admin-grid { grid-template-columns: 1fr; }
 }
+
+/* ==============================
+   Diary public — optional title
+============================== */
+
+.diary-entry-title {
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 4px 0 6px;
+}
+
+body.night .diary-entry-title { color: var(--text-dark); }
+
+/* ==============================
+   Diary Admin — /afterhours/diary
+============================== */
+
+/* — List header — */
+.da-list-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin: 24px 0 8px;
+}
+
+.da-count {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    min-height: 1em;
+}
+
+.da-new-btn {
+    margin-top: 0;
+    padding: 7px 18px;
+    font-size: 11px;
+}
+
+/* — Post list — */
+.da-list {
+    border: 1px solid var(--border);
+    max-height: 210px;
+    overflow-y: auto;
+    margin-bottom: 28px;
+    /* subtle scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.da-list::-webkit-scrollbar        { width: 4px; }
+.da-list::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 2px; }
+
+.da-item {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s ease;
+}
+
+.da-item:last-child { border-bottom: none; }
+
+.da-item:hover,
+.da-item.is-active {
+    background: rgba(0, 0, 0, .035);
+}
+
+.da-dot {
+    background: var(--border);
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 6px;
+    width: 6px;
+}
+
+.da-dot.is-published { background: #8aaa8a; }
+
+.da-item-date {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+}
+
+.da-item-title {
+    color: var(--text-dark);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.da-notitle { color: var(--text-muted); }
+
+.da-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+    padding: 14px 12px;
+}
+
+/* — Editor — */
+.da-editor {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+}
+
+.da-editor-heading {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.da-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.da-textarea {
+    line-height: 1.65;
+    min-height: 130px;
+    padding: 8px 0;
+    resize: vertical;
+}
+
+.da-date-input { color-scheme: light; }
+
+/* — Status radios — */
+.da-radios {
+    display: flex;
+    gap: 22px;
+}
+
+.da-radio {
+    align-items: center;
+    color: var(--text-dark);
+    cursor: pointer;
+    display: flex;
+    font-size: 14px;
+    gap: 7px;
+    letter-spacing: 0.01em;
+}
+
+.da-radio input { accent-color: var(--accent); }
+
+/* — Action buttons row — */
+.da-btns {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.da-btn-publish {
+    background: var(--text-dark);
+    border-color: var(--text-dark);
+    color: var(--card-bg);
+}
+
+.da-btn-publish:hover {
+    opacity: 0.75;
+    background: var(--text-dark);
+    color: var(--card-bg);
+}
+
+.da-btn-delete {
+    border-color: #c8a0a0;
+    color: #a07070;
+    margin-left: auto;
+}
+
+.da-btn-delete:hover {
+    background: #c8a0a0;
+    border-color: #c8a0a0;
+    color: #fff;
+}
+
+/* — Night mode — */
+body.night .da-item:hover,
+body.night .da-item.is-active  { background: rgba(255,255,255,.05); }
+body.night .da-dot.is-published{ background: #6a9a6a; }
+body.night .da-date-input      { color-scheme: dark; }
+body.night .da-btn-publish     { opacity: .9; }

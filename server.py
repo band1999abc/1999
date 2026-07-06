@@ -4,12 +4,17 @@ Development server for Replit.
 
 Routes
 ------
-GET  /api/weather      — IP-geolocated weather condition
-GET  /api/auth         — session check  → {"ok": bool}
-POST /api/auth         — login / logout → {"ok": bool}
-GET  /afterhours       — admin gate: session valid → afterhours.html
-                                     else          → login.html
-GET  *                 — static files via SimpleHTTPRequestHandler
+GET  /api/weather          — IP-geolocated weather condition
+GET  /api/auth             — session check  → {"ok": bool}
+POST /api/auth             — login / logout → {"ok": bool}
+GET  /api/diary            — list posts (auth → all; unauth → published only)
+POST /api/diary            — create post (auth required)
+GET  /api/diary/<id>       — get single post
+PUT  /api/diary/<id>       — update post (auth required)
+DELETE /api/diary/<id>     — delete post (auth required)
+GET  /afterhours           — admin gate → afterhours.html or login.html
+GET  /afterhours/diary     — diary admin gate → afterhours-diary.html or redirect
+GET  *                     — static files via SimpleHTTPRequestHandler
 """
 
 import base64
@@ -18,15 +23,22 @@ import hmac
 import http.server
 import json
 import os
+import re
 import time
 import urllib.parse
 import urllib.request
+import uuid as _uuid_mod
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+
+_ROOT      = os.path.dirname(os.path.abspath(__file__))
+_TEMPLATES = os.path.join(_ROOT, 'templates')
+_DATA_DIR  = os.path.join(_ROOT, 'data')
 
 # ── Auth helpers ──────────────────────────────────────────────────────────────
 
 _COOKIE_NAME = 'admin_session'
 _MAX_AGE     = 7 * 24 * 3600          # 7 days in seconds
-_TEMPLATES   = os.path.join(os.path.dirname(__file__), 'templates')
 
 
 def _make_token():
@@ -74,6 +86,44 @@ def _cookie_header(token):
             f'Path=/; Max-Age={age}')
 
 
+# ── Diary storage helpers ─────────────────────────────────────────────────────
+
+_DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+
+
+def _today_iso():
+    return time.strftime('%Y-%m-%d')
+
+
+def _valid_date(s):
+    """Return s if it matches YYYY-MM-DD, else return today's date."""
+    return s if (s and _DATE_RE.match(s)) else _today_iso()
+
+
+def _load_diary():
+    path = os.path.join(_DATA_DIR, 'diary.json')
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            print('[diary] WARNING: diary.json is not a list, resetting to []')
+            return []
+        return data
+    except (json.JSONDecodeError, OSError) as e:
+        print(f'[diary] WARNING: could not load diary.json: {e}')
+        return []
+
+
+def _save_diary(posts):
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    path = os.path.join(_DATA_DIR, 'diary.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(posts, f, ensure_ascii=False, indent=2)
+
+
 # ── Request handler ───────────────────────────────────────────────────────────
 
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
@@ -86,8 +136,18 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_weather()
         elif path == '/api/auth':
             self._handle_auth_get()
+        elif path == '/afterhours/diary':
+            self._handle_afterhours_diary()
         elif path == '/afterhours':
             self._handle_afterhours()
+        elif path == '/api/diary':
+            self._handle_diary_list()
+        elif path.startswith('/api/diary/'):
+            item_id = path[len('/api/diary/'):]
+            if item_id and '/' not in item_id:
+                self._handle_diary_get(item_id)
+            else:
+                self.send_error(404)
         else:
             super().do_GET()
 
@@ -95,8 +155,28 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         path = self.path.split('?')[0]
         if path == '/api/auth':
             self._handle_auth_post()
+        elif path == '/api/diary':
+            self._handle_diary_create()
         else:
             self.send_error(404)
+
+    def do_PUT(self):
+        path = self.path.split('?')[0].rstrip('/')
+        if path.startswith('/api/diary/'):
+            item_id = path[len('/api/diary/'):]
+            if item_id and '/' not in item_id:
+                self._handle_diary_update(item_id)
+                return
+        self.send_error(404)
+
+    def do_DELETE(self):
+        path = self.path.split('?')[0].rstrip('/')
+        if path.startswith('/api/diary/'):
+            item_id = path[len('/api/diary/'):]
+            if item_id and '/' not in item_id:
+                self._handle_diary_delete(item_id)
+                return
+        self.send_error(404)
 
     # ── No-cache headers for HTML ─────────────────────────────────────────────
 
@@ -115,6 +195,17 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         token    = cookies.get(_COOKIE_NAME, '')
         filename = 'afterhours.html' if _verify_token(token) else 'login.html'
         self._serve_template(filename)
+
+    def _handle_afterhours_diary(self):
+        cookies = _parse_cookies(self.headers.get('Cookie', ''))
+        token   = cookies.get(_COOKIE_NAME, '')
+        if not _verify_token(token):
+            self.send_response(302)
+            self.send_header('Location', '/afterhours')
+            self.send_header('Cache-Control', 'no-store')
+            http.server.BaseHTTPRequestHandler.end_headers(self)
+            return
+        self._serve_template('afterhours-diary.html')
 
     def _serve_template(self, filename):
         filepath = os.path.join(_TEMPLATES, filename)
@@ -143,14 +234,13 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     def _handle_auth_post(self):
         length = int(self.headers.get('Content-Length', 0))
         try:
-            body   = json.loads(self.rfile.read(length))
+            body = json.loads(self.rfile.read(length))
         except Exception:
             self._write_json(400, {'error': 'Bad request'})
             return
 
         action = body.get('action')
 
-        # — login —
         if action == 'login':
             admin_pw = os.environ.get('ADMIN_PASSWORD', '')
             given    = str(body.get('password', ''))
@@ -166,28 +256,146 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._write_json_with_cookie(200, {'ok': True}, _cookie_header(token))
             return
 
-        # — logout —
         if action == 'logout':
             self._write_json_with_cookie(200, {'ok': True}, _cookie_header(None))
             return
 
         self._write_json(400, {'error': 'Unknown action'})
 
-    # ── Helpers ───────────────────────────────────────────────────────────────
+    # ── Auth shortcut ─────────────────────────────────────────────────────────
+
+    def _is_authed(self):
+        cookies = _parse_cookies(self.headers.get('Cookie', ''))
+        return _verify_token(cookies.get(_COOKIE_NAME, ''))
+
+    # ── GET /api/diary ────────────────────────────────────────────────────────
+
+    def _handle_diary_list(self):
+        authed = self._is_authed()
+        posts  = _load_diary()
+        if not authed:
+            posts = [p for p in posts if p.get('status') == 'published']
+        posts.sort(key=lambda p: p.get('date', ''), reverse=True)
+        self._write_json(200, posts)
+
+    # ── GET /api/diary/<id> ───────────────────────────────────────────────────
+
+    def _handle_diary_get(self, item_id):
+        authed = self._is_authed()
+        posts  = _load_diary()
+        post   = next((p for p in posts if p.get('id') == item_id), None)
+        if not post:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        if post.get('status') != 'published' and not authed:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        self._write_json(200, post)
+
+    # ── POST /api/diary ───────────────────────────────────────────────────────
+
+    def _handle_diary_create(self):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        now      = time.strftime('%Y-%m-%dT%H:%M:%S')
+        status   = body.get('status', 'draft')
+        if status not in ('published', 'draft'):
+            status = 'draft'
+        raw_date = str(body.get('date', ''))
+        if raw_date and not _DATE_RE.match(raw_date):
+            self._write_json(400, {'error': 'Invalid date format; expected YYYY-MM-DD'})
+            return
+        post = {
+            'id':        str(_uuid_mod.uuid4()),
+            'title':     str(body.get('title', '')).strip(),
+            'body':      str(body.get('body',  '')).strip(),
+            'date':      _valid_date(raw_date),
+            'status':    status,
+            'createdAt': now,
+            'updatedAt': now,
+        }
+        posts = _load_diary()
+        posts.insert(0, post)
+        _save_diary(posts)
+        self._write_json(201, post)
+
+    # ── PUT /api/diary/<id> ───────────────────────────────────────────────────
+
+    def _handle_diary_update(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        posts = _load_diary()
+        idx   = next((i for i, p in enumerate(posts) if p.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        prev   = posts[idx]
+        status = body.get('status', prev.get('status', 'draft'))
+        if status not in ('published', 'draft'):
+            status = prev.get('status', 'draft')
+        if 'date' in body:
+            raw_date = str(body['date'])
+            if not _DATE_RE.match(raw_date):
+                self._write_json(400, {'error': 'Invalid date format; expected YYYY-MM-DD'})
+                return
+        updated = {
+            **prev,
+            'title':     str(body['title']).strip()  if 'title' in body else prev.get('title', ''),
+            'body':      str(body['body']).strip()   if 'body'  in body else prev.get('body',  ''),
+            'date':      body['date']                if 'date'  in body else prev.get('date',  _today_iso()),
+            'status':    status,
+            'updatedAt': time.strftime('%Y-%m-%dT%H:%M:%S'),
+        }
+        posts[idx] = updated
+        _save_diary(posts)
+        self._write_json(200, updated)
+
+    # ── DELETE /api/diary/<id> ────────────────────────────────────────────────
+
+    def _handle_diary_delete(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        posts = _load_diary()
+        idx   = next((i for i, p in enumerate(posts) if p.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        posts.pop(idx)
+        _save_diary(posts)
+        self._write_json(200, {'ok': True})
+
+    # ── Shared helpers ────────────────────────────────────────────────────────
+
+    def _read_json_body(self):
+        length = int(self.headers.get('Content-Length', 0))
+        try:
+            return json.loads(self.rfile.read(length))
+        except Exception:
+            self._write_json(400, {'error': 'Bad request'})
+            return None
 
     def _write_json(self, status, payload):
-        body = json.dumps(payload).encode()
+        body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
         http.server.BaseHTTPRequestHandler.end_headers(self)
         self.wfile.write(body)
 
     def _write_json_with_cookie(self, status, payload, cookie):
-        body = json.dumps(payload).encode()
+        body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Set-Cookie', cookie)
         self.send_header('Cache-Control', 'no-store')
@@ -197,7 +405,6 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     # ── Weather ───────────────────────────────────────────────────────────────
 
     def _handle_weather(self):
-        """Resolve weather condition; returns {"condition": "<Main>"} or {"condition": null}."""
         t_total = time.monotonic()
         parsed  = urllib.parse.urlparse(self.path)
         params  = urllib.parse.parse_qs(parsed.query)
@@ -223,7 +430,6 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             t_geo  = time.monotonic()
             geo_ok = False
 
-            # Primary: ipapi.co
             try:
                 path = ip if ip else 'json'
                 with urllib.request.urlopen('https://ipapi.co/%s/json/' % path, timeout=3) as resp:
@@ -238,7 +444,6 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 print('[weather/geo]   ipapi.co error: %s' % e)
 
-            # Fallback: freeipapi.com
             if not geo_ok:
                 try:
                     url2 = 'https://freeipapi.com/api/json/%s' % (ip or '')
@@ -259,7 +464,6 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._write_json(200, {'condition': None})
                 return
 
-        # OpenWeatherMap
         condition = None
         if api_key:
             t_owm = time.monotonic()
@@ -269,14 +473,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 with urllib.request.urlopen(url, timeout=5) as resp:
                     data = json.loads(resp.read())
                 condition = data['weather'][0]['main']
-                owm_ms    = int((time.monotonic() - t_owm) * 1000)
-                print('[weather/owm]   %dms  condition=%s' % (owm_ms, condition))
+                print('[weather/owm]   %dms  condition=%s' % (int((time.monotonic()-t_owm)*1000), condition))
             except Exception as e:
-                owm_ms = int((time.monotonic() - t_owm) * 1000)
-                print('[weather/owm]   %dms  error: %s' % (owm_ms, e))
+                print('[weather/owm]   %dms  error: %s' % (int((time.monotonic()-t_owm)*1000), e))
 
-        total_ms = int((time.monotonic() - t_total) * 1000)
-        print('[weather/total] %dms' % total_ms)
+        print('[weather/total] %dms' % int((time.monotonic()-t_total)*1000))
         self._write_json(200, {'condition': condition})
 
     def log_message(self, format, *args):

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diary — After Hours | 1999</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/style.css?v=13">
+</head>
+<body data-page="afterhours-diary">
+
+<div class="card">
+    <img src="/whale_transparent.png" class="whale-bg" alt="">
+
+    <h1>1999</h1>
+    <div class="sub">Diary</div>
+
+    <!-- ── Post list ──────────────────────────────────── -->
+    <div class="da-list-header">
+        <span class="da-count" id="da-count"></span>
+        <button class="admin-btn da-new-btn" id="da-new">＋ 新規</button>
+    </div>
+
+    <div class="da-list" id="da-list">
+        <p class="da-empty">読み込み中…</p>
+    </div>
+
+    <!-- ── Editor ────────────────────────────────────── -->
+    <div class="da-editor">
+        <div class="da-editor-heading" id="da-editor-heading">新規投稿</div>
+
+        <form id="da-form" class="da-form" autocomplete="off">
+
+            <div class="admin-label">タイトル</div>
+            <input
+                type="text"
+                id="da-title"
+                class="admin-input"
+                placeholder="タイトル（省略可）"
+                maxlength="120"
+            >
+
+            <div class="admin-label">本文</div>
+            <textarea
+                id="da-body"
+                class="admin-input da-textarea"
+                placeholder="本文を入力…"
+                rows="6"
+            ></textarea>
+
+            <div class="admin-label">公開日</div>
+            <input
+                type="date"
+                id="da-date"
+                class="admin-input da-date-input"
+            >
+
+            <div class="admin-label">状態</div>
+            <div class="da-radios">
+                <label class="da-radio">
+                    <input type="radio" name="da-status" value="published">
+                    <span>公開</span>
+                </label>
+                <label class="da-radio">
+                    <input type="radio" name="da-status" value="draft" checked>
+                    <span>下書き</span>
+                </label>
+            </div>
+
+            <div class="da-btns">
+                <button type="button" class="admin-btn" id="da-save">保存</button>
+                <button type="button" class="admin-btn da-btn-publish" id="da-publish">公開</button>
+                <button type="button" class="admin-btn da-btn-delete" id="da-delete" style="display:none">削除</button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ── Footer ────────────────────────────────────── -->
+    <div class="admin-footer">
+        <a href="/afterhours" class="back-home">← After Hours</a>
+        <button class="admin-signout" id="signout-btn">Sign out</button>
+    </div>
+</div>
+
+<script src="/whale.js"></script>
+<script src="/script.js?v=2"></script>
+<script src="/admin.js"></script>
+<script src="/diary-admin.js"></script>
+
+</body>
+</html>

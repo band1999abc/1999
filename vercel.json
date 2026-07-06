@@ -2,10 +2,12 @@
   "framework": null,
   "outputDirectory": ".",
   "functions": {
-    "api/afterhours.js": { "includeFiles": "templates/**" }
+    "api/afterhours.js":       { "includeFiles": "templates/**" },
+    "api/afterhours-diary.js": { "includeFiles": "templates/**" }
   },
   "rewrites": [
-    { "source": "/afterhours", "destination": "/api/afterhours" }
+    { "source": "/afterhours/diary", "destination": "/api/afterhours-diary" },
+    { "source": "/afterhours",       "destination": "/api/afterhours"       }
   ],
   "headers": [
     {
