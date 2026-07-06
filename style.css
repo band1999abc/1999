@@ -651,10 +651,10 @@ body.night .card {
         radial-gradient(rgba(255,255,255,.02) 1px, transparent 1px);
 }
 
-/* — Whale: brighter, softer — more ethereal on dark background — */
+/* — Whale: dark-grey, detail-preserving — subtle on navy background — */
 body.night .whale-bg {
-    opacity: .55;
-    filter: grayscale(100%) contrast(0.7) brightness(1.8);
+    opacity: .35;
+    filter: grayscale(100%) contrast(1.2) brightness(0.75);
 }
 
 /* — Index: greeting & nav — */
