@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1999</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/style.css?v=12">
+</head>
+<body data-page="login">
+
+<div class="card">
+    <img src="/whale_transparent.png" class="whale-bg" alt="">
+
+    <h1>1999</h1>
+
+    <form class="admin-login" id="login-form" autocomplete="off" novalidate>
+        <p class="admin-welcome">Welcome back.</p>
+
+        <label class="admin-label" for="admin-password">Password</label>
+        <input
+            type="password"
+            id="admin-password"
+            class="admin-input"
+            autocomplete="current-password"
+            spellcheck="false"
+        >
+
+        <button type="submit" class="admin-btn">Enter</button>
+
+        <p class="admin-error" id="admin-error" aria-live="polite"></p>
+    </form>
+</div>
+
+<script src="/whale.js"></script>
+<script src="/script.js?v=2"></script>
+<script src="/admin.js"></script>
+
+</body>
+</html>

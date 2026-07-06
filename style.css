@@ -696,3 +696,163 @@ body.night .band-info   { color: #8a9ab2; border-top-color: var(--border); }
 body.night .contact-label   { color: #8a9ab2; }
 body.night .contact-link    { color: var(--text-dark); }
 body.night .back-home       { color: #8a9ab2; }
+
+/* ==============================
+   Admin pages — /afterhours
+   (login form + dashboard)
+============================== */
+
+/* — Login form — */
+.admin-login {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 28px 0 0;
+}
+
+.admin-welcome {
+    color: var(--text-dark);
+    font-size: 17px;
+    margin: 0 0 6px;
+    letter-spacing: 0.01em;
+}
+
+.admin-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: -6px;
+}
+
+.admin-input {
+    appearance: none;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dark);
+    font: inherit;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    outline: none;
+    padding: 8px 0;
+    transition: border-color 0.2s ease;
+    width: 100%;
+}
+
+.admin-input:focus {
+    border-bottom-color: var(--accent);
+}
+
+.admin-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dark);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    margin-top: 6px;
+    padding: 10px 30px;
+    text-transform: uppercase;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-btn:hover {
+    background: var(--text-dark);
+    border-color: var(--text-dark);
+    color: var(--card-bg);
+}
+
+.admin-btn:disabled {
+    cursor: default;
+    opacity: 0.35;
+}
+
+.admin-error {
+    color: #b07060;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    min-height: 1.4em;
+    margin: 0;
+}
+
+/* — Dashboard grid — */
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 28px 0 24px;
+}
+
+.admin-module {
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 18px 16px;
+    transition: border-color 0.2s ease;
+}
+
+.admin-module:hover {
+    border-color: var(--accent);
+}
+
+.admin-module-icon {
+    font-size: 17px;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.admin-module-title {
+    color: var(--text-dark);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+}
+
+.admin-module-desc {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 6px;
+}
+
+.admin-module-status {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* — Footer bar — */
+.admin-footer {
+    align-items: center;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    padding-top: 20px;
+}
+
+.admin-signout {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.admin-signout:hover {
+    color: var(--text-dark);
+}
+
+/* — Night mode overrides — */
+body.night .admin-error { color: #c08878; }
+
+/* — Responsive — */
+@media (max-width: 480px) {
+    .admin-grid { grid-template-columns: 1fr; }
+}

@@ -26,4 +26,20 @@
             greeting.textContent = "Good evening.";
         }
     }
+    // ── Hidden admin entry: 5 clicks on h1 within 3 seconds ──
+    // Regular visitors never see a button or hint — just works silently.
+    const h1 = document.querySelector('h1');
+    if (h1) {
+        let _n = 0, _t = null;
+        h1.addEventListener('click', function () {
+            _n++;
+            clearTimeout(_t);
+            _t = setTimeout(function () { _n = 0; }, 3000);
+            if (_n >= 5) {
+                _n = 0;
+                clearTimeout(_t);
+                window.location.href = '/afterhours';
+            }
+        });
+    }
 }());

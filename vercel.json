@@ -1,6 +1,9 @@
 {
   "framework": null,
   "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/afterhours", "destination": "/api/afterhours" }
+  ],
   "headers": [
     {
       "source": "/(.*\\.html)",
@@ -9,6 +12,13 @@
     {
       "source": "/",
       "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }]
+    },
+    {
+      "source": "/templates/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "X-Robots-Tag",  "value": "noindex"  }
+      ]
     }
   ]
 }
