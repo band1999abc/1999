@@ -658,12 +658,12 @@ body.night .whale-bg {
 }
 
 /* — Index: greeting & nav — */
-body.night .sub         { color: #7a8499; }
+body.night .sub         { color: #8a9ab2; }
 body.night nav a        { color: #9aa0b8; }
 body.night nav a:hover  { color: var(--accent); }
 
 /* — Weather subtext — */
-body.night .weather-subtext { color: #7a8499; }
+body.night .weather-subtext { color: #8a9ab2; }
 
 /* — Music page — */
 body.night .song-link,
@@ -679,20 +679,20 @@ body.night .play-button:hover {
     color: var(--text-dark);
 }
 body.night .lyrics              { color: #c0bcb4; }
-body.night .lyrics-title span   { color: #6e7888; }
+body.night .lyrics-title span   { color: #8a9ab2; }
 body.night .lyrics-title::before,
 body.night .lyrics-title::after { background: #2e3550; }
 
 /* — Diary page — */
 body.night .diary-entry p   { color: #c0bcb4; }
-body.night .diary-date      { color: #6e7888; }
+body.night .diary-date      { color: #8a9ab2; }
 body.night .diary-divider   { background: var(--border); }
 
 /* — Members page — */
-body.night .role        { color: #6e7888; }
-body.night .band-info   { color: #6e7888; border-top-color: var(--border); }
+body.night .role        { color: #8a9ab2; }
+body.night .band-info   { color: #8a9ab2; border-top-color: var(--border); }
 
 /* — Contact page — */
-body.night .contact-label   { color: #6e7888; }
+body.night .contact-label   { color: #8a9ab2; }
 body.night .contact-link    { color: var(--text-dark); }
-body.night .back-home       { color: #7a8499; }
+body.night .back-home       { color: #8a9ab2; }
