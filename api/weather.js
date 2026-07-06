@@ -50,7 +50,7 @@ export default async function handler(req, res) {
     try {
       const ctrl  = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 3000);
-      const r     = await fetch('https://ipapi.co/' + (ip || 'json') + '/json/', { signal: ctrl.signal });
+      const r     = await fetch('https://ipapi.co/' + (ip || '') + '/json/', { signal: ctrl.signal });
       clearTimeout(timer);
       const geo = await r.json();
       if (geo.latitude != null && geo.longitude != null && !geo.error) {
