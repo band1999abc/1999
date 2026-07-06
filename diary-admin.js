@@ -130,8 +130,14 @@
     }
 
     // ── Auth-aware fetch helper ───────────────────────────────────────────────
+    // Delegates to admin.js's shared authFetch (adds Bearer header + handles 401
+    // by clearing sessionStorage and redirecting to login).
 
     function authFetch(url, opts) {
+        if (window._adminAuthFetch) {
+            return window._adminAuthFetch(url, opts);
+        }
+        // Fallback if admin.js hasn't run yet
         const token = sessionStorage.getItem('admin_token') || '';
         opts = opts || {};
         opts.headers = Object.assign({}, opts.headers || {});

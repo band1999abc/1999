@@ -188,6 +188,19 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
             self.send_header('Pragma', 'no-cache')
             self.send_header('Expires', '0')
+            # Reduce XSS blast-radius now that the admin token lives in sessionStorage
+            self.send_header(
+                'Content-Security-Policy',
+                "default-src 'self'; "
+                "script-src 'self'; "
+                "style-src 'self' https://fonts.googleapis.com; "
+                "font-src https://fonts.gstatic.com; "
+                "img-src 'self' data:; "
+                "connect-src 'self' https://ipapi.co https://freeipapi.com "
+                "https://api.openweathermap.org; "
+                "frame-ancestors 'self' https://*.replit.dev https://*.replit.co "
+                "https://*.replit.com https://replit.com;"
+            )
         super().end_headers()
 
     # ── /afterhours ───────────────────────────────────────────────────────────
@@ -208,8 +221,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
-            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-            http.server.BaseHTTPRequestHandler.end_headers(self)
+            # Use self.end_headers() so Cache-Control + CSP are added via override
+            self.end_headers()
             self.wfile.write(body)
         except FileNotFoundError:
             self.send_error(404)

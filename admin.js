@@ -3,14 +3,16 @@
  *
  * Auth strategy
  * ─────────────
- * Token is stored in sessionStorage and sent as
- * "Authorization: Bearer <token>" on every API call.
- * This works in Replit's iframe preview where third-party cookies are blocked.
- * An HttpOnly cookie is still set as a fallback for direct (non-iframe) access.
+ * Primary: token in sessionStorage → "Authorization: Bearer <token>" header.
+ *          Works in Replit's iframe preview where third-party cookies are blocked.
+ * Fallback: HttpOnly cookie for direct (non-iframe) browser tab access.
+ *           Server checks cookie when no Bearer header is present.
  *
- * data-page values handled here:
+ * The gate always calls GET /api/auth so the cookie fallback is honoured.
+ *
+ * data-page values:
  *   "login"            → /afterhours/login
- *   "afterhours"       → /afterhours (dashboard)
+ *   "afterhours"       → /afterhours  (dashboard)
  *   "afterhours-diary" → /afterhours/diary
  */
 (function () {
@@ -28,22 +30,41 @@
         return sessionStorage.getItem(SESSION_KEY) || '';
     }
 
-    function authFetch(url, opts) {
+    /**
+     * Fetch with optional Bearer header.
+     * On 401: clear sessionStorage token and redirect to login.
+     * @param {string} url
+     * @param {RequestInit} [opts]
+     * @param {boolean} [noRedirectOn401] — set true for the gate check itself
+     */
+    async function authFetch(url, opts, noRedirectOn401) {
         const token = getToken();
         opts = opts || {};
         opts.headers = Object.assign({}, opts.headers || {});
         if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-        return fetch(url, opts);
+        const res = await fetch(url, opts);
+        if (res.status === 401 && !noRedirectOn401) {
+            sessionStorage.removeItem(SESSION_KEY);
+            window.location.replace(LOGIN_URL);
+        }
+        return res;
     }
 
     /* ── Login page (/afterhours/login) ───────────────────────────── */
 
     if (page === 'login') {
-        // If already logged in, skip straight to dashboard
-        if (getToken()) {
-            window.location.replace(DASH_URL);
-            return;
-        }
+        // Probe the server first — a valid cookie session (direct tab) skips login
+        (async function checkExisting() {
+            try {
+                // No bearer token on login page; server falls back to cookie
+                const res = await fetch('/api/auth');
+                if (res.ok) {
+                    window.location.replace(DASH_URL);
+                }
+            } catch {
+                // network error — stay on login page
+            }
+        })();
 
         const form    = document.getElementById('login-form');
         const input   = document.getElementById('admin-password');
@@ -83,25 +104,20 @@
         });
     }
 
-    /* ── Gated pages (afterhours dashboard + sub-pages) ──────────── */
+    /* ── Gated pages (dashboard + sub-pages) ─────────────────────── */
 
     if (page === 'afterhours' || page === 'afterhours-diary') {
 
-        // Auth gate — runs immediately on page load
+        // Always call the server — honours both Bearer token AND cookie fallback
         (async function gate() {
-            const token = getToken();
-            if (!token) {
-                window.location.replace(LOGIN_URL);
-                return;
-            }
             try {
-                const res = await authFetch('/api/auth');
+                const res = await authFetch('/api/auth', {}, /* noRedirect */ true);
                 if (!res.ok) {
                     sessionStorage.removeItem(SESSION_KEY);
                     window.location.replace(LOGIN_URL);
                 }
             } catch {
-                // Network hiccup — stay on page; next real action will re-check
+                // Network hiccup — stay on page; next API call will re-check
             }
         })();
 
@@ -123,5 +139,8 @@
             });
         }
     }
+
+    // Expose authFetch for diary-admin.js (same document scope)
+    window._adminAuthFetch = authFetch;
 
 }());
