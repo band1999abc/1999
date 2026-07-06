@@ -1,26 +1,21 @@
 /**
  * Vercel Serverless Function: /afterhours
  *
- * Server-side session gate before delivering any admin UI.
- *   Authenticated   → serve afterhours.html (admin dashboard)
- *   Not authenticated → serve login.html    (login form)
+ * Always serves afterhours.html. The client-side JS (admin.js) performs
+ * the auth gate by calling GET /api/auth with the Bearer token, and
+ * redirects to /afterhours/login if not authenticated.
  *
- * Both pages live in /templates/ which is not directly routed.
+ * This avoids third-party cookie blocking when the page is viewed inside
+ * an iframe (e.g. Replit preview or embedded players).
  */
 
 import { readFileSync } from 'fs';
 import { join }         from 'path';
-import { COOKIE_NAME, verifyToken, parseCookies } from './_auth.js';
 
 export default function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-
-    const cookies  = parseCookies(req.headers.cookie);
-    const authed   = verifyToken(cookies[COOKIE_NAME] || '');
-    const filename = authed ? 'afterhours.html' : 'login.html';
-
     try {
-        const html = readFileSync(join(process.cwd(), 'templates', filename), 'utf-8');
+        const html = readFileSync(join(process.cwd(), 'templates', 'afterhours.html'), 'utf-8');
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.status(200).send(html);
     } catch (err) {

@@ -1,9 +1,13 @@
 /**
  * Vercel Serverless Function: /api/auth
  *
- * GET  ?action=check                  → verify current session → {ok: bool}
- * POST { action: "login",  password } → verify password, set session cookie
- * POST { action: "logout" }           → clear session cookie
+ * GET  (no body)                      → verify current session → {ok: bool}
+ * POST { action: "login",  password } → verify password → {ok: true, token}
+ * POST { action: "logout" }           → clear session cookie → {ok: true}
+ *
+ * Auth is checked via:
+ *   1. Authorization: Bearer <token>  header  (sessionStorage path)
+ *   2. Cookie admin_session=<token>            (direct-tab fallback)
  */
 
 import { timingSafeEqual } from 'crypto';
@@ -18,14 +22,23 @@ async function readBody(req) {
     catch { return {}; }
 }
 
+function isAuthed(req) {
+    // 1. Bearer token (sessionStorage path — works in iframes)
+    const auth = req.headers['authorization'] || '';
+    if (auth.startsWith('Bearer ')) {
+        if (verifyToken(auth.slice(7))) return true;
+    }
+    // 2. Cookie fallback
+    const cookies = parseCookies(req.headers.cookie);
+    return verifyToken(cookies[COOKIE_NAME] || '');
+}
+
 export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
-    const cookies = parseCookies(req.headers.cookie);
-
-    /* ── GET ?action=check ────────────────────────────────────── */
+    /* ── GET — session check ──────────────────────────────────── */
     if (req.method === 'GET') {
-        const ok = verifyToken(cookies[COOKIE_NAME] || '');
+        const ok = isAuthed(req);
         return res.status(ok ? 200 : 401).json({ ok });
     }
 
@@ -50,8 +63,11 @@ export default async function handler(req, res) {
         if (!ok) {
             return res.status(401).json({ ok: false });
         }
-        res.setHeader('Set-Cookie', cookieHeader(makeToken()));
-        return res.status(200).json({ ok: true });
+        const token = makeToken();
+        // Return token in body so client stores it in sessionStorage
+        // (cookie also set as fallback for direct-tab access)
+        res.setHeader('Set-Cookie', cookieHeader(token));
+        return res.status(200).json({ ok: true, token });
     }
 
     /* ── POST logout ──────────────────────────────────────────── */

@@ -92,7 +92,7 @@
                     }
                     window.location.href = DASH_URL;
                 } else {
-                    errorEl.textContent = 'The passphrase is incorrect.';
+                    errorEl.textContent = 'The password is incorrect.';
                     input.value = '';
                     input.focus();
                 }
