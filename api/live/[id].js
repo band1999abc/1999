@@ -4,26 +4,33 @@
  * GET    — fetch single live
  * PUT    — update live (auth required)
  * DELETE — delete live (auth required)
+ *
+ * Storage strategy: same as api/live.js — reads from /tmp then bundle,
+ * writes to /tmp.
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
 
-const DATA_PATH = join(process.cwd(), 'data', 'lives.json');
-const DATE_RE   = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_RE   = /^\d{1,2}:\d{2}$/;
+const BUNDLE_PATH = join(process.cwd(), 'data', 'lives.json');
+const TMP_PATH    = '/tmp/data/lives.json';
+const DATE_RE     = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE     = /^\d{1,2}:\d{2}$/;
 
 function loadLives() {
-    try {
-        const data = JSON.parse(readFileSync(DATA_PATH, 'utf-8'));
-        return Array.isArray(data) ? data : [];
-    } catch { return []; }
+    for (const path of [TMP_PATH, BUNDLE_PATH]) {
+        try {
+            const data = JSON.parse(readFileSync(path, 'utf-8'));
+            if (Array.isArray(data)) return data;
+        } catch { /* try next */ }
+    }
+    return [];
 }
 
 function saveLives(lives) {
-    mkdirSync(join(process.cwd(), 'data'), { recursive: true });
-    writeFileSync(DATA_PATH, JSON.stringify(lives, null, 2), 'utf-8');
+    mkdirSync('/tmp/data', { recursive: true });
+    writeFileSync(TMP_PATH, JSON.stringify(lives, null, 2), 'utf-8');
 }
 
 function validTime(s) {
@@ -74,13 +81,13 @@ export default function handler(req, res) {
 
         const updated = {
             ...prev,
-            date:       date       !== undefined ? String(date)                              : prev.date,
-            venue:      venue      !== undefined ? String(venue).trim()                      : prev.venue,
-            open:       open       !== undefined ? validTime(open)                           : prev.open,
-            start:      start      !== undefined ? validTime(start)                          : prev.start,
-            ticket:     ticket     !== undefined ? String(ticket).trim()                     : prev.ticket,
-            status:     status && ['published', 'draft'].includes(status) ? status           : prev.status,
-            sort_order: sort_order !== undefined ? Number(sort_order)                        : prev.sort_order,
+            date:       date       !== undefined ? String(date)                          : prev.date,
+            venue:      venue      !== undefined ? String(venue).trim()                  : prev.venue,
+            open:       open       !== undefined ? validTime(open)                       : prev.open,
+            start:      start      !== undefined ? validTime(start)                      : prev.start,
+            ticket:     ticket     !== undefined ? String(ticket).trim()                 : prev.ticket,
+            status:     status && ['published', 'draft'].includes(status) ? status       : prev.status,
+            sort_order: sort_order !== undefined ? Number(sort_order)                    : prev.sort_order,
             updatedAt:  new Date().toISOString(),
         };
 

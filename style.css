@@ -1062,6 +1062,8 @@ body.night .diary-entry-title { color: var(--text-dark); }
     color: #fff;
 }
 
+.la-hidden { display: none; }
+
 /* Auth gate — hide gated pages until JS confirms session */
 body.auth-hidden { visibility: hidden; }
 

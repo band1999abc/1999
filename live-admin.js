@@ -174,7 +174,7 @@
         startEl.value  = live.start  || '';
         ticketEl.value = live.ticket || '';
         setStatusRadio(live.status || 'draft');
-        deleteBtn.style.display = '';
+        deleteBtn.classList.remove('la-hidden');
         renderList();
         formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         venueEl.focus();
@@ -189,7 +189,7 @@
         startEl.value  = '';
         ticketEl.value = '';
         setStatusRadio('draft');
-        deleteBtn.style.display = 'none';
+        deleteBtn.classList.add('la-hidden');
         renderList();
         dateEl.focus();
     }
@@ -269,8 +269,8 @@
             startEl.value  = saved.start  || '';
             ticketEl.value = saved.ticket || '';
             setStatusRadio(saved.status || 'draft');
-            headingEl.textContent   = '編集';
-            deleteBtn.style.display = '';
+            headingEl.textContent = '編集';
+            deleteBtn.classList.remove('la-hidden');
             renderList();
 
         } catch (e) {
