@@ -16,15 +16,50 @@
     // Time-based greeting (index.html only)
     const greeting = document.getElementById("greeting");
     if (greeting) {
+        const greetings = {
+            morning: [
+                "Good morning.",
+                "Rise and shine.",
+                "Morning.",
+                "A new day.",
+                "Still half asleep?",
+            ],
+            midday: [
+                "Welcome.",
+                "Hello.",
+                "Hey.",
+                "What's up.",
+                "Good to see you.",
+            ],
+            afternoon: [
+                "Take a break.",
+                "Afternoon.",
+                "Still here?",
+                "How's the day going.",
+                "Almost there.",
+            ],
+            evening: [
+                "Good evening.",
+                "Evening.",
+                "Night owl.",
+                "Still up.",
+                "The night is young.",
+                "Welcome back.",
+            ],
+        };
+
+        let pool;
         if (hour >= 6 && hour < 10) {
-            greeting.textContent = "Good morning.";
+            pool = greetings.morning;
         } else if (hour >= 10 && hour < 15) {
-            greeting.textContent = "Welcome.";
-        } else if (hour >= 15 && hour < 17) {
-            greeting.textContent = "Take a break.";
+            pool = greetings.midday;
+        } else if (hour >= 15 && hour < 18) {
+            pool = greetings.afternoon;
         } else {
-            greeting.textContent = "Good evening.";
+            pool = greetings.evening;
         }
+
+        greeting.textContent = pool[Math.floor(Math.random() * pool.length)];
     }
     // ── Hidden admin entry: 5 clicks on h1 within 3 seconds ──
     // Regular visitors never see a button or hint — just works silently.
