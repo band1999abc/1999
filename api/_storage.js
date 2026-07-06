@@ -21,7 +21,7 @@ function upstashConfigured() {
 }
 
 async function upstashCmd(commands) {
-    const url   = process.env.UPSTASH_REDIS_REST_URL;
+    const url   = (process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/$/, '');
     const token = process.env.UPSTASH_REDIS_REST_TOKEN;
     const res = await fetch(`${url}/pipeline`, {
         method:  'POST',
