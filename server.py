@@ -54,10 +54,18 @@ def _get_members():
         try:
             arr = json.loads(raw)
             if isinstance(arr, list) and arr:
+                print(f'[auth] MEMBERS loaded: {len(arr)} member(s): '
+                      + ', '.join(m.get("name", "?") for m in arr))
                 return arr
-        except json.JSONDecodeError:
-            pass
+            else:
+                print(f'[auth] MEMBERS parsed but not a non-empty list: {type(arr)}')
+        except json.JSONDecodeError as e:
+            print(f'[auth] MEMBERS JSON parse error: {e}')
+            print(f'[auth] MEMBERS raw (first 200 chars): {raw[:200]!r}')
+    else:
+        print('[auth] MEMBERS env var is empty or not set')
     pw = os.environ.get('ADMIN_PASSWORD', '')
+    print(f'[auth] falling back to ADMIN_PASSWORD (set={bool(pw)})')
     return [{'name': 'Admin', 'password': pw, 'comment': 'おかえりなさい。'}] if pw else []
 
 
