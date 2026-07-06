@@ -7,7 +7,7 @@
 
     // ?night=1 forces night mode regardless of time (dev/preview only)
     const debugNight = new URLSearchParams(window.location.search).get('night');
-    const isNight = debugNight === '1' || hour >= 19 || hour < 7;
+    const isNight = true; // TODO: revert to time-based → debugNight === '1' || hour >= 19 || hour < 7
 
     if (isNight) {
         document.body.classList.add('night');
