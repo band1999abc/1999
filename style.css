@@ -368,15 +368,11 @@ footer {
     text-transform: uppercase;
 }
 
-.name {
+/* .name is always inside .member-list; one consolidated rule */
+.member-list .name {
     margin-top: 6px;
     font-weight: 700;
     color: var(--text-dark);
-    font-size: clamp(18px, 5vw, 24px);
-    white-space: nowrap;
-}
-
-.member-list .name {
     font-size: clamp(20px, 5vw, 28px);
     word-break: keep-all;
     overflow-wrap: normal;
@@ -440,10 +436,6 @@ footer {
 }
 
 /* ==============================
-   Whale Background
-============================== */
-
-/* ==============================
    Responsive — 600px
 ============================== */
 @media (max-width: 600px) {
@@ -471,16 +463,12 @@ footer {
         word-break: keep-all;
     }
 
-    .name {
+    .member-list .name {
         font-size: 18px;
         letter-spacing: -0.02em;
     }
 
     .member {
         padding: 0 8px;
-    }
-
-    .member-list .name {
-        font-size: 18px;
     }
 }
