@@ -3,38 +3,27 @@
  *
  * GET  — list lives (published only when not authed; all when authed)
  * POST — create live (auth required)
- *
- * Storage strategy:
- *   Reads:  /tmp/data/lives.json (recently written) → data/lives.json (bundle)
- *   Writes: /tmp/data/lives.json  (/tmp is writable on Vercel Lambda)
- *   Note:   /tmp is ephemeral and lost on cold start; reads fall back to the
- *           bundled data/lives.json committed to git.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join }       from 'path';
 import { randomUUID } from 'crypto';
 import { COOKIE_NAME, verifyToken, parseCookies } from './_auth.js';
 
-const BUNDLE_PATH = join(process.cwd(), 'data', 'lives.json');
-const TMP_PATH    = '/tmp/data/lives.json';
-const DATE_RE     = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_RE     = /^\d{1,2}:\d{2}$/;
+const DATA_PATH = join(process.cwd(), 'data', 'lives.json');
+const DATE_RE   = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE   = /^\d{1,2}:\d{2}$/;
 
 function loadLives() {
-    // Prefer /tmp (recently written by this function), fall back to bundle
-    for (const path of [TMP_PATH, BUNDLE_PATH]) {
-        try {
-            const data = JSON.parse(readFileSync(path, 'utf-8'));
-            if (Array.isArray(data)) return data;
-        } catch { /* try next */ }
-    }
-    return [];
+    try {
+        const data = JSON.parse(readFileSync(DATA_PATH, 'utf-8'));
+        return Array.isArray(data) ? data : [];
+    } catch { return []; }
 }
 
 function saveLives(lives) {
-    mkdirSync('/tmp/data', { recursive: true });
-    writeFileSync(TMP_PATH, JSON.stringify(lives, null, 2), 'utf-8');
+    mkdirSync(join(process.cwd(), 'data'), { recursive: true });
+    writeFileSync(DATA_PATH, JSON.stringify(lives, null, 2), 'utf-8');
 }
 
 function validTime(s) {

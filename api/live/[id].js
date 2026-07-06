@@ -4,33 +4,26 @@
  * GET    — fetch single live
  * PUT    — update live (auth required)
  * DELETE — delete live (auth required)
- *
- * Storage strategy: same as api/live.js — reads from /tmp then bundle,
- * writes to /tmp.
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
 
-const BUNDLE_PATH = join(process.cwd(), 'data', 'lives.json');
-const TMP_PATH    = '/tmp/data/lives.json';
-const DATE_RE     = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_RE     = /^\d{1,2}:\d{2}$/;
+const DATA_PATH = join(process.cwd(), 'data', 'lives.json');
+const DATE_RE   = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE   = /^\d{1,2}:\d{2}$/;
 
 function loadLives() {
-    for (const path of [TMP_PATH, BUNDLE_PATH]) {
-        try {
-            const data = JSON.parse(readFileSync(path, 'utf-8'));
-            if (Array.isArray(data)) return data;
-        } catch { /* try next */ }
-    }
-    return [];
+    try {
+        const data = JSON.parse(readFileSync(DATA_PATH, 'utf-8'));
+        return Array.isArray(data) ? data : [];
+    } catch { return []; }
 }
 
 function saveLives(lives) {
-    mkdirSync('/tmp/data', { recursive: true });
-    writeFileSync(TMP_PATH, JSON.stringify(lives, null, 2), 'utf-8');
+    mkdirSync(join(process.cwd(), 'data'), { recursive: true });
+    writeFileSync(DATA_PATH, JSON.stringify(lives, null, 2), 'utf-8');
 }
 
 function validTime(s) {
