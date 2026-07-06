@@ -117,6 +117,8 @@
                     window.location.replace(LOGIN_URL);
                     return;
                 }
+                // Auth confirmed — reveal the page
+                document.body.style.visibility = 'visible';
                 // Show personalized greeting on the dashboard
                 if (page === 'afterhours') {
                     try {
@@ -129,7 +131,8 @@
                     } catch { /* ignore parse errors */ }
                 }
             } catch {
-                // Network hiccup — stay on page; next API call will re-check
+                // Network hiccup — reveal anyway so the page isn't stuck hidden
+                document.body.style.visibility = 'visible';
             }
         })();
 
