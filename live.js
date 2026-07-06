@@ -176,14 +176,24 @@
         return gallery;
     }
 
+    // ── Attach flyer click behaviour to an entry element ─────────────────────
+    function attachFlyerClick(el, live) {
+        const slots = getFlyerSlots(live);
+        if (slots.length === 0) return;
+        const urls = slots.map(function (s) { return flyerUrl(live.id, s); });
+        el.classList.add('has-flyer');
+        el.addEventListener('click', function () { openModal(urls, 0); });
+
+        const ind = document.createElement('div');
+        ind.className = 'live-flyer-indicator';
+        ind.textContent = 'FLYER';
+        el.appendChild(ind);
+    }
+
     // ── Render upcoming entry ─────────────────────────────────────────────────
     function renderEntry(live, badge) {
         const el = document.createElement('div');
         el.className = 'live-entry' + (badge ? ' live-entry-next' : '');
-
-        // Flyer image(s) at top
-        const flyerEl = buildFlyerElement(live);
-        if (flyerEl) el.appendChild(flyerEl);
 
         if (badge) {
             const b = document.createElement('span');
@@ -221,6 +231,7 @@
             el.appendChild(meta);
         }
 
+        attachFlyerClick(el, live);
         return el;
     }
 
@@ -228,9 +239,6 @@
     function renderPastEntry(live) {
         const el = document.createElement('div');
         el.className = 'live-entry live-entry-past';
-
-        const flyerEl = buildFlyerElement(live);
-        if (flyerEl) el.appendChild(flyerEl);
 
         const dateEl = document.createElement('div');
         dateEl.className = 'live-date';
@@ -251,6 +259,7 @@
             el.appendChild(meta);
         }
 
+        attachFlyerClick(el, live);
         return el;
     }
 

@@ -460,11 +460,12 @@
             deleteBtn.classList.remove('la-hidden');
 
             // Step 2: sync flyer images (upload pending, delete marked)
+            let flyerSyncError = null;
             try {
                 await syncFlyers(saved.id);
             } catch (flyerErr) {
-                console.error('[live-admin] flyer sync failed (metadata saved):', flyerErr);
-                alert('ライブ情報は保存しましたが、画像の処理に失敗しました: ' + flyerErr.message);
+                console.error('[live-admin] flyer sync error (will verify after reload):', flyerErr);
+                flyerSyncError = flyerErr;
             }
 
             // Step 3: reload live from server to get authoritative flyer state
@@ -474,6 +475,18 @@
                     saved = await reloadRes.json();
                 }
             } catch (_) { /* non-fatal */ }
+
+            // Only alert if images genuinely didn't make it to the server.
+            // (syncFlyers may throw on a bad response even though the upload succeeded.)
+            if (flyerSyncError) {
+                const stillPending = flyerItems.filter(
+                    it => !it.toDelete && !it.slotId && it.file
+                );
+                if (stillPending.length > 0) {
+                    alert('ライブ情報は保存しましたが、一部の画像が保存されませんでした。もう一度保存してください。');
+                }
+                // If no pending items remain, the upload actually succeeded → no alert.
+            }
 
             // Update allLives with refreshed state
             allLives = allLives.map(l => l.id === saved.id ? saved : l);
