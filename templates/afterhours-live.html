@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live — After Hours | 1999</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/style.css?v=14">
+</head>
+<body data-page="afterhours-live" class="auth-hidden">
+
+<div class="card">
+    <img src="/whale_transparent.png" class="whale-bg" alt="">
+
+    <h1>1999</h1>
+    <div class="sub">Live</div>
+
+    <!-- ── Live list ──────────────────────────────────── -->
+    <div class="da-list-header">
+        <span class="da-count" id="la-count"></span>
+        <button class="admin-btn da-new-btn" id="la-new">＋ 新規</button>
+    </div>
+
+    <div class="la-list" id="la-list">
+        <p class="la-empty">読み込み中…</p>
+    </div>
+
+    <!-- ── Editor ────────────────────────────────────── -->
+    <div class="da-editor">
+        <div class="da-editor-heading" id="la-editor-heading">新規ライブ</div>
+
+        <form id="la-form" class="da-form" autocomplete="off">
+
+            <div class="admin-label">ライブ日</div>
+            <input
+                type="date"
+                id="la-date"
+                class="admin-input da-date-input"
+                required
+            >
+
+            <div class="admin-label">会場名</div>
+            <input
+                type="text"
+                id="la-venue"
+                class="admin-input"
+                placeholder="例：渋谷クラブクアトロ"
+                maxlength="120"
+            >
+
+            <div class="admin-label">Open</div>
+            <input
+                type="text"
+                id="la-open"
+                class="admin-input"
+                placeholder="例：17:30"
+                maxlength="10"
+            >
+
+            <div class="admin-label">Start</div>
+            <input
+                type="text"
+                id="la-start"
+                class="admin-input"
+                placeholder="例：18:00"
+                maxlength="10"
+            >
+
+            <div class="admin-label">チケット料金（任意）</div>
+            <input
+                type="text"
+                id="la-ticket"
+                class="admin-input"
+                placeholder="例：¥3,000 / 当日¥3,500"
+                maxlength="120"
+            >
+
+            <div class="admin-label">状態</div>
+            <div class="da-radios">
+                <label class="da-radio">
+                    <input type="radio" name="la-status" value="published">
+                    <span>公開</span>
+                </label>
+                <label class="da-radio">
+                    <input type="radio" name="la-status" value="draft" checked>
+                    <span>下書き</span>
+                </label>
+            </div>
+
+            <div class="da-btns">
+                <button type="button" class="admin-btn" id="la-save">保存</button>
+                <button type="button" class="admin-btn da-btn-publish" id="la-publish">公開</button>
+                <button type="button" class="admin-btn da-btn-delete" id="la-delete" style="display:none">削除</button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ── Footer ────────────────────────────────────── -->
+    <div class="admin-footer">
+        <a href="/afterhours" class="back-home">← After Hours</a>
+        <button class="admin-signout" id="signout-btn">Sign out</button>
+    </div>
+</div>
+
+<script src="/whale.js"></script>
+<script src="/script.js?v=2"></script>
+<script src="/admin.js?v=2"></script>
+<script src="/live-admin.js?v=1"></script>
+
+</body>
+</html>

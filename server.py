@@ -12,8 +12,15 @@ POST /api/diary            — create post (auth required)
 GET  /api/diary/<id>       — get single post
 PUT  /api/diary/<id>       — update post (auth required)
 DELETE /api/diary/<id>     — delete post (auth required)
-GET  /afterhours           — admin gate → afterhours.html or login.html
-GET  /afterhours/diary     — diary admin gate → afterhours-diary.html or redirect
+GET  /api/live             — list lives (auth → all; unauth → published only)
+POST /api/live             — create live (auth required)
+GET  /api/live/<id>        — get single live
+PUT  /api/live/<id>        — update live (auth required)
+DELETE /api/live/<id>      — delete live (auth required)
+GET  /afterhours           — admin dashboard → afterhours.html
+GET  /afterhours/diary     — diary admin → afterhours-diary.html
+GET  /afterhours/live      — live admin  → afterhours-live.html
+GET  /afterhours/login     — login page  → login.html
 GET  *                     — static files via SimpleHTTPRequestHandler
 """
 
@@ -154,6 +161,39 @@ def _save_diary(posts):
         json.dump(posts, f, ensure_ascii=False, indent=2)
 
 
+# ── Live storage helpers ──────────────────────────────────────────────────────
+
+_TIME_RE = re.compile(r'^\d{1,2}:\d{2}$')
+
+
+def _valid_time(s):
+    """Return s if it looks like H:MM or HH:MM, else empty string."""
+    return s if (s and _TIME_RE.match(s)) else ''
+
+
+def _load_lives():
+    path = os.path.join(_DATA_DIR, 'lives.json')
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            return []
+        return data
+    except (json.JSONDecodeError, OSError) as e:
+        print(f'[live] WARNING: could not load lives.json: {e}')
+        return []
+
+
+def _save_lives(lives):
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    path = os.path.join(_DATA_DIR, 'lives.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(lives, f, ensure_ascii=False, indent=2)
+
+
 # ── Request handler ───────────────────────────────────────────────────────────
 
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
@@ -168,6 +208,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_auth_get()
         elif path == '/afterhours/diary':
             self._handle_afterhours_diary()
+        elif path == '/afterhours/live':
+            self._serve_template('afterhours-live.html')
         elif path == '/afterhours/login':
             self._serve_template('login.html')
         elif path == '/afterhours':
@@ -180,6 +222,14 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_diary_get(item_id)
             else:
                 self.send_error(404)
+        elif path == '/api/live':
+            self._handle_live_list()
+        elif path.startswith('/api/live/'):
+            item_id = path[len('/api/live/'):]
+            if item_id and '/' not in item_id:
+                self._handle_live_get(item_id)
+            else:
+                self.send_error(404)
         else:
             super().do_GET()
 
@@ -189,6 +239,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_auth_post()
         elif path == '/api/diary':
             self._handle_diary_create()
+        elif path == '/api/live':
+            self._handle_live_create()
         else:
             self.send_error(404)
 
@@ -199,6 +251,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             if item_id and '/' not in item_id:
                 self._handle_diary_update(item_id)
                 return
+        elif path.startswith('/api/live/'):
+            item_id = path[len('/api/live/'):]
+            if item_id and '/' not in item_id:
+                self._handle_live_update(item_id)
+                return
         self.send_error(404)
 
     def do_DELETE(self):
@@ -207,6 +264,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             item_id = path[len('/api/diary/'):]
             if item_id and '/' not in item_id:
                 self._handle_diary_delete(item_id)
+                return
+        elif path.startswith('/api/live/'):
+            item_id = path[len('/api/live/'):]
+            if item_id and '/' not in item_id:
+                self._handle_live_delete(item_id)
                 return
         self.send_error(404)
 
@@ -218,7 +280,6 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
             self.send_header('Pragma', 'no-cache')
             self.send_header('Expires', '0')
-            # Reduce XSS blast-radius now that the admin token lives in sessionStorage
             self.send_header(
                 'Content-Security-Policy',
                 "default-src 'self'; "
@@ -236,11 +297,9 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     # ── /afterhours ───────────────────────────────────────────────────────────
 
     def _handle_afterhours(self):
-        # Always serve the shell; JS does the auth check via /api/auth
         self._serve_template('afterhours.html')
 
     def _handle_afterhours_diary(self):
-        # Always serve the shell; JS does the auth check via /api/auth
         self._serve_template('afterhours-diary.html')
 
     def _serve_template(self, filename):
@@ -251,7 +310,6 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
-            # Use self.end_headers() so Cache-Control + CSP are added via override
             self.end_headers()
             self.wfile.write(body)
         except FileNotFoundError:
@@ -286,13 +344,10 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 pw = str(m.get('password', ''))
                 g  = given.encode()
                 p  = pw.encode() if pw else b'\x00'
-                # Always call compare_digest (constant-time); match only if pw
-                # non-empty and lengths equal so the digest comparison is valid.
                 same_len = bool(pw) and len(g) == len(p)
                 is_match = same_len and hmac.compare_digest(g, p)
                 if is_match and matched is None:
                     matched = m
-                # No break — always iterate all members to avoid timing leaks
             if not matched:
                 self._write_json(401, {'ok': False})
                 return
@@ -432,6 +487,132 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             return
         posts.pop(idx)
         _save_diary(posts)
+        self._write_json(200, {'ok': True})
+
+    # ── GET /api/live ─────────────────────────────────────────────────────────
+
+    def _handle_live_list(self):
+        authed = self._is_authed()
+        lives  = _load_lives()
+        if not authed:
+            lives = [l for l in lives if l.get('status') == 'published']
+        self._write_json(200, lives)
+
+    # ── GET /api/live/<id> ────────────────────────────────────────────────────
+
+    def _handle_live_get(self, item_id):
+        authed = self._is_authed()
+        lives  = _load_lives()
+        live   = next((l for l in lives if l.get('id') == item_id), None)
+        if not live:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        if live.get('status') != 'published' and not authed:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        self._write_json(200, live)
+
+    # ── POST /api/live ────────────────────────────────────────────────────────
+
+    def _handle_live_create(self):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        now    = time.strftime('%Y-%m-%dT%H:%M:%S')
+        status = body.get('status', 'draft')
+        if status not in ('published', 'draft'):
+            status = 'draft'
+        raw_date = str(body.get('date', ''))
+        if raw_date and not _DATE_RE.match(raw_date):
+            self._write_json(400, {'error': 'Invalid date format; expected YYYY-MM-DD'})
+            return
+        lives = _load_lives()
+        # Default sort_order: one higher than current max
+        max_order = max((l.get('sort_order', 0) for l in lives), default=-1)
+        raw_order = body.get('sort_order', max_order + 1)
+        try:
+            sort_order = int(raw_order)
+        except (TypeError, ValueError):
+            self._write_json(400, {'error': 'sort_order must be an integer'})
+            return
+        live = {
+            'id':         str(_uuid_mod.uuid4()),
+            'date':       _valid_date(raw_date),
+            'venue':      str(body.get('venue',  '')).strip(),
+            'open':       _valid_time(str(body.get('open',  '')).strip()),
+            'start':      _valid_time(str(body.get('start', '')).strip()),
+            'ticket':     str(body.get('ticket', '')).strip(),
+            'status':     status,
+            'sort_order': sort_order,
+            'createdAt':  now,
+            'updatedAt':  now,
+        }
+        lives.append(live)
+        _save_lives(lives)
+        self._write_json(201, live)
+
+    # ── PUT /api/live/<id> ────────────────────────────────────────────────────
+
+    def _handle_live_update(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        lives = _load_lives()
+        idx   = next((i for i, l in enumerate(lives) if l.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        prev   = lives[idx]
+        status = body.get('status', prev.get('status', 'draft'))
+        if status not in ('published', 'draft'):
+            status = prev.get('status', 'draft')
+        if 'date' in body:
+            raw_date = str(body['date'])
+            if raw_date and not _DATE_RE.match(raw_date):
+                self._write_json(400, {'error': 'Invalid date format; expected YYYY-MM-DD'})
+                return
+        if 'sort_order' in body:
+            try:
+                new_order = int(body['sort_order'])
+            except (TypeError, ValueError):
+                self._write_json(400, {'error': 'sort_order must be an integer'})
+                return
+        else:
+            new_order = prev.get('sort_order', idx)
+        updated = {
+            **prev,
+            'date':       body['date']                               if 'date'   in body else prev.get('date', _today_iso()),
+            'venue':      str(body['venue']).strip()                 if 'venue'  in body else prev.get('venue',  ''),
+            'open':       _valid_time(str(body['open']).strip())     if 'open'   in body else prev.get('open',   ''),
+            'start':      _valid_time(str(body['start']).strip())    if 'start'  in body else prev.get('start',  ''),
+            'ticket':     str(body['ticket']).strip()                if 'ticket' in body else prev.get('ticket', ''),
+            'status':     status,
+            'sort_order': new_order,
+            'updatedAt':  time.strftime('%Y-%m-%dT%H:%M:%S'),
+        }
+        lives[idx] = updated
+        _save_lives(lives)
+        self._write_json(200, updated)
+
+    # ── DELETE /api/live/<id> ─────────────────────────────────────────────────
+
+    def _handle_live_delete(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        lives = _load_lives()
+        idx   = next((i for i, l in enumerate(lives) if l.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        lives.pop(idx)
+        _save_lives(lives)
         self._write_json(200, {'ok': True})
 
     # ── Shared helpers ────────────────────────────────────────────────────────
