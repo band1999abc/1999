@@ -653,7 +653,7 @@ body.night .card {
 
 /* — Whale: dark-grey, detail-preserving — subtle on navy background — */
 body.night .whale-bg {
-    opacity: .35;
+    opacity: .22;
     filter: grayscale(100%) contrast(1.2) brightness(0.75);
 }
 
