@@ -1,39 +1,42 @@
 /**
  * weather.js
- * Requests geolocation once, fetches current weather from /api/weather,
- * then applies a subtle body class and optional canvas animation.
- * All effects are silent-fallback: denied or failed → no change.
+ * Fetches current weather from /api/weather (server-side IP geolocation).
+ * No browser Geolocation API needed — zero permission dialogs, fast.
+ * All effects are silent-fallback: failed fetch or unknown condition → no change.
+ *
+ * Timing is logged to the browser console:
+ *   [weather] fetch: Xms  condition: Y
  */
 (function () {
   'use strict';
 
   /* ── Condition map ──────────────────────────────────────────── */
-  const CONDITIONS = {
-    Clear:        { text: "Outside, it\u2019s sunny.",  cls: 'weather-sunny'  },
-    Clouds:       { text: "Outside, it\u2019s cloudy.", cls: 'weather-cloudy' },
-    Rain:         { text: "Outside, it\u2019s raining.", cls: 'weather-rain'  },
-    Drizzle:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain'  },
-    Thunderstorm: { text: "Outside, it\u2019s raining.", cls: 'weather-rain'  },
-    Squall:       { text: "Outside, it\u2019s raining.", cls: 'weather-rain'  },
-    Snow:         { text: "Outside, it\u2019s snowing.", cls: 'weather-snow'  },
-    Mist:         { text: "Outside, it\u2019s foggy.",  cls: 'weather-foggy' },
-    Fog:          { text: "Outside, it\u2019s foggy.",  cls: 'weather-foggy' },
-    Haze:         { text: "Outside, it\u2019s foggy.",  cls: 'weather-foggy' },
-    Smoke:        { text: "Outside, it\u2019s foggy.",  cls: 'weather-foggy' },
-    Dust:         { text: "Outside, it\u2019s foggy.",  cls: 'weather-foggy' },
-    Sand:         { text: "Outside, it\u2019s foggy.",  cls: 'weather-foggy' },
-    Ash:          { text: "Outside, it\u2019s foggy.",  cls: 'weather-foggy' },
-    Tornado:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain' },
+  var CONDITIONS = {
+    Clear:        { text: "Outside, it\u2019s sunny.",   cls: 'weather-sunny'  },
+    Clouds:       { text: "Outside, it\u2019s cloudy.",  cls: 'weather-cloudy' },
+    Rain:         { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
+    Drizzle:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
+    Thunderstorm: { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
+    Squall:       { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
+    Snow:         { text: "Outside, it\u2019s snowing.", cls: 'weather-snow'   },
+    Mist:         { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
+    Fog:          { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
+    Haze:         { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
+    Smoke:        { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
+    Dust:         { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
+    Sand:         { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
+    Ash:          { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
+    Tornado:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
   };
 
   /* ── Apply weather to DOM ───────────────────────────────────── */
   function applyWeather(condition) {
-    const info = CONDITIONS[condition];
+    var info = CONDITIONS[condition];
     if (!info) return;
 
     document.body.classList.add(info.cls);
 
-    const el = document.getElementById('weather-text');
+    var el = document.getElementById('weather-text');
     if (el) {
       el.textContent = info.text;
       // Double rAF ensures transition fires after paint
@@ -53,7 +56,6 @@
     var canvas = document.getElementById('weather-canvas');
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
-    var raf;
 
     function resize() {
       canvas.width  = window.innerWidth;
@@ -90,7 +92,7 @@
           d.x = Math.random() * canvas.width;
         }
       }
-      raf = requestAnimationFrame(draw);
+      requestAnimationFrame(draw);
     }
 
     canvas.style.display = 'block';
@@ -102,7 +104,6 @@
     var canvas = document.getElementById('weather-canvas');
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
-    var raf;
 
     function resize() {
       canvas.width  = window.innerWidth;
@@ -138,7 +139,7 @@
           f.x = Math.random() * canvas.width;
         }
       }
-      raf = requestAnimationFrame(draw);
+      requestAnimationFrame(draw);
     }
 
     canvas.style.display = 'block';
@@ -155,22 +156,20 @@
     var debugParam = new URLSearchParams(window.location.search).get('weather');
     if (debugParam) { applyWeather(debugParam); return; }
 
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        var lat = pos.coords.latitude;
-        var lon = pos.coords.longitude;
-        fetch('/api/weather?lat=' + lat + '&lon=' + lon)
-          .then(function (r) { return r.json(); })
-          .then(function (data) {
-            if (data && data.condition) applyWeather(data.condition);
-          })
-          .catch(function () {}); // silent fallback on network error
-      },
-      function () {},            // denied → no effect
-      { timeout: 8000 }
-    );
+    // Fetch immediately — server resolves location from client IP.
+    // No browser Geolocation needed: no permission dialog, no GPS wait.
+    var t0 = performance.now();
+    fetch('/api/weather')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var ms = Math.round(performance.now() - t0);
+        console.log('[weather] fetch: ' + ms + 'ms  condition: ' + (data && data.condition));
+        if (data && data.condition) applyWeather(data.condition);
+      })
+      .catch(function () {
+        var ms = Math.round(performance.now() - t0);
+        console.log('[weather] fetch failed after ' + ms + 'ms');
+      });
   }
 
   if (document.readyState === 'loading') {

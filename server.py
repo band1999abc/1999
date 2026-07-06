@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
+"""
+Development server for Replit.
+Mirrors the Vercel Function logic: resolves weather from client IP when
+lat/lon are not supplied.  Timing is printed to stdout for each stage.
+"""
 import http.server
 import urllib.request
 import urllib.parse
 import json
 import os
+import time
 
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
@@ -22,34 +28,70 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def _handle_weather(self):
-        """Proxy to OpenWeatherMap; returns {"condition": "<Main>"} or {"condition": null}."""
-        parsed = urllib.parse.urlparse(self.path)
-        params = urllib.parse.parse_qs(parsed.query)
+        """Resolve weather condition; returns {"condition": "<Main>"} or {"condition": null}."""
+        t_total = time.monotonic()
+        parsed  = urllib.parse.urlparse(self.path)
+        params  = urllib.parse.parse_qs(parsed.query)
         lat_raw = params.get('lat', [None])[0]
         lon_raw = params.get('lon', [None])[0]
         api_key = os.environ.get('OPENWEATHERMAP_API_KEY', '')
 
-        # Validate lat/lon are numeric and within geographic bounds
-        condition = None
-        try:
-            lat = float(lat_raw)
-            lon = float(lon_raw)
-            if not (-90 <= lat <= 90 and -180 <= lon <= 180):
-                raise ValueError('out of bounds')
-        except (TypeError, ValueError):
-            self._write_json(400, {'condition': None})
-            return
+        lat = lon = None
 
-        if api_key:
+        if lat_raw and lon_raw:
+            # Explicit coords (debug / backwards-compat)
             try:
-                qs = urllib.parse.urlencode({'lat': lat, 'lon': lon, 'appid': api_key})
+                lat = float(lat_raw)
+                lon = float(lon_raw)
+                if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+                    raise ValueError('out of bounds')
+                print('[weather/coords] explicit lat=%s lon=%s' % (lat, lon))
+            except (TypeError, ValueError):
+                self._write_json(400, {'condition': None})
+                return
+        else:
+            # IP-based geolocation
+            forwarded = self.headers.get('X-Forwarded-For', '')
+            ip = forwarded.split(',')[0].strip() if forwarded else self.client_address[0]
+            t_geo = time.monotonic()
+            try:
+                # ipapi.co: free (30k/month), HTTPS, no API key required
+                path = ip if ip else 'json'
+                geo_url = 'https://ipapi.co/%s/json/' % path
+                with urllib.request.urlopen(geo_url, timeout=3) as resp:
+                    geo = json.loads(resp.read())
+                geo_ms = int((time.monotonic() - t_geo) * 1000)
+                if not geo.get('latitude') or not geo.get('longitude'):
+                    print('[weather/geo]   %dms  no coords (fallback null)' % geo_ms)
+                    self._write_json(200, {'condition': None})
+                    return
+                lat = geo['latitude']
+                lon = geo['longitude']
+                print('[weather/geo]   %dms  lat=%s lon=%s' % (geo_ms, lat, lon))
+            except Exception as e:
+                geo_ms = int((time.monotonic() - t_geo) * 1000)
+                print('[weather/geo]   %dms  error: %s' % (geo_ms, e))
+                self._write_json(200, {'condition': None})
+                return
+
+        # OpenWeatherMap
+        condition = None
+        if api_key:
+            t_owm = time.monotonic()
+            try:
+                qs  = urllib.parse.urlencode({'lat': lat, 'lon': lon, 'appid': api_key})
                 url = 'https://api.openweathermap.org/data/2.5/weather?' + qs
                 with urllib.request.urlopen(url, timeout=5) as resp:
                     data = json.loads(resp.read())
                 condition = data['weather'][0]['main']
-            except Exception:
-                pass  # Network error or bad response → silent fallback
+                owm_ms = int((time.monotonic() - t_owm) * 1000)
+                print('[weather/owm]   %dms  condition=%s' % (owm_ms, condition))
+            except Exception as e:
+                owm_ms = int((time.monotonic() - t_owm) * 1000)
+                print('[weather/owm]   %dms  error: %s' % (owm_ms, e))
 
+        total_ms = int((time.monotonic() - t_total) * 1000)
+        print('[weather/total] %dms' % total_ms)
         self._write_json(200, {'condition': condition})
 
     def _write_json(self, status, payload):
