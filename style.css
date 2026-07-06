@@ -87,8 +87,9 @@ body {
     height: 85vh;
     object-fit: contain;
     object-position: center;
-    opacity: .26;
-    filter: grayscale(100%) contrast(.85);
+    opacity: .55;
+    filter: grayscale(100%) contrast(1.1);
+    mix-blend-mode: multiply;
     pointer-events: none;
     z-index: 0;
 }
