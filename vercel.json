@@ -4,10 +4,12 @@
   "functions": {
     "api/afterhours.js":        { "includeFiles": "templates/**" },
     "api/afterhours-diary.js":  { "includeFiles": "templates/**" },
+    "api/afterhours-live.js":   { "includeFiles": "templates/**" },
     "api/afterhours-login.js":  { "includeFiles": "templates/**" }
   },
   "rewrites": [
     { "source": "/afterhours/diary",  "destination": "/api/afterhours-diary"  },
+    { "source": "/afterhours/live",   "destination": "/api/afterhours-live"   },
     { "source": "/afterhours/login",  "destination": "/api/afterhours-login"  },
     { "source": "/afterhours",        "destination": "/api/afterhours"        }
   ],
