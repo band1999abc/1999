@@ -9,8 +9,9 @@
 import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
 import { readJsonArray, writeJsonArray } from '../_storage.js';
 
-const FILE    = 'data/diary.json';
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const FILE     = 'data/diary.json';
+const DATE_RE  = /^\d{4}-\d{2}-\d{2}$/;
+const SCHED_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 async function readBody(req) {
     const chunks = [];
@@ -28,6 +29,29 @@ function isAuthed(req) {
     return verifyToken(cookies[COOKIE_NAME] || '') !== null;
 }
 
+/** Current Japan time as 'YYYY-MM-DDTHH:MM' (JST = UTC+9). */
+function nowJST() {
+    const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    return d.toISOString().slice(0, 16);
+}
+
+/**
+ * Promote 'scheduled' posts whose scheduledAt has passed.
+ * Returns true if any post was changed.
+ */
+function autoPromote(posts) {
+    const now = nowJST();
+    let changed = false;
+    for (const p of posts) {
+        if (p.status === 'scheduled' && p.scheduledAt && p.scheduledAt <= now) {
+            p.status    = 'published';
+            p.updatedAt = new Date().toISOString();
+            changed     = true;
+        }
+    }
+    return changed;
+}
+
 export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
@@ -37,8 +61,15 @@ export default async function handler(req, res) {
 
     // ── GET /api/diary/:id ────────────────────────────────────────────────────
     if (req.method === 'GET') {
-        if (idx < 0) return res.status(404).json({ error: 'Not found' });
-        const post = posts[idx];
+        // Auto-promote scheduled posts whose time has passed (JST)
+        if (autoPromote(posts)) {
+            await writeJsonArray(FILE, posts).catch(e =>
+                console.error('[diary/id] auto-promote save error:', e)
+            );
+        }
+        const updatedIdx = posts.findIndex(p => p.id === id);
+        if (updatedIdx < 0) return res.status(404).json({ error: 'Not found' });
+        const post = posts[updatedIdx];
         if (post.status !== 'published' && !isAuthed(req))
             return res.status(404).json({ error: 'Not found' });
         return res.status(200).json(post);
@@ -50,19 +81,32 @@ export default async function handler(req, res) {
         if (idx < 0)        return res.status(404).json({ error: 'Not found' });
 
         const body = await readBody(req);
-        const { title, body: text, date, status } = body;
+        const { title, body: text, date, status, scheduledAt } = body;
         const prev = posts[idx];
 
         if (date !== undefined && !DATE_RE.test(String(date)))
             return res.status(400).json({ error: 'Invalid date format; expected YYYY-MM-DD' });
 
+        const validStatuses = ['published', 'draft', 'scheduled'];
+        const safeStatus = status && validStatuses.includes(status) ? status : prev.status;
+
+        // scheduledAt validation
+        const rawSched = scheduledAt !== undefined
+            ? String(scheduledAt).trim()
+            : (prev.scheduledAt || '');
+        if (safeStatus === 'scheduled') {
+            if (!rawSched || !SCHED_RE.test(rawSched))
+                return res.status(400).json({ error: 'scheduledAt required (YYYY-MM-DDTHH:MM)' });
+        }
+
         const updated = {
             ...prev,
-            title:     title  !== undefined ? String(title).trim() : prev.title,
-            body:      text   !== undefined ? String(text).trim()  : prev.body,
-            date:      date   !== undefined ? String(date)         : prev.date,
-            status:    status && ['published','draft'].includes(status) ? status : prev.status,
-            updatedAt: new Date().toISOString(),
+            title:       title       !== undefined ? String(title).trim()  : prev.title,
+            body:        text        !== undefined ? String(text).trim()   : prev.body,
+            date:        date        !== undefined ? String(date)          : prev.date,
+            status:      safeStatus,
+            scheduledAt: safeStatus === 'scheduled' ? rawSched : '',
+            updatedAt:   new Date().toISOString(),
         };
 
         try {

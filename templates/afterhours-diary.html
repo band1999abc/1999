@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=33">
-    <link rel="stylesheet" href="/admin.css?v=1">
+    <link rel="stylesheet" href="/admin.css?v=2">
 </head>
 <body data-page="afterhours-diary" class="auth-hidden">
 
@@ -58,22 +58,36 @@
                 class="admin-input da-date-input"
             >
 
-            <div class="admin-label">状態</div>
-            <div class="da-radios">
+            <div class="admin-label">公開設定</div>
+            <div class="da-radios" id="da-pub-mode-wrap">
                 <label class="da-radio">
-                    <input type="radio" name="da-status" value="published">
-                    <span>公開</span>
+                    <input type="radio" name="da-pub-mode" value="published">
+                    <span>今すぐ公開</span>
                 </label>
                 <label class="da-radio">
-                    <input type="radio" name="da-status" value="draft" checked>
+                    <input type="radio" name="da-pub-mode" value="scheduled">
+                    <span>予約公開</span>
+                </label>
+                <label class="da-radio">
+                    <input type="radio" name="da-pub-mode" value="draft" checked>
                     <span>下書き</span>
                 </label>
             </div>
 
+            <!-- datetime picker — visible only when "予約公開" is selected -->
+            <div id="da-scheduled-wrap" class="da-hidden">
+                <div class="admin-label">公開日時（日本時間）</div>
+                <input
+                    type="datetime-local"
+                    id="da-scheduled-at"
+                    class="admin-input da-date-input"
+                >
+            </div>
+
             <div class="da-btns">
                 <button type="button" class="admin-btn" id="da-save">保存</button>
-                <button type="button" class="admin-btn da-btn-publish" id="da-publish">公開</button>
-                <button type="button" class="admin-btn da-btn-delete" id="da-delete" style="display:none">削除</button>
+                <button type="button" class="admin-btn da-btn-publish" id="da-publish">今すぐ公開</button>
+                <button type="button" class="admin-btn da-btn-delete da-hidden" id="da-delete">削除</button>
             </div>
 
         </form>
@@ -89,7 +103,7 @@
 <script src="/whale.js"></script>
 <script src="/script.js?v=2"></script>
 <script src="/admin.js?v=2"></script>
-<script src="/diary-admin.js"></script>
+<script src="/diary-admin.js?v=2"></script>
 
 </body>
 </html>

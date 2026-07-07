@@ -22,8 +22,9 @@ body[data-page="afterhours"] .sub {
     transition: color var(--transition-slow) ease;
 }
 
-/* JS-controlled display toggle */
+/* JS-controlled display toggles */
 .la-hidden { display: none; }
+.da-hidden  { display: none; }
 
 /* ==============================
    Login form + Dashboard
@@ -246,7 +247,33 @@ body.night .admin-error { color: #c08878; }
     width: 6px;
 }
 
-.da-dot.is-published { background: #8aaa8a; }
+.da-dot.is-published  { background: #8aaa8a; }
+.da-dot.is-scheduled  { background: #c8a070; }
+
+.da-badge {
+    border-radius: 2px;
+    flex-shrink: 0;
+    font-size: 9px;
+    letter-spacing: 0.07em;
+    line-height: 1.6;
+    margin-left: auto;
+    padding: 1px 5px;
+}
+.da-badge--published {
+    background: rgba(138, 170, 138, 0.15);
+    border: 1px solid rgba(138, 170, 138, 0.45);
+    color: #6a9a6a;
+}
+.da-badge--scheduled {
+    background: rgba(200, 160, 112, 0.15);
+    border: 1px solid rgba(200, 160, 112, 0.45);
+    color: #b87d40;
+}
+.da-badge--draft {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+}
 
 .da-item-date {
     color: var(--text-muted);
@@ -351,10 +378,14 @@ body.night .admin-error { color: #c08878; }
 
 /* Night mode */
 body.night .da-item:hover,
-body.night .da-item.is-active  { background: rgba(255,255,255,.05); }
-body.night .da-dot.is-published{ background: #6a9a6a; }
-body.night .da-date-input      { color-scheme: dark; }
-body.night .da-btn-publish     { opacity: .9; }
+body.night .da-item.is-active      { background: rgba(255,255,255,.05); }
+body.night .da-dot.is-published    { background: #6a9a6a; }
+body.night .da-dot.is-scheduled    { background: #b8905a; }
+body.night .da-date-input          { color-scheme: dark; }
+body.night .da-btn-publish         { opacity: .9; }
+body.night .da-badge--published    { color: #7aaa7a; border-color: rgba(122,170,122,.4); }
+body.night .da-badge--scheduled    { color: #c89050; border-color: rgba(200,144,80,.4); }
+body.night .da-badge--draft        { color: #888; }
 
 /* ==============================
    Live Admin — /afterhours/live

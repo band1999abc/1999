@@ -125,16 +125,38 @@ def _cookie_header(token):
 
 # ── Diary storage helpers ─────────────────────────────────────────────────────
 
-_DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+_DATE_RE     = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+_SCHED_AT_RE = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$')
 
 
 def _today_iso():
     return time.strftime('%Y-%m-%d')
 
 
+def _now_jst():
+    """Return current Japan time as 'YYYY-MM-DDTHH:MM' (JST = UTC+9)."""
+    utc_ts = time.time() + 9 * 3600
+    t = time.gmtime(utc_ts)
+    return time.strftime('%Y-%m-%dT%H:%M', t)
+
+
 def _valid_date(s):
     """Return s if it matches YYYY-MM-DD, else return today's date."""
     return s if (s and _DATE_RE.match(s)) else _today_iso()
+
+
+def _auto_promote_scheduled(posts):
+    """Promote 'scheduled' posts whose scheduledAt has passed (JST). Returns changed flag."""
+    now_jst = _now_jst()
+    changed = False
+    for p in posts:
+        if p.get('status') == 'scheduled':
+            sched = p.get('scheduledAt', '')
+            if sched and sched <= now_jst:
+                p['status'] = 'published'
+                p['updatedAt'] = time.strftime('%Y-%m-%dT%H:%M:%S')
+                changed = True
+    return changed
 
 
 def _load_diary():
@@ -453,9 +475,14 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     def _handle_diary_list(self):
         authed = self._is_authed()
         posts  = _load_diary()
+        if _auto_promote_scheduled(posts):
+            _save_diary(posts)
         if not authed:
             posts = [p for p in posts if p.get('status') == 'published']
-        posts.sort(key=lambda p: p.get('date', ''), reverse=True)
+        posts.sort(
+            key=lambda p: (p.get('date', ''), p.get('scheduledAt', '')),
+            reverse=True
+        )
         self._write_json(200, posts)
 
     # ── GET /api/diary/<id> ───────────────────────────────────────────────────
@@ -463,7 +490,9 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     def _handle_diary_get(self, item_id):
         authed = self._is_authed()
         posts  = _load_diary()
-        post   = next((p for p in posts if p.get('id') == item_id), None)
+        if _auto_promote_scheduled(posts):
+            _save_diary(posts)
+        post = next((p for p in posts if p.get('id') == item_id), None)
         if not post:
             self._write_json(404, {'error': 'Not found'})
             return
@@ -481,22 +510,30 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         body = self._read_json_body()
         if body is None:
             return
-        now      = time.strftime('%Y-%m-%dT%H:%M:%S')
-        status   = body.get('status', 'draft')
-        if status not in ('published', 'draft'):
+        now    = time.strftime('%Y-%m-%dT%H:%M:%S')
+        status = body.get('status', 'draft')
+        if status not in ('published', 'draft', 'scheduled'):
             status = 'draft'
         raw_date = str(body.get('date', ''))
         if raw_date and not _DATE_RE.match(raw_date):
             self._write_json(400, {'error': 'Invalid date format; expected YYYY-MM-DD'})
             return
+        raw_sched = str(body.get('scheduledAt', '')).strip()
+        if status == 'scheduled':
+            if not raw_sched or not _SCHED_AT_RE.match(raw_sched):
+                self._write_json(400, {'error': 'scheduledAt required (YYYY-MM-DDTHH:MM)'})
+                return
+        else:
+            raw_sched = ''
         post = {
-            'id':        str(_uuid_mod.uuid4()),
-            'title':     str(body.get('title', '')).strip(),
-            'body':      str(body.get('body',  '')).strip(),
-            'date':      _valid_date(raw_date),
-            'status':    status,
-            'createdAt': now,
-            'updatedAt': now,
+            'id':          str(_uuid_mod.uuid4()),
+            'title':       str(body.get('title', '')).strip(),
+            'body':        str(body.get('body',  '')).strip(),
+            'date':        _valid_date(raw_date),
+            'status':      status,
+            'scheduledAt': raw_sched,
+            'createdAt':   now,
+            'updatedAt':   now,
         }
         posts = _load_diary()
         posts.insert(0, post)
@@ -519,20 +556,29 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             return
         prev   = posts[idx]
         status = body.get('status', prev.get('status', 'draft'))
-        if status not in ('published', 'draft'):
+        if status not in ('published', 'draft', 'scheduled'):
             status = prev.get('status', 'draft')
         if 'date' in body:
             raw_date = str(body['date'])
             if not _DATE_RE.match(raw_date):
                 self._write_json(400, {'error': 'Invalid date format; expected YYYY-MM-DD'})
                 return
+        raw_sched = str(body['scheduledAt']).strip() if 'scheduledAt' in body \
+                    else prev.get('scheduledAt', '')
+        if status == 'scheduled':
+            if not raw_sched or not _SCHED_AT_RE.match(raw_sched):
+                self._write_json(400, {'error': 'scheduledAt required (YYYY-MM-DDTHH:MM)'})
+                return
+        else:
+            raw_sched = ''
         updated = {
             **prev,
-            'title':     str(body['title']).strip()  if 'title' in body else prev.get('title', ''),
-            'body':      str(body['body']).strip()   if 'body'  in body else prev.get('body',  ''),
-            'date':      body['date']                if 'date'  in body else prev.get('date',  _today_iso()),
-            'status':    status,
-            'updatedAt': time.strftime('%Y-%m-%dT%H:%M:%S'),
+            'title':       str(body['title']).strip()  if 'title' in body else prev.get('title', ''),
+            'body':        str(body['body']).strip()   if 'body'  in body else prev.get('body',  ''),
+            'date':        body['date']                if 'date'  in body else prev.get('date',  _today_iso()),
+            'status':      status,
+            'scheduledAt': raw_sched,
+            'updatedAt':   time.strftime('%Y-%m-%dT%H:%M:%S'),
         }
         posts[idx] = updated
         _save_diary(posts)
