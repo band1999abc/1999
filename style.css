@@ -1312,8 +1312,6 @@ body.auth-hidden { visibility: hidden; }
     z-index: 10;
     transition: background 0.15s, border-color 0.15s;
     padding: 0;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
 }
 
 .live-flyer-modal-prev { left: 12px; }
