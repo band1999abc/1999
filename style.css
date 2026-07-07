@@ -2,12 +2,15 @@
    Custom Properties
 ============================== */
 :root {
-    --accent:     #8a6a42;
-    --card-bg:    #f7f2ea;
-    --text-dark:  #2f2f2f;
-    --text-muted: #999;
-    --border:     #ddd;
-    --song-line:  rgba(140, 120, 90, .22);
+    --accent:           #8a6a42;
+    --card-bg:          #f7f2ea;
+    --text-dark:        #2f2f2f;
+    --text-muted:       #999;
+    --border:           #ddd;
+    --song-line:        rgba(140, 120, 90, .22);
+    --transition-fast:  0.25s;
+    --transition-base:  0.35s;
+    --transition-slow:  0.5s;
 }
 
 /* ==============================
@@ -27,7 +30,7 @@ body {
         radial-gradient(circle at 20% 20%, rgba(255,255,255,.35) 0%, transparent 45%),
         radial-gradient(circle at 80% 70%, rgba(255,255,255,.18) 0%, transparent 40%),
         linear-gradient(180deg, #efe8dc 0%, #e7dfd2 100%);
-    transition: background 0.5s ease, color 0.5s ease;
+    transition: background var(--transition-slow) ease, color var(--transition-slow) ease;
 
     font-family:
         -apple-system,
@@ -44,7 +47,7 @@ body {
     padding: 40px 20px;
 }
 
-/* ── music / hibiware ページ固有の余白（CSP対応：外部CSSに移動） ── */
+/* ── music / hibiware page-specific padding ── */
 body[data-page="music"] {
     align-items: center;
     padding-top: 60px;
@@ -84,7 +87,10 @@ body[data-page="hibiware"] {
     animation:
         fade 1.2s ease,
         floating 8s ease-in-out infinite;
-    transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+    transition:
+        background-color var(--transition-slow) ease,
+        border-color     var(--transition-slow) ease,
+        box-shadow       var(--transition-slow) ease;
 }
 
 /* All card children sit above the whale background */
@@ -93,9 +99,8 @@ body[data-page="hibiware"] {
     z-index: 1;
 }
 
-/* Whale: transform is driven by whale.js to stay visually fixed on screen.
-   will-change promotes the element to its own GPU compositing layer,
-   eliminating repaints during scroll. */
+/* Whale: transform is driven by whale.js for parallax.
+   will-change keeps it on its own GPU compositing layer. */
 .whale-bg {
     position: absolute;
     top: 0;
@@ -109,7 +114,7 @@ body[data-page="hibiware"] {
     pointer-events: none;
     z-index: 0;
     will-change: transform;
-    transition: opacity 0.5s ease, filter 0.5s ease;
+    transition: opacity var(--transition-slow) ease, filter var(--transition-slow) ease;
 }
 
 /* ==============================
@@ -137,22 +142,7 @@ p {
     margin-top: 18px;
     margin-bottom: 36px;
     text-align: center;
-    transition: color 0.5s ease;
-}
-
-/* After Hours ページでは .member-greeting が続くので間隔を詰める */
-body[data-page="afterhours"] .sub {
-    margin-bottom: 4px;
-}
-
-.member-greeting {
-    font-size: 13px;
-    color: #999;
-    text-align: center;
-    margin: 0 0 24px;
-    min-height: 1.4em;
-    letter-spacing: 0.03em;
-    transition: color 0.5s ease;
+    transition: color var(--transition-slow) ease;
 }
 
 /* ==============================
@@ -170,7 +160,7 @@ nav a {
     color: #444;
     padding: 15px 0;
     border-bottom: 1px solid var(--border);
-    transition: .35s;
+    transition: var(--transition-base);
 }
 
 nav a:hover {
@@ -178,24 +168,19 @@ nav a:hover {
     padding-left: 12px;
 }
 
-/* ナビアイコン */
+/* Nav icons */
 nav a svg {
     flex-shrink: 0;
     opacity: 0.65;
-    transition: opacity .35s;
+    transition: opacity var(--transition-base);
 }
 
 nav a:hover svg {
     opacity: 1;
 }
 
-body.night nav a svg {
-    opacity: 0.45;
-}
-
-body.night nav a:hover svg {
-    opacity: 0.9;
-}
+body.night nav a svg       { opacity: 0.45; }
+body.night nav a:hover svg { opacity: 0.9;  }
 
 /* ==============================
    Footer
@@ -204,7 +189,7 @@ footer {
     margin-top: 45px;
     color: var(--text-muted);
     font-size: 14px;
-    transition: color 0.5s ease;
+    transition: color var(--transition-slow) ease;
 }
 
 /* ==============================
@@ -257,7 +242,9 @@ footer {
     color: #222;
 }
 
-.song-link:hover {
+.song-link:hover,
+.song-link:hover .play-icon,
+.song-item:hover .play-icon {
     color: var(--accent);
 }
 
@@ -285,7 +272,7 @@ footer {
     color: var(--accent);
     text-decoration: none;
     flex-shrink: 0;
-    transition: .3s;
+    transition: var(--transition-fast);
 }
 
 .song-name {
@@ -294,7 +281,7 @@ footer {
     color: #222;
     text-decoration: none;
     white-space: nowrap;
-    transition: transform .25s ease, color .25s ease;
+    transition: transform var(--transition-fast) ease, color var(--transition-fast) ease;
 }
 
 .song-item:hover .song-name {
@@ -333,7 +320,7 @@ footer {
     font-size: 16px;
     letter-spacing: .18em;
     cursor: pointer;
-    transition: .3s;
+    transition: var(--transition-fast);
 }
 
 .play-button:hover {
@@ -409,6 +396,15 @@ footer {
     margin: 45px 0;
 }
 
+/* Optional entry title */
+.diary-entry-title {
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 4px 0 6px;
+}
+
 /* ==============================
    Members
 ============================== */
@@ -428,7 +424,6 @@ footer {
     text-transform: uppercase;
 }
 
-/* .name is always inside .member-list; one consolidated rule */
 .member-list .name {
     margin-top: 6px;
     font-weight: 700;
@@ -476,7 +471,7 @@ footer {
     font-weight: 600;
     color: var(--text-dark);
     text-decoration: none;
-    transition: opacity .25s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
 .contact-link:hover {
@@ -488,7 +483,7 @@ footer {
     margin-top: 10px;
     color: #666;
     text-decoration: none;
-    transition: opacity .25s ease;
+    transition: opacity var(--transition-fast) ease;
 }
 
 .back-home:hover {
@@ -508,7 +503,7 @@ footer {
     line-height: 1;
     opacity: 0;
     transform: translateY(4px);
-    transition: opacity 0.4s ease, transform 0.4s ease, color 0.5s ease;
+    transition: opacity 0.4s ease, transform 0.4s ease, color var(--transition-slow) ease;
 }
 
 .weather-subtext.visible {
@@ -516,17 +511,19 @@ footer {
     transform: translateY(0);
 }
 
-/* Home message (動的日本語メッセージ) */
+/* Home message (dynamic Japanese message) */
 .home-message {
     text-align: center;
     opacity: 0;
     transform: translateY(4px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    transition: opacity var(--transition-slow) ease, transform var(--transition-slow) ease;
 }
+
 .home-message.visible {
     opacity: 1;
     transform: translateY(0);
 }
+
 .home-message p {
     line-height: 2;
     margin-bottom: 4px;
@@ -540,16 +537,16 @@ footer {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 3; /* above card (z-index: 2) */
+    z-index: 3; /* above .card (z-index: 2) */
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity var(--transition-slow) ease;
 }
 
 /* ==============================
    Weather — Effects
 ============================== */
 
-/* Sunny: soft warm light beams */
+/* Sunny: warm light beams */
 body.weather-sunny::before {
     content: '';
     position: fixed;
@@ -564,8 +561,7 @@ body.weather-sunny::before {
         transparent 70%
     );
     pointer-events: none;
-    z-index: 3; /* above card */
-    /* Fade in 0→0.6 over 0.5s, then chain into sunbeam loop (starts at 0.6) */
+    z-index: 3;
     animation: weather-sunny-in 0.5s ease forwards, sunbeam 9s ease-in-out 0.5s infinite;
 }
 
@@ -579,7 +575,7 @@ body.weather-sunny::before {
     50%       { opacity: 1;   transform: scale(1.06); }
 }
 
-/* Cloudy: slightly cooler background + subtle cool overlay */
+/* Cloudy: cooler tones */
 body.weather-cloudy {
     background:
         radial-gradient(circle at 20% 20%, rgba(255,255,255,.20) 0%, transparent 45%),
@@ -593,7 +589,7 @@ body.weather-cloudy::before {
     inset: 0;
     background: rgba(180, 185, 195, 0.12);
     pointer-events: none;
-    z-index: 3; /* above card */
+    z-index: 3;
     animation: weather-overlay-in 0.5s ease forwards;
 }
 
@@ -602,9 +598,8 @@ body.weather-cloudy::before {
     to   { opacity: 1; }
 }
 
-/* Rain: cooler, darker background + blue-grey overlay */
+/* Rain: cool blue-grey tones */
 body.weather-rain {
-    /* 3 gradients — matches default body structure for smooth CSS transition */
     background:
         radial-gradient(circle at 30% 10%, rgba(190,205,225,.30) 0%, transparent 50%),
         radial-gradient(circle at 80% 70%, rgba(190,205,225,.08) 0%, transparent 40%),
@@ -617,13 +612,12 @@ body.weather-rain::before {
     inset: 0;
     background: rgba(100, 120, 155, 0.10);
     pointer-events: none;
-    z-index: 3; /* above card */
+    z-index: 3;
     animation: weather-overlay-in 0.5s ease forwards;
 }
 
-/* Snow: cooler, brighter background */
+/* Snow: bright cool tones */
 body.weather-snow {
-    /* 3 gradients — matches default body structure for smooth CSS transition */
     background:
         radial-gradient(circle at 50% 0%, rgba(235,240,255,.45) 0%, transparent 55%),
         radial-gradient(circle at 80% 70%, rgba(235,240,255,.12) 0%, transparent 40%),
@@ -637,8 +631,7 @@ body.weather-foggy::before {
     inset: 0;
     background: rgba(238, 235, 230, 0.45);
     pointer-events: none;
-    z-index: 3; /* above card */
-    /* Fade in 0→0.7 over 0.5s, then chain into fog-drift loop (starts at 0.7) */
+    z-index: 3;
     animation: weather-foggy-in 0.5s ease forwards, fog-drift 12s ease-in-out 0.5s infinite;
 }
 
@@ -673,10 +666,6 @@ body.weather-foggy::before {
         padding-bottom: 48px;
     }
 
-    h1 {
-        font-size: 64px;
-    }
-
     .song-name {
         font-size: 20px;
     }
@@ -703,11 +692,11 @@ body.weather-foggy::before {
 }
 
 /* ==============================
-   Night mode  (19:00 – 06:59)
-   Added to <body> by script.js
+   Night mode  (18:00 – 05:59)
+   Applied to <body> by script.js
 ============================== */
 
-/* — CSS variable overrides — */
+/* CSS variable overrides */
 body.night {
     --accent:     #c49a6c;
     --card-bg:    #1e2235;
@@ -722,33 +711,32 @@ body.night {
         linear-gradient(180deg, #1a1e2e 0%, #141624 100%);
 }
 
-/* — Card — */
+/* Card */
 body.night .card {
     border-color: #2a2f45;
     box-shadow:
         0 14px 45px rgba(0, 0, 0, .38),
         0 2px 8px rgba(80, 100, 140, .08) inset;
-    /* Soften dot texture on dark surface */
     background-image:
         radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
         radial-gradient(rgba(255,255,255,.02) 1px, transparent 1px);
 }
 
-/* — Whale: dark-grey, detail-preserving — subtle on navy background — */
+/* Whale */
 body.night .whale-bg {
     opacity: .22;
     filter: grayscale(100%) contrast(1.2) brightness(0.75);
 }
 
-/* — Index: greeting & nav — */
+/* Home page */
 body.night .sub         { color: #8a9ab2; }
 body.night nav a        { color: #9aa0b8; }
 body.night nav a:hover  { color: var(--accent); }
 
-/* — Weather subtext — */
+/* Weather */
 body.night .weather-subtext { color: #8a9ab2; }
 
-/* — Music page — */
+/* Music */
 body.night .song-link,
 body.night .song-name       { color: var(--text-dark); }
 body.night .play-icon       { border-color: #3d4460; }
@@ -766,384 +754,32 @@ body.night .lyrics-title span   { color: #8a9ab2; }
 body.night .lyrics-title::before,
 body.night .lyrics-title::after { background: #2e3550; }
 
-/* — Diary page — */
-body.night .diary-entry p   { color: #c0bcb4; }
-body.night .diary-date      { color: #8a9ab2; }
-body.night .diary-divider   { background: var(--border); }
-
-/* — Members page — */
-body.night .role        { color: #8a9ab2; }
-body.night .band-info   { color: #8a9ab2; border-top-color: var(--border); }
-
-/* — Contact page — */
-body.night .contact-label   { color: #8a9ab2; }
-body.night .contact-link    { color: var(--text-dark); }
-body.night .back-home       { color: #8a9ab2; }
-
-/* ==============================
-   Admin pages — /afterhours
-   (login form + dashboard)
-============================== */
-
-/* — Login form — */
-.admin-login {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin: 28px 0 0;
-}
-
-.admin-welcome {
-    color: var(--text-dark);
-    font-size: 17px;
-    margin: 0 0 6px;
-    letter-spacing: 0.01em;
-}
-
-.admin-label {
-    color: var(--text-muted);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: -6px;
-}
-
-.admin-input {
-    appearance: none;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border);
-    color: var(--text-dark);
-    font: inherit;
-    font-size: 15px;
-    letter-spacing: 0.08em;
-    outline: none;
-    padding: 8px 0;
-    transition: border-color 0.2s ease;
-    width: 100%;
-}
-
-.admin-input:focus {
-    border-bottom-color: var(--accent);
-}
-
-.admin-btn {
-    align-self: flex-start;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dark);
-    cursor: pointer;
-    font: inherit;
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    margin-top: 6px;
-    padding: 10px 30px;
-    text-transform: uppercase;
-    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
-.admin-btn:hover {
-    background: var(--text-dark);
-    border-color: var(--text-dark);
-    color: var(--card-bg);
-}
-
-.admin-btn:disabled {
-    cursor: default;
-    opacity: 0.35;
-}
-
-.admin-error {
-    color: #b07060;
-    font-size: 13px;
-    letter-spacing: 0.02em;
-    min-height: 1.4em;
-    margin: 0;
-}
-
-/* — Dashboard grid — */
-.admin-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin: 28px 0 24px;
-}
-
-.admin-module {
-    border: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 18px 16px;
-    transition: border-color 0.2s ease;
-}
-
-.admin-module:hover {
-    border-color: var(--accent);
-}
-
-/* link variant — resets <a> decoration */
-a.admin-module-link {
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.admin-module-icon {
-    font-size: 17px;
-    line-height: 1;
-    margin-bottom: 6px;
-}
-
-.admin-module-title {
-    color: var(--text-dark);
-    font-size: 14px;
-    letter-spacing: 0.02em;
-}
-
-.admin-module-desc {
-    color: var(--text-muted);
-    font-size: 12px;
-    line-height: 1.4;
-    margin-bottom: 6px;
-}
-
-.admin-module-status {
-    color: var(--text-muted);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-
-/* — Footer bar — */
-.admin-footer {
-    align-items: center;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    padding-top: 20px;
-}
-
-.admin-signout {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font: inherit;
-    font-size: 14px;
-    padding: 0;
-    transition: color 0.2s ease;
-}
-
-.admin-signout:hover {
-    color: var(--text-dark);
-}
-
-/* — Night mode overrides — */
-body.night .admin-error { color: #c08878; }
-
-/* — Responsive — */
-@media (max-width: 480px) {
-    .admin-grid { grid-template-columns: 1fr; }
-}
-
-/* ==============================
-   Diary public — optional title
-============================== */
-
-.diary-entry-title {
-    color: var(--text-dark);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    margin: 4px 0 6px;
-}
-
+/* Diary */
+body.night .diary-entry p     { color: #c0bcb4; }
+body.night .diary-date        { color: #8a9ab2; }
+body.night .diary-divider     { background: var(--border); }
 body.night .diary-entry-title { color: var(--text-dark); }
 
-/* ==============================
-   Diary Admin — /afterhours/diary
-============================== */
+/* Members */
+body.night .role      { color: #8a9ab2; }
+body.night .band-info { color: #8a9ab2; border-top-color: var(--border); }
 
-/* — List header — */
-.da-list-header {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    margin: 24px 0 8px;
-}
-
-.da-count {
-    color: var(--text-muted);
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    min-height: 1em;
-}
-
-.da-new-btn {
-    margin-top: 0;
-    padding: 7px 18px;
-    font-size: 11px;
-}
-
-/* — Post list — */
-.da-list {
-    border: 1px solid var(--border);
-    max-height: 210px;
-    overflow-y: auto;
-    margin-bottom: 28px;
-    /* subtle scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-}
-
-.da-list::-webkit-scrollbar        { width: 4px; }
-.da-list::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 2px; }
-
-.da-item {
-    align-items: center;
-    cursor: pointer;
-    display: flex;
-    gap: 10px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s ease;
-}
-
-.da-item:last-child { border-bottom: none; }
-
-.da-item:hover,
-.da-item.is-active {
-    background: rgba(0, 0, 0, .035);
-}
-
-.da-dot {
-    background: var(--border);
-    border-radius: 50%;
-    flex-shrink: 0;
-    height: 6px;
-    width: 6px;
-}
-
-.da-dot.is-published { background: #8aaa8a; }
-
-.da-item-date {
-    color: var(--text-muted);
-    flex-shrink: 0;
-    font-size: 11px;
-    letter-spacing: 0.04em;
-}
-
-.da-item-title {
-    color: var(--text-dark);
-    font-size: 13px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.da-notitle { color: var(--text-muted); }
-
-.da-empty {
-    color: var(--text-muted);
-    font-size: 13px;
-    margin: 0;
-    padding: 14px 12px;
-}
-
-/* — Editor — */
-.da-editor {
-    border-top: 1px solid var(--border);
-    padding-top: 20px;
-}
-
-.da-editor-heading {
-    color: var(--text-muted);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-}
-
-.da-form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.da-textarea {
-    line-height: 1.65;
-    min-height: 130px;
-    padding: 8px 0;
-    resize: vertical;
-}
-
-.da-date-input { color-scheme: light; }
-
-/* — Status radios — */
-.da-radios {
-    display: flex;
-    gap: 22px;
-}
-
-.da-radio {
-    align-items: center;
-    color: var(--text-dark);
-    cursor: pointer;
-    display: flex;
-    font-size: 14px;
-    gap: 7px;
-    letter-spacing: 0.01em;
-}
-
-.da-radio input { accent-color: var(--accent); }
-
-/* — Action buttons row — */
-.da-btns {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.da-btn-publish {
-    background: var(--text-dark);
-    border-color: var(--text-dark);
-    color: var(--card-bg);
-}
-
-.da-btn-publish:hover {
-    opacity: 0.75;
-    background: var(--text-dark);
-    color: var(--card-bg);
-}
-
-.da-btn-delete {
-    border-color: #c8a0a0;
-    color: #a07070;
-    margin-left: auto;
-}
-
-.da-btn-delete:hover {
-    background: #c8a0a0;
-    border-color: #c8a0a0;
-    color: #fff;
-}
-
-.la-hidden { display: none; }
-
-/* Auth gate — hide gated pages until JS confirms session */
-body.auth-hidden { visibility: hidden; }
+/* Contact */
+body.night .contact-label { color: #8a9ab2; }
+body.night .contact-link  { color: var(--text-dark); }
+body.night .back-home     { color: #8a9ab2; }
 
 /* ==============================
    Live — public page
 ============================== */
-
 .live-entry {
     padding: 24px 6px;
     border-bottom: 1px solid var(--border);
     border-radius: 6px;
-    transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        background  var(--transition-fast) ease,
+        transform   var(--transition-fast) ease,
+        box-shadow  var(--transition-fast) ease;
 }
 
 .live-entry:first-child {
@@ -1168,7 +804,7 @@ body.auth-hidden { visibility: hidden; }
     letter-spacing: 0.04em;
     color: var(--text-dark);
     margin-bottom: 5px;
-    transition: color 0.5s ease;
+    transition: color var(--transition-slow) ease;
 }
 
 .live-venue {
@@ -1176,7 +812,7 @@ body.auth-hidden { visibility: hidden; }
     color: var(--text-dark);
     margin-bottom: 9px;
     line-height: 1.5;
-    transition: color 0.5s ease;
+    transition: color var(--transition-slow) ease;
 }
 
 .live-meta {
@@ -1222,23 +858,18 @@ body.auth-hidden { visibility: hidden; }
     border-bottom: 1px solid var(--border);
 }
 
-.live-divider {
-    /* spacing handled by .live-entry padding */
-}
-
-/* ── Flyer click-to-open ────────────────────────────────────── */
+/* Flyer click-to-open */
 .live-entry.has-flyer {
     cursor: pointer;
 }
 
-/* Day mode hover */
 .live-entry.has-flyer:hover {
     background: rgba(0,0,0,.03);
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(0,0,0,.08);
 }
 
-/* FLYER badge — day mode default */
+/* FLYER badge */
 .live-flyer-indicator {
     display: inline-block;
     margin-top: 12px;
@@ -1250,7 +881,10 @@ body.auth-hidden { visibility: hidden; }
     border-radius: 3px;
     font-family: inherit;
     pointer-events: none;
-    transition: color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    transition:
+        color        var(--transition-fast) ease,
+        border-color var(--transition-fast) ease,
+        transform    var(--transition-fast) ease;
 }
 
 .live-entry.has-flyer:hover .live-flyer-indicator {
@@ -1259,7 +893,7 @@ body.auth-hidden { visibility: hidden; }
     transform: scale(1.04);
 }
 
-/* ── Flyer image — single (public page) ────────────────────── */
+/* Flyer image — single */
 .live-flyer-img {
     display: block;
     width: 100%;
@@ -1277,7 +911,7 @@ body.auth-hidden { visibility: hidden; }
     box-shadow: 0 8px 28px rgba(0,0,0,.15);
 }
 
-/* ── Flyer gallery — multiple images (public page) ──────────── */
+/* Flyer gallery — multiple images */
 .live-flyer-gallery {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1302,7 +936,7 @@ body.auth-hidden { visibility: hidden; }
     box-shadow: 0 8px 28px rgba(0,0,0,.15);
 }
 
-/* ── Flyer modal ────────────────────────────────────────────── */
+/* Flyer modal */
 .live-flyer-modal {
     display: none;
     position: fixed;
@@ -1360,7 +994,7 @@ body.auth-hidden { visibility: hidden; }
     border-color: rgba(255,255,255,.85);
 }
 
-/* Prev / Next navigation buttons */
+/* Prev / Next navigation */
 .live-flyer-modal-nav {
     position: fixed;
     top: 50%;
@@ -1395,7 +1029,7 @@ body.auth-hidden { visibility: hidden; }
     to   { opacity: 1; }
 }
 
-/* Night mode */
+/* Night mode — Live public */
 body.night .live-entry                              { border-bottom-color: var(--border); }
 body.night .live-date                               { color: var(--text-dark); }
 body.night .live-venue                              { color: var(--text-dark); }
@@ -1404,189 +1038,3 @@ body.night .live-archive-label                      { border-bottom-color: var(-
 body.night .live-entry.has-flyer:hover              { background: rgba(255,255,255,.04); }
 body.night .live-flyer-indicator                    { color: rgba(255,255,255,.38); border-color: rgba(255,255,255,.20); }
 body.night .live-entry.has-flyer:hover .live-flyer-indicator { color: rgba(255,255,255,.70); border-color: rgba(255,255,255,.42); }
-
-/* ==============================
-   Live Admin — /afterhours/live
-============================== */
-
-.la-list {
-    margin: 0 0 24px;
-}
-
-.la-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.15s, padding 0.15s, margin 0.15s;
-}
-
-.la-item:hover,
-.la-item.is-active {
-    background: rgba(138, 106, 66, 0.05);
-    margin: 0 -8px;
-    padding: 10px 8px;
-}
-
-.la-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--border);
-    flex-shrink: 0;
-    transition: background 0.2s;
-}
-
-.la-dot.is-published {
-    background: #7a9a7a;
-}
-
-.la-item-date {
-    font-size: 12px;
-    color: var(--text-muted);
-    flex-shrink: 0;
-    letter-spacing: 0.04em;
-    min-width: 76px;
-}
-
-.la-item-venue {
-    flex: 1;
-    font-size: 13px;
-    color: var(--text-dark);
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.la-order-btns {
-    display: flex;
-    gap: 2px;
-    flex-shrink: 0;
-}
-
-.la-order-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 11px;
-    line-height: 1;
-    padding: 3px 6px;
-    transition: border-color 0.15s, color 0.15s;
-}
-
-.la-order-btn:hover:not(:disabled) {
-    border-color: var(--text-dark);
-    color: var(--text-dark);
-}
-
-.la-order-btn:disabled {
-    opacity: 0.2;
-    cursor: default;
-}
-
-.la-empty {
-    color: var(--text-muted);
-    font-size: 14px;
-    padding: 16px 0;
-}
-
-/* ── Flyer section (admin) ──────────────────────────────────── */
-.la-flyer-section {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 4px;
-}
-
-/* Thumbnail grid */
-.la-flyer-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.la-flyer-thumb {
-    position: relative;
-    width: 80px;
-    height: 100px;
-    border-radius: 6px;
-    overflow: hidden;
-    background: var(--border);
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,.10);
-}
-
-.la-flyer-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-/* × delete button on each thumb */
-.la-flyer-thumb-del {
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    width: 20px;
-    height: 20px;
-    background: rgba(0,0,0,.55);
-    border: none;
-    border-radius: 50%;
-    color: #fff;
-    font-size: 14px;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: background 0.15s;
-}
-
-.la-flyer-thumb-del:hover {
-    background: rgba(180,60,40,.85);
-}
-
-.la-flyer-empty {
-    color: var(--text-muted);
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    padding: 6px 0 2px;
-}
-
-.la-flyer-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.la-flyer-action-btn {
-    margin-top: 0;
-    padding: 7px 16px;
-    font-size: 11px;
-}
-
-/* Image count badge on list item */
-.la-flyer-badge {
-    font-size: 12px;
-    opacity: 0.6;
-    flex-shrink: 0;
-    margin-right: 2px;
-}
-
-/* Night mode */
-body.night .la-item:hover,
-body.night .la-item.is-active   { background: rgba(255,255,255,.04); }
-body.night .la-dot.is-published { background: #6a9a6a; }
-
-/* — Night mode — */
-body.night .da-item:hover,
-body.night .da-item.is-active  { background: rgba(255,255,255,.05); }
-body.night .da-dot.is-published{ background: #6a9a6a; }
-body.night .da-date-input      { color-scheme: dark; }
-body.night .da-btn-publish     { opacity: .9; }

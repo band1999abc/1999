@@ -1,0 +1,532 @@
+/* ==============================
+   admin.css — Admin pages only
+   Loaded exclusively on /afterhours templates.
+   NOT included in public-facing pages.
+============================== */
+
+/* Auth gate — hides the page until JS verifies the session */
+body.auth-hidden { visibility: hidden; }
+
+/* Tighten spacing between .sub and member-greeting on the dashboard */
+body[data-page="afterhours"] .sub {
+    margin-bottom: 4px;
+}
+
+.member-greeting {
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+    margin: 0 0 24px;
+    min-height: 1.4em;
+    letter-spacing: 0.03em;
+    transition: color var(--transition-slow) ease;
+}
+
+/* JS-controlled display toggle */
+.la-hidden { display: none; }
+
+/* ==============================
+   Login form + Dashboard
+============================== */
+.admin-login {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 28px 0 0;
+}
+
+.admin-welcome {
+    color: var(--text-dark);
+    font-size: 17px;
+    margin: 0 0 6px;
+    letter-spacing: 0.01em;
+}
+
+.admin-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: -6px;
+}
+
+.admin-input {
+    appearance: none;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dark);
+    font: inherit;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    outline: none;
+    padding: 8px 0;
+    transition: border-color 0.2s ease;
+    width: 100%;
+}
+
+.admin-input:focus {
+    border-bottom-color: var(--accent);
+}
+
+.admin-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dark);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    margin-top: 6px;
+    padding: 10px 30px;
+    text-transform: uppercase;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-btn:hover {
+    background: var(--text-dark);
+    border-color: var(--text-dark);
+    color: var(--card-bg);
+}
+
+.admin-btn:disabled {
+    cursor: default;
+    opacity: 0.35;
+}
+
+.admin-error {
+    color: #b07060;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    min-height: 1.4em;
+    margin: 0;
+}
+
+/* Dashboard grid */
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 28px 0 24px;
+}
+
+.admin-module {
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 18px 16px;
+    transition: border-color 0.2s ease;
+}
+
+.admin-module:hover {
+    border-color: var(--accent);
+}
+
+a.admin-module-link {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.admin-module-icon {
+    font-size: 17px;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.admin-module-title {
+    color: var(--text-dark);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+}
+
+.admin-module-desc {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 6px;
+}
+
+.admin-module-status {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* Footer bar */
+.admin-footer {
+    align-items: center;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    padding-top: 20px;
+}
+
+.admin-signout {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.admin-signout:hover {
+    color: var(--text-dark);
+}
+
+/* Night mode */
+body.night .admin-error { color: #c08878; }
+
+@media (max-width: 480px) {
+    .admin-grid { grid-template-columns: 1fr; }
+}
+
+/* ==============================
+   Diary Admin — /afterhours/diary
+============================== */
+.da-list-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin: 24px 0 8px;
+}
+
+.da-count {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    min-height: 1em;
+}
+
+.da-new-btn {
+    margin-top: 0;
+    padding: 7px 18px;
+    font-size: 11px;
+}
+
+.da-list {
+    border: 1px solid var(--border);
+    max-height: 210px;
+    overflow-y: auto;
+    margin-bottom: 28px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.da-list::-webkit-scrollbar        { width: 4px; }
+.da-list::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 2px; }
+
+.da-item {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s ease;
+}
+
+.da-item:last-child { border-bottom: none; }
+
+.da-item:hover,
+.da-item.is-active {
+    background: rgba(0, 0, 0, .035);
+}
+
+.da-dot {
+    background: var(--border);
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 6px;
+    width: 6px;
+}
+
+.da-dot.is-published { background: #8aaa8a; }
+
+.da-item-date {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+}
+
+.da-item-title {
+    color: var(--text-dark);
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.da-notitle { color: var(--text-muted); }
+
+.da-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+    padding: 14px 12px;
+}
+
+.da-editor {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+}
+
+.da-editor-heading {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.da-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.da-textarea {
+    line-height: 1.65;
+    min-height: 130px;
+    padding: 8px 0;
+    resize: vertical;
+}
+
+.da-date-input { color-scheme: light; }
+
+.da-radios {
+    display: flex;
+    gap: 22px;
+}
+
+.da-radio {
+    align-items: center;
+    color: var(--text-dark);
+    cursor: pointer;
+    display: flex;
+    font-size: 14px;
+    gap: 7px;
+    letter-spacing: 0.01em;
+}
+
+.da-radio input { accent-color: var(--accent); }
+
+.da-btns {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.da-btn-publish {
+    background: var(--text-dark);
+    border-color: var(--text-dark);
+    color: var(--card-bg);
+}
+
+.da-btn-publish:hover {
+    opacity: 0.75;
+    background: var(--text-dark);
+    color: var(--card-bg);
+}
+
+.da-btn-delete {
+    border-color: #c8a0a0;
+    color: #a07070;
+    margin-left: auto;
+}
+
+.da-btn-delete:hover {
+    background: #c8a0a0;
+    border-color: #c8a0a0;
+    color: #fff;
+}
+
+/* Night mode */
+body.night .da-item:hover,
+body.night .da-item.is-active  { background: rgba(255,255,255,.05); }
+body.night .da-dot.is-published{ background: #6a9a6a; }
+body.night .da-date-input      { color-scheme: dark; }
+body.night .da-btn-publish     { opacity: .9; }
+
+/* ==============================
+   Live Admin — /afterhours/live
+============================== */
+.la-list {
+    margin: 0 0 24px;
+}
+
+.la-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s, padding 0.15s, margin 0.15s;
+}
+
+.la-item:hover,
+.la-item.is-active {
+    background: rgba(138, 106, 66, 0.05);
+    margin: 0 -8px;
+    padding: 10px 8px;
+}
+
+.la-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.la-dot.is-published {
+    background: #7a9a7a;
+}
+
+.la-item-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+    min-width: 76px;
+}
+
+.la-item-venue {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-dark);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.la-order-btns {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.la-order-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    padding: 3px 6px;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.la-order-btn:hover:not(:disabled) {
+    border-color: var(--text-dark);
+    color: var(--text-dark);
+}
+
+.la-order-btn:disabled {
+    opacity: 0.2;
+    cursor: default;
+}
+
+.la-empty {
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 16px 0;
+}
+
+/* Flyer section */
+.la-flyer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.la-flyer-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.la-flyer-thumb {
+    position: relative;
+    width: 80px;
+    height: 100px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--border);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,.10);
+}
+
+.la-flyer-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.la-flyer-thumb-del {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0,0,0,.55);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.15s;
+}
+
+.la-flyer-thumb-del:hover {
+    background: rgba(180,60,40,.85);
+}
+
+.la-flyer-empty {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    padding: 6px 0 2px;
+}
+
+.la-flyer-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.la-flyer-action-btn {
+    margin-top: 0;
+    padding: 7px 16px;
+    font-size: 11px;
+}
+
+.la-flyer-badge {
+    font-size: 12px;
+    opacity: 0.6;
+    flex-shrink: 0;
+    margin-right: 2px;
+}
+
+/* Night mode */
+body.night .la-item:hover,
+body.night .la-item.is-active   { background: rgba(255,255,255,.04); }
+body.night .la-dot.is-published { background: #6a9a6a; }
