@@ -249,6 +249,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_weather()
         elif path == '/api/auth':
             self._handle_auth_get()
+        elif path == '/afterhours/analytics':
+            self._serve_template('afterhours-analytics.html')
         elif path == '/afterhours/diary':
             self._handle_afterhours_diary()
         elif path == '/afterhours/live':
