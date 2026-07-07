@@ -153,6 +153,9 @@
             summer: [
                 '夏の夜もいいですね。',
                 '夏の音楽でもどうぞ。',
+                '夏ですね。',
+                '夏の空ですね。',
+                '暑い日もここで一息。',
             ],
             autumn: [
                 '秋の夜長に。',
@@ -278,7 +281,12 @@
 
             // 通常：時間帯＋季節＋天気のプールを合算してランダム
             } else {
-                let pool = MSG_TIME[tSlot].concat(MSG_SEASON[seasonKey()]);
+                // 夜を含む季節メッセージは夜の時間帯のみ追加（朝・昼に「夏の夜も…」が出ないよう）
+                const isNight = ['evening', 'latenight', 'dawn'].indexOf(tSlot) >= 0;
+                const seasonMsgs = MSG_SEASON[seasonKey()].filter(function (m) {
+                    return isNight || m.indexOf('夜') === -1;
+                });
+                let pool = MSG_TIME[tSlot].concat(seasonMsgs);
                 const wk = weatherKey(cond);
                 if (wk && MSG_WEATHER[wk]) pool = pool.concat(MSG_WEATHER[wk]);
                 if (temp !== null && temp !== undefined) {
