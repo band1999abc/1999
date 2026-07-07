@@ -204,10 +204,11 @@
 
     var PANEL_LOADERS = {
         dashboard: renderDashboard,
-        // visitors: renderVisitors,  // future
-        // music:    renderMusic,      // future
-        // pages:    renderPages,      // future
+        // music is registered by analytics-music.js after this script loads
     };
+
+    // Expose registry so analytics-music.js (loaded after this) can self-register
+    window._AA_PANELS = PANEL_LOADERS;
 
     // ── Tab navigation ────────────────────────────────────────────────────────
 

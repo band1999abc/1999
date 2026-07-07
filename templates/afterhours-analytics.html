@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=33">
-    <link rel="stylesheet" href="/admin.css?v=4">
+    <link rel="stylesheet" href="/admin.css?v=5">
 </head>
 <body data-page="afterhours-analytics" class="auth-hidden">
 
@@ -29,7 +29,7 @@
     <nav class="aa-nav" aria-label="Analytics sections">
         <button class="aa-nav-tab is-active" data-panel="dashboard">Dashboard</button>
         <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Visitors</button>
-        <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Music</button>
+        <button class="aa-nav-tab" data-panel="music">Music</button>
         <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Pages</button>
         <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">QR</button>
     </nav>
@@ -151,6 +151,64 @@
 
     </div><!-- /#aa-panel-dashboard -->
 
+    <!-- ── Music Analytics panel ────────────────────────────────── -->
+    <div id="aa-panel-music" class="aa-panel" hidden>
+
+        <!-- Track list ─────────────────────────────────────────── -->
+        <div id="am-list">
+            <div class="aa-section-header am-list-header-gap">
+                <span class="aa-section-label">Music</span>
+                <span class="aa-section-note" id="am-list-count"></span>
+            </div>
+            <div class="am-col-header">
+                <span>Track</span>
+                <span>Total</span>
+                <span>Today</span>
+                <span>Week</span>
+                <span>Month</span>
+                <span>Listeners</span>
+            </div>
+            <div id="am-tracks"></div>
+        </div>
+
+        <!-- Detail view ─────────────────────────────────────────── -->
+        <div id="am-detail" hidden>
+
+            <button class="am-back" id="am-back" type="button">← All Tracks</button>
+
+            <!-- Hero: track name + summary -->
+            <div class="am-hero">
+                <div class="am-hero-title" id="am-track-title"></div>
+                <div class="am-hero-meta"  id="am-track-meta"></div>
+            </div>
+
+            <!-- Controls: mode toggle + period selector -->
+            <div class="am-controls">
+                <div class="am-toggle-group" role="group" aria-label="グラフ表示">
+                    <button class="am-toggle-btn is-active" data-mode="cumulative" type="button">累計</button>
+                    <button class="am-toggle-btn"           data-mode="daily"      type="button">日別</button>
+                </div>
+                <div class="am-period-group" role="group" aria-label="表示期間">
+                    <button class="am-period-btn"           data-period="7d"  type="button">7日</button>
+                    <button class="am-period-btn"           data-period="30d" type="button">30日</button>
+                    <button class="am-period-btn"           data-period="90d" type="button">90日</button>
+                    <button class="am-period-btn is-active" data-period="all" type="button">全期間</button>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="am-chart-wrap">
+                <svg id="am-chart" class="am-chart" viewBox="0 0 440 180"></svg>
+            </div>
+
+            <!-- Legend + period stats -->
+            <div class="am-legend" id="am-legend"></div>
+            <div class="am-stats-row" id="am-detail-stats"></div>
+
+        </div><!-- /#am-detail -->
+
+    </div><!-- /#aa-panel-music -->
+
     <div class="admin-footer">
         <a href="/afterhours" class="back-home">← Back</a>
         <button class="admin-signout" id="signout-btn">Sign out</button>
@@ -161,6 +219,7 @@
 <script src="/script.js?v=2"></script>
 <script src="/admin.js?v=3"></script>
 <script src="/analytics-overview.js?v=2"></script>
+<script src="/analytics-music.js?v=1"></script>
 
 </body>
 </html>

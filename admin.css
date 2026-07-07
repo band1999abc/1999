@@ -793,3 +793,290 @@ body.night .aa-refresh-btn { color: var(--text-muted); }
 @media (max-width: 360px) {
     .aa-value { font-size: 22px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Music Analytics  (.am-*)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Track list ────────────────────────────────────────────────────────────── */
+
+.am-col-header {
+    color: var(--text-muted);
+    display: grid;
+    font-size: 9px;
+    gap: 6px;
+    grid-template-columns: 1fr 54px 40px 40px 48px 58px;
+    letter-spacing: 0.12em;
+    padding: 8px 4px 6px;
+    text-transform: uppercase;
+}
+
+.am-col-header span { text-align: right; }
+.am-col-header span:first-child { text-align: left; }
+
+.am-track-list { border-top: 1px solid var(--border); }
+
+.am-track-row {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: 1fr 54px 40px 40px 48px 58px;
+    padding: 11px 4px;
+    transition: background 0.15s ease;
+}
+
+.am-track-row:hover { background: rgba(0,0,0,.025); }
+body.night .am-track-row:hover { background: rgba(255,255,255,.03); }
+
+.am-track-name {
+    color: var(--text-dark);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.am-track-stat {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    text-align: right;
+}
+
+.am-track-stat--main {
+    color: var(--text-dark);
+    font-size: 13px;
+}
+
+/* ── Detail: back + hero ───────────────────────────────────────────────────── */
+
+#am-detail { margin-top: 4px; }
+
+.am-back {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    margin-top: 16px;
+    padding: 0;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+}
+.am-back:hover { color: var(--text-dark); }
+
+.am-hero { margin: 14px 0 0; }
+
+.am-hero-title {
+    color: var(--text-dark);
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    margin-bottom: 5px;
+}
+
+.am-hero-meta {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+}
+
+/* ── Controls: mode + period toggles ──────────────────────────────────────── */
+
+.am-controls {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    margin: 18px 0 10px;
+    flex-wrap: wrap;
+}
+
+.am-toggle-group,
+.am-period-group {
+    display: flex;
+}
+
+.am-toggle-btn,
+.am-period-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    padding: 4px 11px;
+    text-transform: uppercase;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.am-toggle-btn + .am-toggle-btn,
+.am-period-btn + .am-period-btn { border-left: none; }
+
+.am-toggle-btn.is-active,
+.am-period-btn.is-active {
+    background: var(--text-dark);
+    border-color: var(--text-dark);
+    color: #fff;
+}
+
+body.night .am-toggle-btn.is-active,
+body.night .am-period-btn.is-active { color: #111; }
+
+/* ── Chart ─────────────────────────────────────────────────────────────────── */
+
+.am-chart-wrap {
+    border: 1px solid var(--border);
+    overflow: hidden;
+    width: 100%;
+}
+
+.am-chart {
+    display: block;
+    height: auto;
+    width: 100%;
+}
+
+/* SVG element classes */
+.am-chart-bg { fill: transparent; }
+
+.am-chart-grid {
+    stroke: var(--border);
+    stroke-width: 0.8;
+}
+
+.am-chart-axis {
+    fill: var(--text-muted);
+    font-family: inherit;
+    font-size: 9px;
+    letter-spacing: 0.03em;
+}
+
+/* Gradient stops — accent #8a6a42 / night mode #c49a6c */
+.am-grad-top {
+    stop-color: var(--accent, #8a6a42);
+    stop-opacity: 0.18;
+}
+.am-grad-bot {
+    stop-color: var(--accent, #8a6a42);
+    stop-opacity: 0.01;
+}
+
+.am-chart-area { /* fill set inline via url(#am-grad) */ }
+
+.am-chart-line {
+    stroke: var(--accent, #8a6a42);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-width: 1.8;
+}
+
+.am-chart-dot {
+    fill: var(--accent, #8a6a42);
+}
+
+/* Event markers */
+.am-marker-live {
+    stroke: var(--accent, #8a6a42);
+    stroke-opacity: 0.75;
+    stroke-width: 1.5;
+}
+
+.am-marker-diary {
+    stroke: var(--text-muted, #999);
+    stroke-dasharray: 3 3;
+    stroke-opacity: 0.6;
+    stroke-width: 1;
+}
+
+/* ── Legend ────────────────────────────────────────────────────────────────── */
+
+.am-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 10px;
+    min-height: 14px;
+}
+
+.am-legend-item {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+}
+
+.am-legend-sw {
+    display: block;
+    flex-shrink: 0;
+    height: 10px;
+    width: 24px;
+    overflow: visible;
+}
+
+.am-legend-label {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+}
+
+/* ── Period stats row ──────────────────────────────────────────────────────── */
+
+.am-stats-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+    margin-bottom: 10px;
+}
+
+.am-stat {
+    border: 1px solid var(--border);
+    flex: 1;
+    padding: 13px 12px 11px;
+}
+
+.am-stat-val {
+    color: var(--text-dark);
+    font-size: 24px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.am-stat-lab {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+    /* Hide Today/Week/Month columns; keep Track / Total / Listeners */
+    .am-col-header,
+    .am-track-row {
+        grid-template-columns: 1fr 54px 52px;
+    }
+    /* Hide columns 3, 4, 5 (Today, Week, Month) */
+    .am-col-header > *:nth-child(3),
+    .am-col-header > *:nth-child(4),
+    .am-col-header > *:nth-child(5),
+    .am-track-row  > *:nth-child(3),
+    .am-track-row  > *:nth-child(4),
+    .am-track-row  > *:nth-child(5) { display: none; }
+
+    .am-hero-title { font-size: 21px; }
+}
+
+/* list section gap (replaces inline style) */
+.am-list-header-gap { margin-top: 20px; }
