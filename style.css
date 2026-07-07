@@ -44,6 +44,19 @@ body {
     padding: 40px 20px;
 }
 
+/* ── music / hibiware ページ固有の余白（CSP対応：外部CSSに移動） ── */
+body[data-page="music"] {
+    align-items: center;
+    padding-top: 60px;
+    padding-bottom: 60px;
+}
+
+body[data-page="hibiware"] {
+    align-items: center;
+    padding-top: 40px;
+    padding-bottom: 100px;
+}
+
 /* ==============================
    Card
 ============================== */
