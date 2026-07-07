@@ -1299,7 +1299,7 @@ body.auth-hidden { visibility: hidden; }
     transform: translateY(-50%);
     width: 48px;
     height: 80px;
-    background: transparent;
+    background: rgba(120,120,120,.25);
     border: 1.5px solid rgba(255,255,255,.30);
     border-radius: 8px;
     color: #fff;
