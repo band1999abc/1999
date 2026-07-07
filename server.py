@@ -239,6 +239,9 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_flyer_get(item_id, slot_id)
             else:
                 self.send_error(404)
+        elif path == '/sw.js':
+            # Service worker must never be cached by HTTP cache
+            self._serve_static_nocache('sw.js', 'application/javascript')
         else:
             super().do_GET()
 
@@ -329,6 +332,21 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
     def _handle_afterhours_diary(self):
         self._serve_template('afterhours-diary.html')
+
+    def _serve_static_nocache(self, filename, content_type):
+        filepath = os.path.join(_ROOT, filename)
+        try:
+            with open(filepath, 'rb') as f:
+                body = f.read()
+            self.send_response(200)
+            self.send_header('Content-Type', content_type)
+            self.send_header('Content-Length', str(len(body)))
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Service-Worker-Allowed', '/')
+            self.end_headers()
+            self.wfile.write(body)
+        except FileNotFoundError:
+            self.send_error(404)
 
     def _serve_template(self, filename):
         filepath = os.path.join(_TEMPLATES, filename)

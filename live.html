@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-180.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png">
+    <meta name="theme-color" content="#1a1e2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="1999">
     <title>Live | 1999</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +40,7 @@
 <script src="whale.js"></script>
 <script src="script.js?v=2"></script>
 <script src="live.js?v=4"></script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 
 </body>
 </html>
