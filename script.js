@@ -68,7 +68,7 @@
             pool = greetings.midday;
         } else if (hour >= 15 && hour < 18) {
             pool = greetings.afternoon;
-        } else if (hour >= 18) {
+        } else if (hour >= 18 && hour < 23) {
             pool = greetings.evening;
         } else if (hour >= 4) {
             pool = greetings.dawn;
