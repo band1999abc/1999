@@ -221,6 +221,22 @@
             'どこかで誰かも同じ音楽を聴いているかもしれません。',
         ];
 
+        // ── localStorage キャッシュ ────────────────────────────────
+        const CACHE_KEY = 'home_msg_v1';
+
+        function loadCache() {
+            try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || null; }
+            catch (e) { return null; }
+        }
+
+        function saveCache(html, date, tSlot, condition) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    html: html, date: date, tSlot: tSlot, condition: condition,
+                }));
+            } catch (e) {}
+        }
+
         // ── メッセージ表示 ─────────────────────────────────────────
         function showMessage(html) {
             msgEl.innerHTML = html;
@@ -237,39 +253,44 @@
         }
 
         function buildMessage(condition, temp, lives) {
+            const today = todayStr();
+            const tSlot = timeKey();
+            const cond  = condition || null;
+
+            // キャッシュが有効なら再利用（日付・時間帯・天気が同じ場合）
+            const cache = loadCache();
+            if (cache && cache.date === today && cache.tSlot === tSlot && cache.condition === cond) {
+                showMessage(cache.html);
+                return;
+            }
+
+            // キャッシュ無効 → 新規抽選
+            let html;
+
             // レアメッセージ（約2%）
             if (Math.random() < 0.02) {
-                showMessage('<p>' + pick(MSG_RARE) + '</p>');
-                return;
-            }
+                html = '<p>' + pick(MSG_RARE) + '</p>';
 
             // ライブ当日
-            if (isLiveToday(lives)) {
-                showMessage(
-                    '<p>好きなように過ごしてください。</p>' +
-                    '<p>一緒に歌ってもいいし、</p>' +
-                    '<p>コーヒーを飲みながら眺めるだけでも。</p>'
-                );
-                return;
-            }
+            } else if (isLiveToday(lives)) {
+                html = '<p>好きなように過ごしてください。</p>' +
+                       '<p>一緒に歌ってもいいし、</p>' +
+                       '<p>コーヒーを飲みながら眺めるだけでも。</p>';
 
             // 通常：時間帯＋季節＋天気のプールを合算してランダム
-            let pool = MSG_TIME[timeKey()].concat(MSG_SEASON[seasonKey()]);
-            const wk = weatherKey(condition);
-            if (wk && MSG_WEATHER[wk]) {
-                pool = pool.concat(MSG_WEATHER[wk]);
-            }
-
-            // 気温ベースのプールを追加（取得できた場合のみ）
-            if (temp !== null && temp !== undefined) {
-                if (temp >= 30) {
-                    pool = pool.concat(MSG_HOT);
-                } else if (temp <= 8) {
-                    pool = pool.concat(MSG_COLD);
+            } else {
+                let pool = MSG_TIME[tSlot].concat(MSG_SEASON[seasonKey()]);
+                const wk = weatherKey(cond);
+                if (wk && MSG_WEATHER[wk]) pool = pool.concat(MSG_WEATHER[wk]);
+                if (temp !== null && temp !== undefined) {
+                    if (temp >= 30) pool = pool.concat(MSG_HOT);
+                    else if (temp <= 8) pool = pool.concat(MSG_COLD);
                 }
+                html = '<p>' + pick(pool) + '</p>';
             }
 
-            showMessage('<p>' + pick(pool) + '</p>');
+            saveCache(html, today, tSlot, cond);
+            showMessage(html);
         }
 
         // ── weatherReady イベント待機 ──────────────────────────────
