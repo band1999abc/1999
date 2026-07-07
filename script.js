@@ -55,12 +55,12 @@
     const greetingEl = document.getElementById('greeting');
     if (greetingEl) {
         const greetings = {
-            morning:   ['Good morning.', 'Rise and shine.', 'Morning.', 'A new day.', 'Still half asleep?'],
-            midday:    ['Welcome.', 'Hello.', 'Hey.', "What's up.", 'Good to see you.'],
-            afternoon: ['Take a break.', 'Afternoon.', 'Still here?', "How's the day going.", 'Almost there.'],
-            evening:   ['Good evening.', 'Evening.', 'The night is young.', 'Welcome back.', 'Night owl.'],
-            latenight: ['Still up?', "Can't sleep?", 'Late night.', 'Just you and the dark.', 'Night shift.'],
-            dawn:      ['Up already?', 'Almost morning.', "The sun's coming.", 'Early bird.', 'Dawn breaking.'],
+            morning:   ['Good morning.', 'Still half asleep?'],
+            midday:    ['Welcome.', "What's up?"],
+            afternoon: ['Take a break.', "How's the day going."],
+            evening:   ['Good evening.', 'The night is young.'],
+            latenight: ['Still up?', "Can't sleep?"],
+            dawn:      ['Up already?', 'Almost morning.'],
         };
         greetingEl.textContent = pick(greetings[timeKey()]);
     }
