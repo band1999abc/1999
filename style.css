@@ -80,7 +80,9 @@ body {
     z-index: 1;
 }
 
-/* Whale: top is driven by whale.js to stay visually fixed on screen */
+/* Whale: transform is driven by whale.js to stay visually fixed on screen.
+   will-change promotes the element to its own GPU compositing layer,
+   eliminating repaints during scroll. */
 .whale-bg {
     position: absolute;
     top: 0;
@@ -93,6 +95,7 @@ body {
     filter: grayscale(100%) contrast(1.2);
     pointer-events: none;
     z-index: 0;
+    will-change: transform;
     transition: opacity 0.5s ease, filter 0.5s ease;
 }
 
