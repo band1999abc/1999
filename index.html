@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
-    <link rel="stylesheet" href="style.css?v=27">
+    <link rel="stylesheet" href="style.css?v=30">
 </head>
 <body>
 
@@ -33,11 +33,50 @@
     <div id="home-message" class="home-message"></div>
 
     <nav>
-        <a href="music.html">Music</a>
-        <a href="live.html">Live</a>
-        <a href="diary.html">Diary</a>
-        <a href="members.html">Members</a>
-        <a href="contact.html">Contact</a>
+        <a href="music.html">
+            <!-- 音符（八分音符：符頭＋符幹＋旗） -->
+            <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <ellipse cx="5.5" cy="13.5" rx="3" ry="2" transform="rotate(-18 5.5 13.5)" fill="currentColor" stroke="none"/>
+                <line x1="8.2" y1="13" x2="8.2" y2="3.5"/>
+                <line x1="8.2" y1="3.5" x2="13" y2="5.5"/>
+            </svg>
+            Music
+        </a>
+        <a href="live.html">
+            <!-- マイク -->
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="5.5" y="1" width="5" height="8" rx="2.5"/>
+                <path d="M3 9.5a5 5 0 0 0 10 0"/>
+                <line x1="8" y1="14.5" x2="8" y2="16"/>
+                <line x1="5.5" y1="16" x2="10.5" y2="16"/>
+            </svg>
+            Live
+        </a>
+        <a href="diary.html">
+            <!-- 開いた本 -->
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 13.5V2.5"/>
+                <path d="M8 2.5C7 1.5 3 1.5 1 2.5v11c2-1 6-1 7 0"/>
+                <path d="M8 2.5c1-1 5-1 7 0v11c-2-1-6-1-7 0"/>
+            </svg>
+            Diary
+        </a>
+        <a href="members.html">
+            <!-- 人物 -->
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+                <circle cx="8" cy="5" r="3.5"/>
+                <path d="M2 15.5a6 6 0 0 1 12 0"/>
+            </svg>
+            Members
+        </a>
+        <a href="contact.html">
+            <!-- 封筒 -->
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="1" y="3.5" width="14" height="10" rx="1.5"/>
+                <polyline points="1.5,4 8,9.5 14.5,4"/>
+            </svg>
+            Contact
+        </a>
     </nav>
 
     <footer>©1999</footer>

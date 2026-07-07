@@ -3,7 +3,7 @@
  * Caches the app shell for fast load and offline fallback.
  */
 
-const CACHE = '1999-v1';
+const CACHE = '1999-v2';
 const SHELL = [
   '/',
   '/index.html',

@@ -160,7 +160,9 @@ nav {
 }
 
 nav a {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     text-decoration: none;
     color: #444;
     padding: 15px 0;
@@ -171,6 +173,25 @@ nav a {
 nav a:hover {
     color: var(--accent);
     padding-left: 12px;
+}
+
+/* ナビアイコン */
+nav a svg {
+    flex-shrink: 0;
+    opacity: 0.65;
+    transition: opacity .35s;
+}
+
+nav a:hover svg {
+    opacity: 1;
+}
+
+body.night nav a svg {
+    opacity: 0.45;
+}
+
+body.night nav a:hover svg {
+    opacity: 0.9;
 }
 
 /* ==============================
