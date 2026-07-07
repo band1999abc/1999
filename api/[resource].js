@@ -1,0 +1,195 @@
+/**
+ * Vercel Serverless Function: /api/[resource]
+ *
+ * Handles GET (list) and POST (create) for content resources.
+ * Vercel sets req.query.resource to the matched path segment.
+ *
+ * Supported resources:
+ *   diary  →  GET /api/diary,  POST /api/diary
+ *   live   →  GET /api/live,   POST /api/live
+ *
+ * To add a new resource, define { GET, POST } handler functions below
+ * and register them in HANDLERS — no new Vercel function needed.
+ */
+
+import { randomUUID } from 'crypto';
+import { COOKIE_NAME, verifyToken, parseCookies } from './_auth.js';
+import { readJsonArray, writeJsonArray } from './_storage.js';
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
+
+async function readBody(req) {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    try { return JSON.parse(Buffer.concat(chunks).toString()); }
+    catch { return {}; }
+}
+
+function isAuthed(req) {
+    const auth = req.headers['authorization'] || '';
+    if (auth.startsWith('Bearer ') && verifyToken(auth.slice(7)) !== null) return true;
+    const cookies = parseCookies(req.headers.cookie);
+    return verifyToken(cookies[COOKIE_NAME] || '') !== null;
+}
+
+// ── Shared regex ──────────────────────────────────────────────────────────────
+
+const DATE_RE  = /^\d{4}-\d{2}-\d{2}$/;
+const SCHED_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+const TIME_RE  = /^\d{1,2}:\d{2}$/;
+
+// ── Diary ─────────────────────────────────────────────────────────────────────
+
+const DIARY_FILE = 'data/diary.json';
+
+/** Current Japan time as 'YYYY-MM-DDTHH:MM' (JST = UTC+9). */
+function nowJST() {
+    const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    return d.toISOString().slice(0, 16);
+}
+
+/** Promote 'scheduled' posts whose scheduledAt has passed. Returns true if any changed. */
+function autoPromote(posts) {
+    const now = nowJST();
+    let changed = false;
+    for (const p of posts) {
+        if (p.status === 'scheduled' && p.scheduledAt && p.scheduledAt <= now) {
+            p.status    = 'published';
+            p.updatedAt = new Date().toISOString();
+            changed     = true;
+        }
+    }
+    return changed;
+}
+
+async function diaryList(req, res) {
+    let posts = await readJsonArray(DIARY_FILE);
+    if (autoPromote(posts)) {
+        await writeJsonArray(DIARY_FILE, posts).catch(e =>
+            console.error('[diary] auto-promote save error:', e)
+        );
+    }
+    if (!isAuthed(req)) posts = posts.filter(p => p.status === 'published');
+    posts.sort((a, b) => {
+        const da = (b.date || '') + (b.scheduledAt || '');
+        const db = (a.date || '') + (a.scheduledAt || '');
+        return da.localeCompare(db);
+    });
+    return res.status(200).json(posts);
+}
+
+async function diaryCreate(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const body = await readBody(req);
+    const { title = '', body: text = '', date, status = 'draft', scheduledAt = '' } = body;
+
+    if (date && !DATE_RE.test(String(date)))
+        return res.status(400).json({ error: 'Invalid date format; expected YYYY-MM-DD' });
+
+    const validStatuses  = ['published', 'draft', 'scheduled'];
+    const safeStatus     = validStatuses.includes(status) ? status : 'draft';
+    const safeScheduledAt = String(scheduledAt || '').trim();
+
+    if (safeStatus === 'scheduled') {
+        if (!safeScheduledAt || !SCHED_RE.test(safeScheduledAt))
+            return res.status(400).json({ error: 'scheduledAt required (YYYY-MM-DDTHH:MM)' });
+    }
+
+    const now  = new Date().toISOString();
+    const post = {
+        id:          randomUUID(),
+        title:       String(title).trim(),
+        body:        String(text).trim(),
+        date:        (date && DATE_RE.test(String(date))) ? String(date) : now.slice(0, 10),
+        status:      safeStatus,
+        scheduledAt: safeStatus === 'scheduled' ? safeScheduledAt : '',
+        createdAt:   now,
+        updatedAt:   now,
+    };
+
+    try {
+        const posts = await readJsonArray(DIARY_FILE);
+        posts.unshift(post);
+        await writeJsonArray(DIARY_FILE, posts);
+    } catch (e) {
+        console.error('[diary] save error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(201).json(post);
+}
+
+// ── Live ──────────────────────────────────────────────────────────────────────
+
+const LIVES_FILE = 'data/lives.json';
+
+function validTime(s) {
+    const str = String(s || '').trim();
+    return TIME_RE.test(str) ? str : '';
+}
+
+async function liveList(req, res) {
+    let lives = await readJsonArray(LIVES_FILE);
+    if (!isAuthed(req)) lives = lives.filter(l => l.status === 'published');
+    return res.status(200).json(lives);
+}
+
+async function liveCreate(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const body = await readBody(req);
+    const { date, venue = '', open = '', start = '', ticket = '', status = 'draft', sort_order } = body;
+
+    if (date && !DATE_RE.test(String(date)))
+        return res.status(400).json({ error: 'Invalid date format; expected YYYY-MM-DD' });
+    if (sort_order !== undefined && !Number.isFinite(Number(sort_order)))
+        return res.status(400).json({ error: 'sort_order must be an integer' });
+
+    const lives    = await readJsonArray(LIVES_FILE);
+    const maxOrder = lives.reduce((m, l) => Math.max(m, l.sort_order ?? 0), -1);
+    const now      = new Date().toISOString();
+    const live = {
+        id:         randomUUID(),
+        date:       (date && DATE_RE.test(String(date))) ? String(date) : now.slice(0, 10),
+        venue:      String(venue).trim(),
+        open:       validTime(open),
+        start:      validTime(start),
+        ticket:     String(ticket).trim(),
+        status:     ['published', 'draft'].includes(status) ? status : 'draft',
+        sort_order: sort_order !== undefined ? Number(sort_order) : maxOrder + 1,
+        createdAt:  now,
+        updatedAt:  now,
+    };
+
+    try {
+        lives.push(live);
+        await writeJsonArray(LIVES_FILE, lives);
+    } catch (e) {
+        console.error('[live] save error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(201).json(live);
+}
+
+// ── Resource router ───────────────────────────────────────────────────────────
+//
+// Add new resources here. Each entry is a { GET?, POST? } map of method handlers.
+// Unknown resources → 404. Unknown methods → 405.
+
+const HANDLERS = {
+    diary: { GET: diaryList,  POST: diaryCreate  },
+    live:  { GET: liveList,   POST: liveCreate   },
+};
+
+export default async function handler(req, res) {
+    res.setHeader('Cache-Control', 'no-store');
+
+    const resource = req.query?.resource;
+    const methods  = HANDLERS[resource];
+    if (!methods) return res.status(404).json({ error: 'Not found' });
+
+    const fn = methods[req.method];
+    if (!fn)  return res.status(405).json({ error: 'Method not allowed' });
+
+    return fn(req, res);
+}

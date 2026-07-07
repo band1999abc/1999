@@ -2,12 +2,9 @@
   "framework": null,
   "outputDirectory": ".",
   "functions": {
-    "api/afterhours-pages.js":  { "includeFiles": "templates/**" },
-    "api/live.js":              { "includeFiles": "data/**" },
-    "api/live/[id].js":         { "includeFiles": "data/**" },
-    "api/flyer/[id].js":        { "includeFiles": "data/**" },
-    "api/diary.js":             { "includeFiles": "data/**" },
-    "api/diary/[id].js":        { "includeFiles": "data/**" }
+    "api/afterhours-pages.js":      { "includeFiles": "templates/**" },
+    "api/[resource].js":            { "includeFiles": "data/**" },
+    "api/[resource]/[id].js":       { "includeFiles": "data/**" }
   },
   "rewrites": [
     { "source": "/live",                  "destination": "/live.html"                         },
