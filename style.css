@@ -624,6 +624,12 @@ body.weather-foggy::before {
         padding: 32px 24px;
     }
 
+    body[data-page="music"],
+    body[data-page="hibiware"] {
+        padding-top: 64px;
+        padding-bottom: 64px;
+    }
+
     h1 {
         font-size: 64px;
     }
