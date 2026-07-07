@@ -57,16 +57,21 @@
   }
 
   /* ── Apply weather to DOM ───────────────────────────────────── */
+  function dispatchWeatherReady(condition) {
+    window.dispatchEvent(new CustomEvent('weatherReady', { detail: { condition: condition } }));
+  }
+
   function applyWeather(condition) {
     console.log('[weather] applyWeather: condition=' + JSON.stringify(condition));
     var info = CONDITIONS[condition];
     console.log('[weather] matched cls: ' + (info ? info.cls : 'NO MATCH — skipping'));
-    if (!info) return;
+    if (!info) { dispatchWeatherReady(null); return; }
 
     document.body.classList.add(info.cls);
     console.log('[weather] body.className:', document.body.className);
 
     setWeatherText(info.text);
+    dispatchWeatherReady(condition);
 
     if (info.cls === 'weather-rain') { console.log('[weather] → startRain()'); startRain(); }
     if (info.cls === 'weather-snow') { console.log('[weather] → startSnow()'); startSnow(); }
@@ -220,6 +225,7 @@
           // No condition returned — gently fade out the loading text
           var el = document.getElementById('weather-text');
           if (el) el.classList.remove('visible');
+          dispatchWeatherReady(null);
         }
       })
       .catch(function () {
@@ -227,6 +233,7 @@
         console.log('[weather] fetch failed after ' + ms + 'ms');
         var el = document.getElementById('weather-text');
         if (el) el.classList.remove('visible');
+        dispatchWeatherReady(null);
       });
   }
 

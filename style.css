@@ -476,6 +476,22 @@ footer {
     transform: translateY(0);
 }
 
+/* Home message (動的日本語メッセージ) */
+.home-message {
+    text-align: center;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.home-message.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.home-message p {
+    line-height: 2;
+    margin-bottom: 4px;
+}
+
 /* Canvas for rain / snow particles */
 #weather-canvas {
     display: none;
