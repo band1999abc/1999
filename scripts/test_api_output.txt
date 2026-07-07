@@ -1,0 +1,59 @@
+
+=== /api/auth ===
+  ✓ GET /api/auth unauthenticated → ok:false
+  ✓ POST /api/auth login → ok:true
+  ✓ GET /api/auth authed → ok:true
+
+=== /api/diary (unauthenticated) ===
+  ✓ GET /api/diary → array
+  ✓ GET /api/diary unauth → only published items
+
+=== /api/diary CRUD (authenticated) ===
+  ✓ POST /api/diary unauthed → 401
+  ✓ POST /api/diary create draft → has id
+    diary_id=e546c92f-97dc-4adf-b7cd-e37f59510069
+  ✓ GET /api/diary/:id authed → 200
+  ✓ GET /api/diary/:id unauthed draft → 404
+  ✓ PUT /api/diary/:id → updated title
+  ✓ GET /api/diary/:id unauthed published → 200
+  ✓ PUT /api/diary/:id unauthed → 401
+  ✓ DELETE /api/diary/:id → ok
+  ✓ GET /api/diary/:id after delete → 404
+  ✓ POST /api/diary scheduled without scheduledAt → 400 error
+  ✓ POST /api/diary scheduled with valid scheduledAt → has id
+
+=== /api/live CRUD (authenticated) ===
+  ✓ GET /api/live → array
+  ✓ POST /api/live unauthed → 401
+  ✓ POST /api/live create → has id
+    live_id=24b32f5d-9c86-4213-b43b-a4ccbc34233b
+  ✓ GET /api/live/:id authed → 200
+  ✓ GET /api/live/:id unauthed draft → 404
+  ✓ PUT /api/live/:id → updated venue
+  ✓ GET /api/live/:id unauthed published → 200
+  ✓ DELETE /api/live/:id unauthed → 401
+
+=== /api/flyer/:id ===
+  ✓ GET /api/flyer/:id before upload → 404
+  ✓ POST /api/flyer/:id unauthed → 401
+  ✓ POST /api/flyer/:id upload → slotId
+    slot_id=el5p6o
+  ✓ GET /api/flyer/:id (default slot, published live) → 200
+  ✓ GET /api/flyer/:id?s=SLOT → 200
+  ✓ GET /api/flyer/:id?s=bad → 404
+  ✓ DELETE /api/flyer/:id?s=SLOT → ok
+  ✓ GET /api/flyer/:id after slot delete → 404
+  ✓ POST /api/flyer/:id second upload → slotId
+  ✓ DELETE /api/flyer/:id (all) → images key present
+  ✓ images=[] after all-delete
+  ✓ GET /api/flyer/:id unauthed draft live → 404
+
+=== Other endpoints (weather, analytics) ===
+  ✓ GET /api/weather → 200
+  ✓ POST /api/analytics → 204 (success)
+  ✓ GET /api/analytics authed → 200
+  ✓ GET /api/analytics unauthed → 401
+
+══════════════════════════════════════════
+  Passed: 40  Failed: 0
+══════════════════════════════════════════
