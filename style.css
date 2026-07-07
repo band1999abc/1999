@@ -1299,8 +1299,8 @@ body.auth-hidden { visibility: hidden; }
     transform: translateY(-50%);
     width: 48px;
     height: 80px;
-    background: rgba(0,0,0,.22);
-    border: 1.5px solid rgba(255,255,255,.55);
+    background: rgba(0,0,0,.06);
+    border: 1.5px solid rgba(255,255,255,.40);
     border-radius: 8px;
     color: #fff;
     font-size: 32px;
