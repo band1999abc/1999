@@ -200,6 +200,24 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
     # ── Routing ───────────────────────────────────────────────────────────────
 
+    def send_error(self, code, message=None, explain=None):
+        """404 は custom 404.html を返す。それ以外はデフォルト動作。"""
+        if code == 404:
+            filepath = os.path.join(_ROOT, '404.html')
+            try:
+                with open(filepath, 'rb') as f:
+                    body = f.read()
+                self.send_response(404)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(body)))
+                self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except FileNotFoundError:
+                pass
+        super().send_error(code, message, explain)
+
     def do_GET(self):
         path = self.path.split('?')[0].rstrip('/')
         if self.path.startswith('/api/weather'):

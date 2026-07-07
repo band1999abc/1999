@@ -1,9 +1,1 @@
-// Play button interaction for ひび割れ
-const button = document.getElementById("playButton");
-const status = document.getElementById("status");
-
-if (button && status) {
-    button.addEventListener("click", () => {
-        status.textContent = "Coming Soon...";
-    });
-}
+// ひび割れ — 音源実装時にここに audio ロジックを追加する
