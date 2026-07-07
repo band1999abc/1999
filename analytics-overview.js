@@ -226,6 +226,15 @@
             panels[j].hidden = (panels[j].id !== 'aa-panel-' + name);
         }
         _activePanel = name;
+
+        // If data is already loaded and we're switching tabs, invoke the new panel's loader
+        if (_data) {
+            var loader = PANEL_LOADERS[name];
+            if (loader) loader(
+                Array.isArray(_data.events) ? _data.events : [],
+                _data.firstDate || null
+            );
+        }
     }
 
     function initTabs() {
@@ -261,10 +270,7 @@
     function applyData(data) {
         _data = data;
         setLoading(false);
-        showPanel(_activePanel);
-        var events = Array.isArray(data.events) ? data.events : [];
-        var loader = PANEL_LOADERS[_activePanel];
-        if (loader) loader(events, data.firstDate || null);
+        showPanel(_activePanel); // showPanel now invokes the panel loader using _data
     }
 
     function load() {
@@ -295,7 +301,7 @@
         var refreshBtn = document.getElementById('aa-refresh');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', function () {
-                _events = null;
+                _data = null;
                 load();
             });
         }
