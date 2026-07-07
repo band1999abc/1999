@@ -125,6 +125,23 @@
             ],
         };
 
+        // 気温依存メッセージ（気温が取得できた場合のみ候補に加わる）
+        // しきい値: 30°C以上 → 暑い系、8°C以下 → 寒い系
+        const MSG_HOT = [
+            '暑い日が続きますね。',
+            '今日も暑いですね。',
+            '涼しくしてお過ごしください。',
+            '冷たいものでも飲みながらどうぞ。',
+            '熱中症に気をつけてください。',
+        ];
+        const MSG_COLD = [
+            '寒い日が続きますね。',
+            '今日は特に寒いですね。',
+            '温かい飲み物がおすすめです。',
+            '暖かくしてどうぞ。',
+            '温かいところでゆっくりどうぞ。',
+        ];
+
         const MSG_SEASON = {
             spring: [
                 '桜が咲いているといいですね。',
@@ -135,12 +152,8 @@
                 '過ごしやすい季節ですね。',
             ],
             summer: [
-                '暑い日が続きますね。',
-                '冷たいものでも飲みながらどうぞ。',
                 '夏の夜もいいですね。',
-                '涼しくしてお過ごしください。',
                 '夏の音楽でもどうぞ。',
-                '今夜も暑いですね。',
             ],
             autumn: [
                 '秋の夜長に。',
@@ -150,12 +163,7 @@
                 'ゆっくりした夜に。',
             ],
             winter: [
-                '温かい飲み物がおすすめです。',
-                '寒い日が続きますね。',
                 '冬の夜もいいものですよ。',
-                '暖かくしてどうぞ。',
-                '温かいところでゆっくりどうぞ。',
-                '今夜は特に寒いですね。',
             ],
         };
 
@@ -228,7 +236,7 @@
             return Array.isArray(lives) && lives.some(function (l) { return l.date === today; });
         }
 
-        function buildMessage(condition, lives) {
+        function buildMessage(condition, temp, lives) {
             // レアメッセージ（約2%）
             if (Math.random() < 0.02) {
                 showMessage('<p>' + pick(MSG_RARE) + '</p>');
@@ -251,15 +259,28 @@
             if (wk && MSG_WEATHER[wk]) {
                 pool = pool.concat(MSG_WEATHER[wk]);
             }
+
+            // 気温ベースのプールを追加（取得できた場合のみ）
+            if (temp !== null && temp !== undefined) {
+                if (temp >= 30) {
+                    pool = pool.concat(MSG_HOT);
+                } else if (temp <= 8) {
+                    pool = pool.concat(MSG_COLD);
+                }
+            }
+
             showMessage('<p>' + pick(pool) + '</p>');
         }
 
         // ── weatherReady イベント待機 ──────────────────────────────
         const weatherPromise = new Promise(function (resolve) {
-            const timer = setTimeout(function () { resolve(null); }, 6000);
+            const timer = setTimeout(function () { resolve({ condition: null, temp: null }); }, 6000);
             window.addEventListener('weatherReady', function (e) {
                 clearTimeout(timer);
-                resolve(e.detail && e.detail.condition);
+                resolve({
+                    condition: e.detail && e.detail.condition,
+                    temp:      e.detail && e.detail.temp != null ? e.detail.temp : null,
+                });
             }, { once: true });
         });
 
@@ -270,7 +291,7 @@
 
         // ── 両方揃ったらメッセージ決定 ────────────────────────────
         Promise.all([weatherPromise, livePromise]).then(function (results) {
-            buildMessage(results[0], results[1]);
+            buildMessage(results[0].condition, results[0].temp, results[1]);
         });
     }
 

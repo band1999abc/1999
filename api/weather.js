@@ -99,16 +99,18 @@ export default async function handler(req, res) {
     url.searchParams.set('lat', latNum);
     url.searchParams.set('lon', lonNum);
     url.searchParams.set('appid', apiKey);
+    url.searchParams.set('units', 'metric');
 
     const upstream  = await fetch(url.toString());
     const data      = await upstream.json();
     const condition = data?.weather?.[0]?.main ?? null;
+    const temp      = data?.main?.temp ?? null;   // °C
     const owmMs     = Date.now() - tOwm;
 
-    console.log('[weather/owm]   ' + owmMs + 'ms  condition=' + condition);
+    console.log('[weather/owm]   ' + owmMs + 'ms  condition=' + condition + ' temp=' + temp);
     console.log('[weather/total] ' + (Date.now() - tTotal) + 'ms');
 
-    return res.status(200).json({ condition });
+    return res.status(200).json({ condition, temp });
   } catch (err) {
     console.log('[weather/owm]   ' + (Date.now() - tOwm) + 'ms  error: ' + err.message);
     return res.status(200).json({ condition: null });

@@ -57,21 +57,21 @@
   }
 
   /* ── Apply weather to DOM ───────────────────────────────────── */
-  function dispatchWeatherReady(condition) {
-    window.dispatchEvent(new CustomEvent('weatherReady', { detail: { condition: condition } }));
+  function dispatchWeatherReady(condition, temp) {
+    window.dispatchEvent(new CustomEvent('weatherReady', { detail: { condition: condition, temp: temp } }));
   }
 
-  function applyWeather(condition) {
-    console.log('[weather] applyWeather: condition=' + JSON.stringify(condition));
+  function applyWeather(condition, temp) {
+    console.log('[weather] applyWeather: condition=' + JSON.stringify(condition) + ' temp=' + temp);
     var info = CONDITIONS[condition];
     console.log('[weather] matched cls: ' + (info ? info.cls : 'NO MATCH — skipping'));
-    if (!info) { dispatchWeatherReady(null); return; }
+    if (!info) { dispatchWeatherReady(null, null); return; }
 
     document.body.classList.add(info.cls);
     console.log('[weather] body.className:', document.body.className);
 
     setWeatherText(info.text);
-    dispatchWeatherReady(condition);
+    dispatchWeatherReady(condition, temp);
 
     if (info.cls === 'weather-rain') { console.log('[weather] → startRain()'); startRain(); }
     if (info.cls === 'weather-snow') { console.log('[weather] → startSnow()'); startSnow(); }
@@ -220,12 +220,12 @@
         var ms = Math.round(performance.now() - t0);
         console.log('[weather] fetch: ' + ms + 'ms  condition: ' + (data && data.condition));
         if (data && data.condition) {
-          applyWeather(data.condition);
+          applyWeather(data.condition, data.temp != null ? data.temp : null);
         } else {
           // No condition returned — gently fade out the loading text
           var el = document.getElementById('weather-text');
           if (el) el.classList.remove('visible');
-          dispatchWeatherReady(null);
+          dispatchWeatherReady(null, null);
         }
       })
       .catch(function () {
@@ -233,7 +233,7 @@
         console.log('[weather] fetch failed after ' + ms + 'ms');
         var el = document.getElementById('weather-text');
         if (el) el.classList.remove('visible');
-        dispatchWeatherReady(null);
+        dispatchWeatherReady(null, null);
       });
   }
 

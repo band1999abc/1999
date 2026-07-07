@@ -966,17 +966,18 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         if api_key:
             t_owm = time.monotonic()
             try:
-                qs  = urllib.parse.urlencode({'lat': lat, 'lon': lon, 'appid': api_key})
+                qs  = urllib.parse.urlencode({'lat': lat, 'lon': lon, 'appid': api_key, 'units': 'metric'})
                 url = 'https://api.openweathermap.org/data/2.5/weather?' + qs
                 with urllib.request.urlopen(url, timeout=5) as resp:
                     data = json.loads(resp.read())
                 condition = data['weather'][0]['main']
-                print('[weather/owm]   %dms  condition=%s' % (int((time.monotonic()-t_owm)*1000), condition))
+                temp_c = data.get('main', {}).get('temp')  # °C (units=metric)
+                print('[weather/owm]   %dms  condition=%s temp=%.1f' % (int((time.monotonic()-t_owm)*1000), condition, temp_c if temp_c is not None else 0))
             except Exception as e:
                 print('[weather/owm]   %dms  error: %s' % (int((time.monotonic()-t_owm)*1000), e))
 
         print('[weather/total] %dms' % int((time.monotonic()-t_total)*1000))
-        self._write_json(200, {'condition': condition})
+        self._write_json(200, {'condition': condition, 'temp': temp_c})
 
     def log_message(self, format, *args):
         print(format % args)
