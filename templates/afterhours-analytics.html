@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=33">
-    <link rel="stylesheet" href="/admin.css?v=3">
+    <link rel="stylesheet" href="/admin.css?v=4">
 </head>
 <body data-page="afterhours-analytics" class="auth-hidden">
 
@@ -20,19 +20,35 @@
         <div class="sub">Analytics</div>
     </div>
 
-    <!-- Loading / error -->
+    <!--
+        Tab navigation.
+        Future tabs: remove aa-nav-tab--soon, add a data-panel attribute,
+        and create the corresponding <div class="aa-panel"> content below.
+        Tab switching logic lives in analytics-overview.js.
+    -->
+    <nav class="aa-nav" aria-label="Analytics sections">
+        <button class="aa-nav-tab is-active" data-panel="dashboard">Dashboard</button>
+        <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Visitors</button>
+        <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Music</button>
+        <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Pages</button>
+        <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">QR</button>
+    </nav>
+
+    <!-- Loading / error state -->
     <div id="aa-loading" class="aa-loading">読み込み中…</div>
 
-    <!-- Dashboard (hidden until data loads) -->
-    <div id="aa-content">
+    <!-- ── Dashboard panel ──────────────────────────────────────────── -->
+    <div id="aa-panel-dashboard" class="aa-panel" hidden>
 
-        <!-- TODAY ─────────────────────────────────────────────────────── -->
+        <!-- TODAY ─────────────────────────────────────────────────── -->
         <div class="aa-section">
             <div class="aa-section-header">
                 <span class="aa-section-label">Today</span>
                 <button class="aa-refresh-btn" id="aa-refresh" type="button">↻ Refresh</button>
             </div>
-            <div class="aa-grid">
+
+            <!-- 4-column grid on wider screens, 2-col on narrow -->
+            <div class="aa-grid aa-grid--today">
                 <div class="aa-card">
                     <div class="aa-value" id="aa-today-visitors">—</div>
                     <div class="aa-card-label">Visitors</div>
@@ -43,11 +59,11 @@
                 </div>
                 <div class="aa-card">
                     <div class="aa-value" id="aa-today-returning">—</div>
-                    <div class="aa-card-label">Returning</div>
+                    <div class="aa-card-label">Returning Visitors</div>
                 </div>
                 <div class="aa-card">
                     <div class="aa-value" id="aa-today-return-rate">—</div>
-                    <div class="aa-card-label">Return Rate</div>
+                    <div class="aa-card-label">Returning Rate</div>
                 </div>
                 <div class="aa-card">
                     <div class="aa-value" id="aa-today-music">—</div>
@@ -57,14 +73,14 @@
                     <div class="aa-value" id="aa-today-diary">—</div>
                     <div class="aa-card-label">Diary Views</div>
                 </div>
-                <div class="aa-card aa-card--wide">
+                <div class="aa-card">
                     <div class="aa-value" id="aa-today-live">—</div>
                     <div class="aa-card-label">Live Views</div>
                 </div>
             </div>
         </div>
 
-        <!-- THIS WEEK ──────────────────────────────────────────────────── -->
+        <!-- THIS WEEK ──────────────────────────────────────────────── -->
         <div class="aa-section">
             <div class="aa-section-header">
                 <span class="aa-section-label">This Week</span>
@@ -81,7 +97,7 @@
             </div>
         </div>
 
-        <!-- THIS MONTH ─────────────────────────────────────────────────── -->
+        <!-- THIS MONTH ─────────────────────────────────────────────── -->
         <div class="aa-section">
             <div class="aa-section-header">
                 <span class="aa-section-label">This Month</span>
@@ -98,10 +114,11 @@
             </div>
         </div>
 
-        <!-- ALL TIME ───────────────────────────────────────────────────── -->
+        <!-- ALL TIME ───────────────────────────────────────────────── -->
         <div class="aa-section">
             <div class="aa-section-header">
                 <span class="aa-section-label">All Time</span>
+                <span class="aa-section-note">過去 90 日間</span>
             </div>
             <div class="aa-grid">
                 <div class="aa-card">
@@ -115,7 +132,7 @@
             </div>
         </div>
 
-        <!-- POPULAR ────────────────────────────────────────────────────── -->
+        <!-- POPULAR ────────────────────────────────────────────────── -->
         <div class="aa-section">
             <div class="aa-section-header">
                 <span class="aa-section-label">Popular</span>
@@ -132,7 +149,7 @@
             </div>
         </div>
 
-    </div><!-- /#aa-content -->
+    </div><!-- /#aa-panel-dashboard -->
 
     <div class="admin-footer">
         <a href="/afterhours" class="back-home">← Back</a>
@@ -143,7 +160,7 @@
 <script src="/whale.js"></script>
 <script src="/script.js?v=2"></script>
 <script src="/admin.js?v=3"></script>
-<script src="/analytics-overview.js"></script>
+<script src="/analytics-overview.js?v=2"></script>
 
 </body>
 </html>

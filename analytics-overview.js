@@ -1,9 +1,15 @@
 /**
- * analytics-overview.js — After Hours Analytics dashboard
+ * analytics-overview.js — After Hours Analytics Dashboard  v2
  *
  * Requires admin.js (runs first) which:
  *   • gates the page (auth-hidden → visible)
  *   • exposes window._adminAuthFetch
+ *
+ * Tab architecture:
+ *   Each tab has a data-panel attribute matching a <div id="aa-panel-{name}">.
+ *   Only panels with data-panel are clickable; aa-nav-tab--soon tabs are inert.
+ *   To add a future tab: remove aa-nav-tab--soon, add data-panel, create the panel div,
+ *   and register a loader function in PANEL_LOADERS below.
  */
 ;(function () {
     'use strict';
@@ -12,20 +18,19 @@
 
     var JST_OFFSET_MS = 9 * 3600 * 1000;
 
-    function _jstNowMs() { return Date.now() + JST_OFFSET_MS; }
+    function _jstNowMs()  { return Date.now() + JST_OFFSET_MS; }
     function _msToDate(ms) { return new Date(ms).toISOString().slice(0, 10); }
 
     var TODAY       = _msToDate(_jstNowMs());
     var WEEK_START  = (function () {
-        var jst    = new Date(_jstNowMs());
-        var dow    = jst.getUTCDay();              // 0=Sun … 6=Sat
-        var toMon  = (dow === 0) ? 6 : dow - 1;   // days since Monday
+        var dow   = new Date(_jstNowMs()).getUTCDay(); // 0=Sun … 6=Sat
+        var toMon = (dow === 0) ? 6 : dow - 1;        // days since Monday
         return _msToDate(_jstNowMs() - toMon * 86400000);
     }());
-    var MONTH_START = TODAY.slice(0, 8) + '01';    // YYYY-MM-01
-    var ALL_START   = _msToDate(_jstNowMs() - 89 * 86400000); // 90-day window
+    var MONTH_START = TODAY.slice(0, 8) + '01';                      // YYYY-MM-01
+    var ALL_START   = _msToDate(_jstNowMs() - 89 * 86400000);       // 90-day window
 
-    /** Convert UTC ISO timestamp to JST date string (YYYY-MM-DD) */
+    /** Convert UTC ISO timestamp to JST date string */
     function tsToJstDate(ts) {
         return _msToDate(new Date(ts).getTime() + JST_OFFSET_MS);
     }
@@ -153,19 +158,12 @@
         el.innerHTML = html;
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    // ── Dashboard render ──────────────────────────────────────────────────────
 
-    function render(events) {
-        // Hide loading, show content
-        var loadEl = document.getElementById('aa-loading');
-        var contEl = document.getElementById('aa-content');
-        if (loadEl) loadEl.style.display = 'none';
-        if (contEl) contEl.style.display = '';
-
+    function renderDashboard(events) {
         var te = byDate(events, TODAY,       TODAY);
         var we = byDate(events, WEEK_START,  TODAY);
         var me = byDate(events, MONTH_START, TODAY);
-        // All time = all events in the 90-day fetch window
 
         // TODAY
         var tv = uniqueVisitors(te);
@@ -196,18 +194,78 @@
         renderTopList('aa-top-pages',  topPages(events, 5));
     }
 
-    // ── Fetch ─────────────────────────────────────────────────────────────────
+    // ── Panel loader registry ─────────────────────────────────────────────────
+    //
+    // Map of panel name → loader function(events).
+    // Add entries here when new detail tabs are built.
 
+    var PANEL_LOADERS = {
+        dashboard: renderDashboard,
+        // visitors: renderVisitors,  // future
+        // music:    renderMusic,      // future
+        // pages:    renderPages,      // future
+    };
+
+    // ── Tab navigation ────────────────────────────────────────────────────────
+
+    var _activePanel = 'dashboard';
+
+    function showPanel(name) {
+        // Update tab active state
+        var tabs = document.querySelectorAll('.aa-nav-tab[data-panel]');
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].classList.toggle('is-active', tabs[i].dataset.panel === name);
+        }
+        // Show/hide panels
+        var panels = document.querySelectorAll('.aa-panel');
+        for (var j = 0; j < panels.length; j++) {
+            panels[j].hidden = (panels[j].id !== 'aa-panel-' + name);
+        }
+        _activePanel = name;
+    }
+
+    function initTabs() {
+        var tabs = document.querySelectorAll('.aa-nav-tab[data-panel]');
+        for (var i = 0; i < tabs.length; i++) {
+            (function (tab) {
+                tab.addEventListener('click', function () {
+                    showPanel(tab.dataset.panel);
+                });
+            }(tabs[i]));
+        }
+    }
+
+    // ── Data fetch ────────────────────────────────────────────────────────────
+
+    var _events  = null;
     var _loading = false;
+
+    function setLoading(on) {
+        var loadEl = document.getElementById('aa-loading');
+        var panel  = document.getElementById('aa-panel-' + _activePanel);
+        if (loadEl) { loadEl.textContent = '読み込み中…'; loadEl.style.display = on ? '' : 'none'; }
+        if (panel)  panel.hidden = on;
+    }
+
+    function setError(msg) {
+        var loadEl = document.getElementById('aa-loading');
+        if (loadEl) { loadEl.textContent = msg; loadEl.style.display = ''; }
+        var panel = document.getElementById('aa-panel-' + _activePanel);
+        if (panel) panel.hidden = true;
+    }
+
+    function applyData(events) {
+        _events = events;
+        setLoading(false);
+        showPanel(_activePanel);
+        var loader = PANEL_LOADERS[_activePanel];
+        if (loader) loader(events);
+    }
 
     function load() {
         if (_loading) return;
         _loading = true;
-
-        var loadEl = document.getElementById('aa-loading');
-        var contEl = document.getElementById('aa-content');
-        if (loadEl) { loadEl.textContent = '読み込み中…'; loadEl.style.display = ''; }
-        if (contEl) contEl.style.display = 'none';
+        setLoading(true);
 
         var url = '/api/analytics?start=' + ALL_START + '&end=' + TODAY;
 
@@ -215,22 +273,25 @@
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 _loading = false;
-                render(Array.isArray(data.events) ? data.events : []);
+                applyData(Array.isArray(data.events) ? data.events : []);
             })
             .catch(function () {
                 _loading = false;
-                var el = document.getElementById('aa-loading');
-                if (el) el.textContent = '読み込みに失敗しました。再読み込みしてください。';
+                setError('読み込みに失敗しました。再読み込みしてください。');
             });
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────
 
     document.addEventListener('DOMContentLoaded', function () {
-        // Refresh button
+        initTabs();
+
         var refreshBtn = document.getElementById('aa-refresh');
         if (refreshBtn) {
-            refreshBtn.addEventListener('click', function () { load(); });
+            refreshBtn.addEventListener('click', function () {
+                _events = null;
+                load();
+            });
         }
 
         // _adminAuthFetch is set synchronously by admin.js before DOMContentLoaded
