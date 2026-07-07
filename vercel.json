@@ -10,7 +10,8 @@
     "api/live/[id].js":         { "includeFiles": "data/**" },
     "api/flyer/[id].js":        { "includeFiles": "data/**" },
     "api/diary.js":             { "includeFiles": "data/**" },
-    "api/diary/[id].js":        { "includeFiles": "data/**" }
+    "api/diary/[id].js":        { "includeFiles": "data/**" },
+    "api/analytics.js":         {}
   },
   "rewrites": [
     { "source": "/live",              "destination": "/live.html"             },

@@ -4,6 +4,8 @@ Development server for Replit.
 
 Routes
 ------
+GET  /api/analytics        — query events by date range (auth required)
+POST /api/analytics        — collect analytics event (no auth)
 GET  /api/weather          — IP-geolocated weather condition
 GET  /api/auth             — session check  → {"ok": bool}
 POST /api/auth             — login / logout → {"ok": bool}
@@ -25,6 +27,7 @@ GET  *                     — static files via SimpleHTTPRequestHandler
 """
 
 import base64
+import datetime
 import hashlib
 import hmac
 import http.server
@@ -270,6 +273,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_live_get(item_id)
             else:
                 self.send_error(404)
+        elif path == '/api/analytics':
+            self._handle_analytics_read()
         elif path.startswith('/api/flyer/'):
             item_id = path[len('/api/flyer/'):]
             if item_id and '/' not in item_id:
@@ -293,6 +298,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_diary_create()
         elif path == '/api/live':
             self._handle_live_create()
+        elif path == '/api/analytics':
+            self._handle_analytics_track()
         elif path.startswith('/api/flyer/'):
             item_id = path[len('/api/flyer/'):]
             if item_id and '/' not in item_id:
@@ -724,6 +731,128 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         lives.pop(idx)
         _save_lives(lives)
         self._write_json(200, {'ok': True})
+
+
+    # -- POST /api/analytics -- collect event ----------------------------
+
+    _ANALYTICS_UUID_RE = re.compile(
+        r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', re.I)
+    _ANALYTICS_EVENTS = frozenset(
+        ['page_view', 'music_play', 'diary_view', 'live_view', 'contact_view'])
+
+    def _handle_analytics_track(self):
+        """POST /api/analytics -- store one analytics event (no auth required)."""
+        length = int(self.headers.get('Content-Length', 0))
+        try:
+            body = json.loads(self.rfile.read(length))
+        except Exception:
+            self._write_json(400, {'error': 'Invalid JSON'})
+            return
+
+        visitor_id     = str(body.get('visitor_id', '')).strip()
+        session_id     = str(body.get('session_id', '')).strip()
+        page           = str(body.get('page', '/')).strip()[:300]
+        event          = str(body.get('event', '')).strip()
+        is_new_visitor = bool(body.get('is_new_visitor', False))
+        props          = body.get('props', {})
+
+        if not self._ANALYTICS_UUID_RE.match(visitor_id):
+            self._write_json(400, {'error': 'Invalid visitor_id'})
+            return
+        if not self._ANALYTICS_UUID_RE.match(session_id):
+            self._write_json(400, {'error': 'Invalid session_id'})
+            return
+        if event not in self._ANALYTICS_EVENTS:
+            self._write_json(400, {'error': 'Invalid event'})
+            return
+        if not isinstance(props, dict):
+            props = {}
+
+        now      = datetime.datetime.now(datetime.timezone.utc)
+        jst_date = (now + datetime.timedelta(hours=9)).strftime('%Y-%m-%d')
+        entry    = {
+            'id':             str(_uuid_mod.uuid4()),
+            'ts':             now.isoformat(),
+            'visitor_id':     visitor_id,
+            'session_id':     session_id,
+            'page':           page,
+            'event':          event,
+            'is_new_visitor': is_new_visitor,
+            'props':          props,
+        }
+
+        analytics_dir = os.path.join(_DATA_DIR, 'analytics')
+        os.makedirs(analytics_dir, exist_ok=True)
+        file_path = os.path.join(analytics_dir, jst_date + '.json')
+
+        events = []
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as fh:
+                    data = json.load(fh)
+                if isinstance(data, list):
+                    events = data
+            except Exception:
+                pass
+
+        events.append(entry)
+        try:
+            with open(file_path, 'w', encoding='utf-8') as fh:
+                json.dump(events, fh, ensure_ascii=False)
+        except Exception:
+            self._write_json(500, {'error': 'Storage error'})
+            return
+
+        self.send_response(204)
+        self.send_header('Cache-Control', 'no-store')
+        self.end_headers()
+
+    # -- GET /api/analytics -- query events (admin only) ------------------
+
+    def _handle_analytics_read(self):
+        """GET /api/analytics?start=YYYY-MM-DD&end=YYYY-MM-DD -- return events."""
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+
+        _DATE_RE = re.compile(r'\d{4}-\d{2}-\d{2}')
+        today    = (datetime.datetime.now(datetime.timezone.utc)
+                    + datetime.timedelta(hours=9)).strftime('%Y-%m-%d')
+
+        parsed = urllib.parse.urlparse(self.path)
+        qs     = urllib.parse.parse_qs(parsed.query)
+        start  = qs.get('start', [today])[0]
+        end    = qs.get('end',   [today])[0]
+        if not _DATE_RE.fullmatch(start):
+            start = today
+        if not _DATE_RE.fullmatch(end):
+            end = today
+
+        analytics_dir = os.path.join(_DATA_DIR, 'analytics')
+        all_events    = []
+        cur  = datetime.date.fromisoformat(start)
+        last = datetime.date.fromisoformat(end)
+        days = 0
+        while cur <= last and days < 90:
+            fp = os.path.join(analytics_dir, cur.isoformat() + '.json')
+            if os.path.exists(fp):
+                try:
+                    with open(fp, 'r', encoding='utf-8') as fh:
+                        data = json.load(fh)
+                    if isinstance(data, list):
+                        all_events.extend(data)
+                except Exception:
+                    pass
+            cur  += datetime.timedelta(days=1)
+            days += 1
+
+        all_events.sort(key=lambda e: e.get('ts', ''))
+        self._write_json(200, {
+            'start':  start,
+            'end':    end,
+            'count':  len(all_events),
+            'events': all_events,
+        })
 
     # ── Flyer storage helpers ─────────────────────────────────────────────────
 
