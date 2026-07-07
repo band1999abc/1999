@@ -27,8 +27,7 @@
         var toMon = (dow === 0) ? 6 : dow - 1;        // days since Monday
         return _msToDate(_jstNowMs() - toMon * 86400000);
     }());
-    var MONTH_START = TODAY.slice(0, 8) + '01';                      // YYYY-MM-01
-    var ALL_START   = _msToDate(_jstNowMs() - 89 * 86400000);       // 90-day window
+    var MONTH_START = TODAY.slice(0, 8) + '01';  // YYYY-MM-01
 
     /** Convert UTC ISO timestamp to JST date string */
     function tsToJstDate(ts) {
@@ -160,7 +159,11 @@
 
     // ── Dashboard render ──────────────────────────────────────────────────────
 
-    function renderDashboard(events) {
+    function renderDashboard(events, firstDate) {
+        // Update All Time note to show the actual start date
+        var noteEl = document.getElementById('aa-alltime-note');
+        if (noteEl) noteEl.textContent = firstDate ? firstDate + ' 〜' : '';
+
         var te = byDate(events, TODAY,       TODAY);
         var we = byDate(events, WEEK_START,  TODAY);
         var me = byDate(events, MONTH_START, TODAY);
@@ -237,7 +240,7 @@
 
     // ── Data fetch ────────────────────────────────────────────────────────────
 
-    var _events  = null;
+    var _data    = null;   // full API response { firstDate, events, … }
     var _loading = false;
 
     function setLoading(on) {
@@ -254,12 +257,13 @@
         if (panel) panel.hidden = true;
     }
 
-    function applyData(events) {
-        _events = events;
+    function applyData(data) {
+        _data = data;
         setLoading(false);
         showPanel(_activePanel);
+        var events = Array.isArray(data.events) ? data.events : [];
         var loader = PANEL_LOADERS[_activePanel];
-        if (loader) loader(events);
+        if (loader) loader(events, data.firstDate || null);
     }
 
     function load() {
@@ -267,13 +271,14 @@
         _loading = true;
         setLoading(true);
 
-        var url = '/api/analytics?start=' + ALL_START + '&end=' + TODAY;
+        // No ?start param — server uses firstDate (full history) by default
+        var url = '/api/analytics?end=' + TODAY;
 
         window._adminAuthFetch(url)
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 _loading = false;
-                applyData(Array.isArray(data.events) ? data.events : []);
+                applyData(data && typeof data === 'object' ? data : { events: [] });
             })
             .catch(function () {
                 _loading = false;

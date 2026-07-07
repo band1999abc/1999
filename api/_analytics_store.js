@@ -11,7 +11,7 @@
  * Date strings are always JST (UTC+9) so daily files align with Japan midnight.
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
 // ── Upstash helpers ───────────────────────────────────────────────────────────
@@ -37,7 +37,8 @@ async function _upstashCmd(commands) {
     return results;
 }
 
-function _kvKey(dateStr) { return `analytics:${dateStr}`; }
+function _kvKey(dateStr)  { return `analytics:${dateStr}`; }
+const  _META_KEY         = 'analytics:meta:start';   // KV: earliest event date
 
 // ── Filesystem helpers ────────────────────────────────────────────────────────
 
@@ -47,6 +48,10 @@ function _fsPath(dateStr) {
 
 function _fsDir() {
     return join(process.cwd(), 'data', 'analytics');
+}
+
+function _fsMetaPath() {
+    return join(process.cwd(), 'data', 'analytics', 'meta.json');
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -61,7 +66,11 @@ function _fsDir() {
  */
 export async function appendAnalyticsEvent(dateStr, event) {
     if (_upstashConfigured()) {
-        await _upstashCmd([['RPUSH', _kvKey(dateStr), JSON.stringify(event)]]);
+        // RPUSH the event and SET the first-date key (NX = only if not exists) in one pipeline
+        await _upstashCmd([
+            ['RPUSH', _kvKey(dateStr), JSON.stringify(event)],
+            ['SET', _META_KEY, dateStr, 'NX'],
+        ]);
         return;
     }
     // Filesystem fallback
@@ -72,6 +81,26 @@ export async function appendAnalyticsEvent(dateStr, event) {
     if (!Array.isArray(events)) events = [];
     events.push(event);
     writeFileSync(p, JSON.stringify(events, null, 2), 'utf-8');
+    // Record first date on filesystem (write-once)
+    const mp = _fsMetaPath();
+    if (!existsSync(mp)) {
+        try { writeFileSync(mp, JSON.stringify({ firstDate: dateStr }), 'utf-8'); } catch {}
+    }
+}
+
+/**
+ * Return the earliest JST date ('YYYY-MM-DD') that has any recorded event,
+ * or null if no events have ever been stored.
+ */
+export async function getFirstDate() {
+    if (_upstashConfigured()) {
+        const results = await _upstashCmd([['GET', _META_KEY]]);
+        return results[0].result || null;
+    }
+    try {
+        const meta = JSON.parse(readFileSync(_fsMetaPath(), 'utf-8'));
+        return meta.firstDate || null;
+    } catch { return null; }
 }
 
 /**

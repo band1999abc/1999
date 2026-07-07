@@ -16,7 +16,7 @@
 
 import { randomUUID }    from 'crypto';
 import { COOKIE_NAME, verifyToken, parseCookies } from './_auth.js';
-import { appendAnalyticsEvent, readAnalyticsDays } from './_analytics_store.js';
+import { appendAnalyticsEvent, readAnalyticsDays, getFirstDate } from './_analytics_store.js';
 
 // ── Validation constants ──────────────────────────────────────────────────────
 
@@ -81,13 +81,14 @@ function todayJST() {
 
 /**
  * Generate an array of 'YYYY-MM-DD' strings from start to end (inclusive).
- * Capped at 90 days to prevent abuse.
+ * @param {number} [max=90]  Hard cap on number of dates (prevents abuse on public endpoint).
+ *                            Pass Infinity for authenticated admin requests.
  */
-function dateRange(start, end) {
+function dateRange(start, end, max = 90) {
     const dates = [];
     let cur = new Date(start + 'T00:00:00Z');
     const last = new Date(end + 'T00:00:00Z');
-    while (cur <= last && dates.length < 90) {
+    while (cur <= last && dates.length < max) {
         dates.push(cur.toISOString().slice(0, 10));
         cur.setUTCDate(cur.getUTCDate() + 1);
     }
@@ -154,16 +155,19 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-        const today    = todayJST();
+        const today     = todayJST();
+        const firstDate = await getFirstDate().catch(() => null);
+
         const qs       = new URL(req.url, 'http://localhost').searchParams;
-        const rawStart = qs.get('start') || today;
+        const rawStart = qs.get('start') || firstDate || today;
         const rawEnd   = qs.get('end')   || today;
-        const start    = DATE_RE.test(rawStart) ? rawStart : today;
+        const start    = DATE_RE.test(rawStart) ? rawStart : (firstDate || today);
         const end      = DATE_RE.test(rawEnd)   ? rawEnd   : today;
 
         try {
-            const events = await readAnalyticsDays(dateRange(start, end));
-            return res.status(200).json({ start, end, count: events.length, events });
+            // No day cap for authenticated admin requests — full history is allowed
+            const events = await readAnalyticsDays(dateRange(start, end, Infinity));
+            return res.status(200).json({ firstDate, start, end, count: events.length, events });
         } catch (e) {
             console.error('[analytics] read error:', e.message);
             return res.status(500).json({ error: 'Storage error' });
