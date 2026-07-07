@@ -1,9 +1,6 @@
-// Keep the whale image visually fixed within the card as the page scrolls.
-// Optimised for 60fps:
-//   - card top is cached once (no layout read on every scroll)
-//   - window.scrollY is read in the scroll handler (no reflow)
-//   - transform: translate3d() is written in rAF (GPU-composited, no reflow)
-//   - passive scroll listener + ticking flag prevent redundant rAF calls
+// Whale scroll animation — lerp (linear interpolation) for smooth inertia.
+// Each rAF tick, current position moves 10% closer to target.
+// This gives natural easing without any layout reads during animation.
 (function () {
     'use strict';
 
@@ -11,38 +8,44 @@
     const whale = document.querySelector('.whale-bg');
     if (!card || !whale) return;
 
-    let cardTop0 = 0;   // card's distance from document top (cached)
-    let lastY    = 0;
-    let ticking  = false;
+    const LERP_FACTOR = 0.10; // 0.0–1.0: lower = more inertia, higher = snappier
 
-    // Read the card's document-relative top once, without triggering a
-    // forced synchronous layout on every scroll event.
+    let cardTop0  = 0;   // card distance from document top (cached)
+    let targetY   = 0;   // where the whale should end up
+    let currentY  = 0;   // where the whale is right now (lerped)
+    let rafId     = null;
+
     function cacheCardTop() {
         let el = card, top = 0;
-        while (el) {
-            top += el.offsetTop;
-            el = el.offsetParent;
-        }
+        while (el) { top += el.offsetTop; el = el.offsetParent; }
         cardTop0 = top;
     }
 
-    // Runs inside rAF — safe to write style here.
-    function update() {
-        const offset = Math.max(0, lastY - cardTop0);
-        whale.style.transform = 'translate3d(0,' + offset + 'px,0)';
-        ticking = false;
-    }
+    function tick() {
+        // Lerp current toward target
+        currentY += (targetY - currentY) * LERP_FACTOR;
 
-    // Scroll handler: only read scrollY (no reflow), defer write to rAF.
-    function onScroll() {
-        lastY = window.scrollY;
-        if (!ticking) {
-            ticking = true;
-            requestAnimationFrame(update);
+        // Apply — translate3d keeps the element on its GPU compositing layer
+        whale.style.transform = 'translate3d(0,' + currentY.toFixed(2) + 'px,0)';
+
+        // Keep animating until close enough (< 0.1px residual)
+        if (Math.abs(targetY - currentY) > 0.1) {
+            rafId = requestAnimationFrame(tick);
+        } else {
+            // Snap to exact target and stop the loop
+            currentY = targetY;
+            whale.style.transform = 'translate3d(0,' + currentY + 'px,0)';
+            rafId = null;
         }
     }
 
-    // Cache once at load, refresh on resize (layout may shift).
+    function onScroll() {
+        targetY = Math.max(0, window.scrollY - cardTop0);
+        if (rafId === null) {
+            rafId = requestAnimationFrame(tick);
+        }
+    }
+
     cacheCardTop();
     window.addEventListener('resize', function () {
         cacheCardTop();
@@ -51,7 +54,8 @@
 
     window.addEventListener('scroll', onScroll, { passive: true });
 
-    // Set initial position synchronously so there's no flash on load.
-    lastY = window.scrollY;
-    update();
+    // Set initial state without animation
+    targetY  = Math.max(0, window.scrollY - cardTop0);
+    currentY = targetY;
+    whale.style.transform = 'translate3d(0,' + currentY + 'px,0)';
 }());
