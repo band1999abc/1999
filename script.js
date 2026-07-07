@@ -41,10 +41,23 @@
             evening: [
                 "Good evening.",
                 "Evening.",
-                "Night owl.",
-                "Still up?",
                 "The night is young.",
                 "Welcome back.",
+                "Night owl.",
+            ],
+            latenight: [
+                "Still up?",
+                "Can't sleep?",
+                "Late night.",
+                "Just you and the dark.",
+                "Night shift.",
+            ],
+            dawn: [
+                "Up already?",
+                "Almost morning.",
+                "The sun's coming.",
+                "Early bird.",
+                "Dawn breaking.",
             ],
         };
 
@@ -55,8 +68,12 @@
             pool = greetings.midday;
         } else if (hour >= 15 && hour < 18) {
             pool = greetings.afternoon;
-        } else {
+        } else if (hour >= 18) {
             pool = greetings.evening;
+        } else if (hour >= 4) {
+            pool = greetings.dawn;
+        } else {
+            pool = greetings.latenight;
         }
 
         greeting.textContent = pool[Math.floor(Math.random() * pool.length)];
