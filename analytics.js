@@ -22,7 +22,10 @@
   var VID_KEY  = '_ah_vid';
   var SID_KEY  = '_ah_sid';
 
+  // Registry of valid event types (must mirror EVENT_HANDLERS in api/analytics.js).
+  // To add a new event: add the key here AND add a handler in api/analytics.js.
   var VALID_EVENTS = {
+    visit:        true,
     page_view:    true,
     music_play:   true,
     diary_view:   true,
@@ -94,7 +97,7 @@
 
   /**
    * Track a custom event.
-   * @param {string} event  One of: page_view | music_play | diary_view | live_view | contact_view
+   * @param {string} event  One of: visit | page_view | music_play | diary_view | live_view | contact_view
    * @param {object} props  Optional extra properties (track name, post id, etc.)
    */
   function track(event, props) {
