@@ -20,7 +20,7 @@ const TEMPLATES = {
     home:      'afterhours.html',
     diary:     'afterhours-diary.html',
     live:      'afterhours-live.html',
-    login:     'afterhours-login.html',
+    login:     'login.html',
     analytics: 'afterhours-analytics.html',
 };
 
