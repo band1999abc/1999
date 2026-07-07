@@ -1,0 +1,3 @@
+
+# Analytics event data (runtime, not tracked)
+data/analytics/*.json
