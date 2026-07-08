@@ -60,7 +60,9 @@
         });
     }
 
-    fetch('/api/diary')
+    // credentials:'omit' ensures admin cookies are never sent from the public
+    // diary page, so the API always returns only published entries here.
+    fetch('/api/diary', { credentials: 'omit' })
         .then(function (r) { return r.json(); })
         .then(render)
         .catch(function () {
