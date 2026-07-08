@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insights — After Hours | 1999</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/style.css?v=33">
+    <link rel="stylesheet" href="/admin.css?v=11">
+</head>
+<body data-page="afterhours" class="auth-hidden">
+
+<div class="card">
+    <img src="/whale_transparent.png" class="whale-bg" alt="" aria-hidden="true" decoding="async">
+
+    <!-- ── Page header ─────────────────────────────────────────── -->
+    <div class="aa-page-header">
+        <h1>1999</h1>
+        <div class="sub">Insights</div>
+    </div>
+
+    <!-- ── Loading / error ─────────────────────────────────────── -->
+    <div id="ins-loading" class="ins-state">
+        <span class="ins-state-text">読み込み中…</span>
+    </div>
+    <div id="ins-error" class="ins-state" hidden>
+        <span class="ins-state-text">データの取得に失敗しました。</span>
+    </div>
+
+    <!-- ── All sections rendered by insights.js ────────────────── -->
+    <div id="ins-container"></div>
+
+    <div class="admin-footer">
+        <a href="/afterhours" class="back-home">← Back</a>
+        <button class="admin-signout" id="signout-btn">Sign out</button>
+    </div>
+</div>
+
+<script src="/whale.js"></script>
+<script src="/script.js?v=2"></script>
+<script src="/admin.js?v=3"></script>
+<script src="/insights.js?v=1"></script>
+</body>
+</html>

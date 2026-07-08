@@ -381,6 +381,397 @@ _MILESTONES_DEFS = [
 ]
 
 
+# ── Insights helpers (used by _handle_insights_read) ─────────────────────────
+
+_INS_MS_LABELS = {
+    'music_first': ('🎵','初回再生'),    'music_100':   ('🎵','100 Plays'),
+    'music_500':   ('🎵','500 Plays'),   'music_1000':  ('🎵','1,000 Plays'),
+    'music_5000':  ('🎵','5,000 Plays'), 'music_10000': ('🎵','10,000 Plays'),
+    'vis_first':   ('👥','初回訪問'),     'vis_100':     ('👥','100 Visitors'),
+    'vis_500':     ('👥','500 Visitors'), 'vis_1000':    ('👥','1,000 Visitors'),
+    'vis_5000':    ('👥','5,000 Visitors'),
+    'ret_first':   ('🔄','初Returning Visitor'), 'ret_100':     ('🔄','Returning 100人'),
+    'ret_rate_25': ('🔄','Returning Rate 25%'),  'ret_rate_50': ('🔄','Returning Rate 50%'),
+    'qr_first':    ('📱','初QR Scan'),  'qr_100':  ('📱','100 QR Scans'),
+    'qr_500':      ('📱','500 QR Scans'), 'qr_1000': ('📱','1,000 QR Scans'),
+    'diary_first': ('📔','初Diary公開'), 'diary_10':  ('📔','Diary 10件'),
+    'diary_50':    ('📔','Diary 50件'),  'diary_100': ('📔','Diary 100件'),
+    'live_first':  ('🎤','初ライブ登録'), 'live_10': ('🎤','ライブ 10本'),
+    'live_50':     ('🎤','ライブ 50本'),
+    'rel_first':   ('💿','初リリース'),  'rel_5':  ('💿','楽曲 5曲'),
+    'rel_10':      ('💿','楽曲 10曲'),   'rel_20': ('💿','楽曲 20曲'),
+}
+
+
+def _ins_today_str():
+    return (datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(hours=9)).strftime('%Y-%m-%d')
+
+
+def _ins_to_jst_date(ts):
+    if not ts:
+        return ''
+    try:
+        d = datetime.datetime.fromisoformat(ts.replace('Z', '+00:00'))
+        return (d + datetime.timedelta(hours=9)).strftime('%Y-%m-%d')
+    except Exception:
+        return ts[:10] if ts else ''
+
+
+def _ins_to_jst_hour(ts):
+    if not ts:
+        return 0
+    try:
+        d = datetime.datetime.fromisoformat(ts.replace('Z', '+00:00'))
+        return (d + datetime.timedelta(hours=9)).hour
+    except Exception:
+        return 0
+
+
+def _ins_add_days(date_str, n):
+    d = datetime.date.fromisoformat(date_str)
+    return (d + datetime.timedelta(days=n)).isoformat()
+
+
+def _ins_date_range(start, end):
+    dates, cur = [], datetime.date.fromisoformat(start)
+    last = datetime.date.fromisoformat(end)
+    while cur <= last:
+        dates.append(cur.isoformat())
+        cur += datetime.timedelta(days=1)
+    return dates
+
+
+def _ins_week_monday(date_str):
+    d = datetime.date.fromisoformat(date_str)
+    return (d - datetime.timedelta(days=d.weekday())).isoformat()
+
+
+def _ins_prev_month_bounds(date_str):
+    y, m = int(date_str[:4]), int(date_str[5:7])
+    pm = 12 if m == 1 else m - 1
+    py = y - 1 if m == 1 else y
+    start = f'{py}-{pm:02d}-01'
+    last  = (datetime.date(py, pm, 1) + datetime.timedelta(days=32)).replace(day=1) - datetime.timedelta(days=1)
+    return start, last.isoformat()
+
+
+def _ins_read_analytics_days(analytics_dir, dates):
+    events = []
+    for d in dates:
+        fp = os.path.join(analytics_dir, d + '.json')
+        if os.path.exists(fp):
+            try:
+                data = json.load(open(fp, encoding='utf-8'))
+                if isinstance(data, list):
+                    events.extend(data)
+            except Exception:
+                pass
+    return sorted(events, key=lambda e: e.get('ts', ''))
+
+
+def _ins_visitors(events):
+    return len({e.get('visitor_id') for e in events if e.get('event') == 'visit'})
+
+
+def _ins_returning(events):
+    return len({e.get('visitor_id') for e in events
+                if e.get('event') == 'visit' and e.get('is_new_visitor') is False})
+
+
+def _ins_ret_rate(events):
+    v = _ins_visitors(events)
+    return round(_ins_returning(events) / v * 100) if v else 0
+
+
+def _ins_plays(events):
+    return sum(1 for e in events if e.get('event') == 'music_play')
+
+
+def _ins_qr_scans(events):
+    return sum(1 for e in events if e.get('event') == 'qr_scan')
+
+
+def _ins_page_views(events):
+    return sum(1 for e in events if e.get('event') == 'page_view')
+
+
+def _ins_top_track(events):
+    c = {}
+    for e in events:
+        if e.get('event') == 'music_play':
+            t = (e.get('props') or {}).get('track')
+            if t:
+                c[t] = c.get(t, 0) + 1
+    if not c:
+        return None
+    best = max(c, key=lambda k: c[k])
+    return {'track': best, 'count': c[best]}
+
+
+def _ins_group_by_date(events):
+    g = {}
+    for e in events:
+        d = _ins_to_jst_date(e.get('ts', ''))
+        if d:
+            g.setdefault(d, []).append(e)
+    return g
+
+
+def _ins_pct(a, b):
+    if not b:
+        return None
+    return round((a - b) / b * 100)
+
+
+def _ins_build_today(today_ev, yest_ev, this_week_ev, last_week_ev, all_by_date, recent_lives, today):
+    insights = []
+    today_v = _ins_visitors(today_ev)
+    yest_v  = _ins_visitors(yest_ev)
+
+    # 1. Visitor change
+    if today_v > 0 and yest_v > 0:
+        pct = _ins_pct(today_v, yest_v)
+        if pct is not None and pct >= 10:
+            insights.append({'id':'visitor_up','icon':'📈','level':'positive',
+                'text':f'昨日より Visitors が {pct}% 増えました。'})
+        elif pct is not None and pct <= -10:
+            insights.append({'id':'visitor_down','icon':'📉','level':'neutral',
+                'text':f'昨日より Visitors が {abs(pct)}% 減りました。'})
+    elif today_v > 0 and yest_v == 0:
+        insights.append({'id':'back_after_zero','icon':'👋','level':'positive',
+            'text':f'昨日は訪問ゼロでしたが、今日は {today_v} 人が訪れました。'})
+
+    # 2. Top track
+    tt = _ins_top_track(today_ev)
+    if tt:
+        insights.append({'id':'top_track','icon':'🎵','level':'neutral',
+            'text':f'「{tt["track"]}」が今日最も再生されました（{tt["count"]}回）。'})
+
+    # 3. All-time high
+    prev_dates = [d for d in all_by_date if d < today]
+    if len(prev_dates) >= 7:
+        prev_max = max((_ins_visitors(all_by_date[d]) for d in prev_dates), default=0)
+        if today_v > prev_max and today_v > 0:
+            insights.append({'id':'alltime_high','icon':'🎉','level':'positive',
+                'text':f'今日は過去最高の訪問者数（{today_v} 人）です！'})
+
+    # 4. Post-live context
+    live_recent = next((l for l in recent_lives
+                        if l.get('date') and 0 <= (
+                            datetime.date.fromisoformat(today)
+                            - datetime.date.fromisoformat(l['date'][:10])
+                        ).days <= 2), None)
+    if live_recent:
+        tw_pl = _ins_plays(this_week_ev)
+        lw_pl = _ins_plays(last_week_ev)
+        if tw_pl > lw_pl * 1.15:
+            insights.append({'id':'live_music_spike','icon':'🎤','level':'positive',
+                'text':'ライブ後に Music 再生数が増えています。'})
+        else:
+            insights.append({'id':'live_context','icon':'🎤','level':'neutral',
+                'text':'直近にライブがありました。アクセスの動きを観察しましょう。'})
+
+    # 5. Returning rate improvement
+    this_rr = _ins_ret_rate(this_week_ev)
+    last_rr = _ins_ret_rate(last_week_ev)
+    if this_rr > 0 and last_rr > 0 and this_rr >= last_rr + 5:
+        insights.append({'id':'ret_up','icon':'🔄','level':'positive',
+            'text':f'リピーター率が今週 {this_rr}% と先週より上がっています。'})
+
+    # 6. QR today
+    today_qr = _ins_qr_scans(today_ev)
+    if today_qr > 0:
+        insights.append({'id':'qr_today','icon':'📱','level':'neutral',
+            'text':f'QR コード経由で今日 {today_qr} 件のアクセスがありました。'})
+
+    # 7. Fallback
+    if not insights:
+        if today_v == 0:
+            insights.append({'id':'quiet','icon':'🌙','level':'neutral','text':'今日はまだ訪問者がいません。'})
+        else:
+            insights.append({'id':'normal','icon':'✨','level':'neutral','text':f'今日は {today_v} 人が訪れました。'})
+
+    return {
+        'date': today, 'insights': insights,
+        '_data': {'visitorsToday': today_v, 'visitorsYest': yest_v,
+                  'playsToday': _ins_plays(today_ev), 'topTrack': tt,
+                  'qrToday': today_qr, 'retRateWeek': this_rr},
+    }
+
+
+def _ins_build_weekly(this_ev, last_ev, this_start, last_start, today):
+    def mk(key, label, icon, val, prev):
+        return {'key': key, 'label': label, 'icon': icon, 'value': val, 'prev': prev,
+                'changePct': _ins_pct(val, prev)}
+    return {
+        'period':     {'start': this_start, 'end': today},
+        'prevPeriod': {'start': last_start, 'end': _ins_add_days(this_start, -1)},
+        'metrics': [
+            mk('visitors',  'Visitors',          '👥', _ins_visitors(this_ev),  _ins_visitors(last_ev)),
+            mk('plays',     'Music Plays',        '🎵', _ins_plays(this_ev),     _ins_plays(last_ev)),
+            mk('returning', 'Returning Visitors', '🔄', _ins_returning(this_ev), _ins_returning(last_ev)),
+            mk('qr',        'QR Scans',           '📱', _ins_qr_scans(this_ev),  _ins_qr_scans(last_ev)),
+            mk('pageviews', 'Page Views',         '📄', _ins_page_views(this_ev), _ins_page_views(last_ev)),
+        ],
+        '_data': {'retRateThis': _ins_ret_rate(this_ev), 'retRateLast': _ins_ret_rate(last_ev)},
+    }
+
+
+def _ins_build_monthly(this_ev, last_ev, lives, diaries, m_str):
+    this_v  = _ins_visitors(this_ev)
+    last_v  = _ins_visitors(last_ev)
+    this_rr = _ins_ret_rate(this_ev)
+    this_pl = _ins_plays(this_ev)
+    tt      = _ins_top_track(this_ev)
+    has_live = any((l.get('date') or '').startswith(m_str) for l in lives)
+    pub_diaries = [d for d in diaries
+                   if d.get('status') == 'published'
+                   and (d.get('createdAt') or d.get('date') or '').startswith(m_str)]
+    parts = []
+
+    if this_v == 0:
+        parts.append('今月はまだ訪問者がいません。')
+    elif not last_v:
+        parts.append(f'今月は {this_v} 人が訪れました。')
+    else:
+        pct = _ins_pct(this_v, last_v)
+        if pct is not None and pct >= 20:
+            parts.append(f'今月は先月より {pct}% 多くの人が訪れました。')
+        elif pct is not None and pct >= 5:
+            parts.append('今月は先月よりやや多くの人が訪れました。')
+        elif pct is not None and pct <= -20:
+            parts.append(f'今月は先月より {abs(pct)}% 少ない訪問となりました。')
+        else:
+            parts.append('今月は先月と同程度の訪問者数でした。')
+
+    if this_v > 0:
+        if this_rr >= 50:
+            parts.append('リピーターが多く、常連の人たちがよく戻ってきた一ヶ月でした。')
+        elif this_rr >= 25:
+            parts.append('新しい訪問者とリピーターがバランスよく訪れました。')
+        else:
+            parts.append('新しく訪れた人が中心の一ヶ月でした。')
+
+    if has_live:
+        parts.append('ライブがあり、その前後でサイトへのアクセスが増えました。')
+    if tt and this_pl > 0:
+        parts.append(f'「{tt["track"]}」が最も多く聴かれました（{tt["count"]}回）。')
+    if pub_diaries:
+        parts.append(f'Diary は今月 {len(pub_diaries)} 件公開されました。')
+
+    return {
+        'period': m_str,
+        'story':  ''.join(parts) if parts else 'まだデータが揃っていません。',
+        '_data': {'visitorsThis': this_v, 'visitorsLast': last_v,
+                  'retRate': this_rr, 'plays': this_pl, 'hasLive': has_live,
+                  'diaryCount': len(pub_diaries), 'topTrack': tt},
+    }
+
+
+def _ins_build_achievements(ms_cache, window_days=60):
+    today  = _ins_today_str()
+    cutoff = _ins_add_days(today, -window_days)
+    result = []
+    for mid, iso in ms_cache.items():
+        if not iso or iso[:10] < cutoff:
+            continue
+        icon, label = _INS_MS_LABELS.get(mid, ('🏆', mid))
+        result.append({'id': mid, 'icon': icon, 'label': label, 'achievedAt': iso})
+    result.sort(key=lambda x: x['achievedAt'], reverse=True)
+    return result[:8]
+
+
+def _ins_build_recommendations(all_ev, lives, diaries, all_by_date):
+    recs = []
+
+    # 1. Peak hour
+    hour_bin = [0] * 24
+    for e in all_ev:
+        hour_bin[_ins_to_jst_hour(e.get('ts', ''))] += 1
+    total = sum(hour_bin)
+    if total > 0:
+        peak = hour_bin.index(max(hour_bin))
+        if hour_bin[peak] / total > 0.12:
+            recs.append({'id':'peak_hour','icon':'🕐',
+                'text':f'{peak}〜{(peak+2)%24}時にアクセスが集中しています。この時間帯に合わせて更新すると効果的かもしれません。'})
+
+    # 2. Diary → plays correlation
+    pub_diary = [d for d in diaries if d.get('status') == 'published' and d.get('date')]
+    if len(pub_diary) >= 2:
+        n_days  = max(1, len(all_by_date))
+        avg_pl  = _ins_plays(all_ev) / n_days
+        spiked  = sum(1 for d in pub_diary if _ins_plays(all_by_date.get(d['date'], [])) > avg_pl * 1.3)
+        if spiked / len(pub_diary) >= 0.5:
+            recs.append({'id':'diary_plays','icon':'📔',
+                'text':'Diary 公開日は Music 再生数が伸びる傾向があります。定期的な投稿が効果的です。'})
+
+    # 3. Post-live spike
+    recent_l = sorted([l for l in lives if l.get('date')],
+                      key=lambda l: l['date'], reverse=True)[:6]
+    spiked = sum(1 for l in recent_l
+                 if _ins_visitors(all_by_date.get(_ins_add_days(l['date'], 1), []))
+                    > _ins_visitors(all_by_date.get(_ins_add_days(l['date'], -1), [])) * 1.2
+                 and _ins_visitors(all_by_date.get(_ins_add_days(l['date'], 1), [])) > 0)
+    if len(recent_l) >= 2 and spiked / len(recent_l) >= 0.5:
+        recs.append({'id':'post_live','icon':'🎤',
+            'text':'ライブ翌日に Visitors が増えています。ライブ告知をサイトでも強化すると効果的です。'})
+
+    # 4. Returning rate
+    rr = _ins_ret_rate(all_ev)
+    v  = _ins_visitors(all_ev)
+    if rr < 25 and v >= 10:
+        recs.append({'id':'low_returning','icon':'🔄',
+            'text':f'リピーター率が {rr}% と低めです。Diary や Music の定期更新でリピーターを増やしましょう。'})
+    elif rr >= 45 and v >= 10:
+        recs.append({'id':'high_returning','icon':'🌟',
+            'text':f'リピーター率が {rr}% と高く、コアファンが育っています。新規訪問者を増やす施策も検討しましょう。'})
+
+    # 5. QR usage
+    qr = _ins_qr_scans(all_ev)
+    if qr == 0 and lives:
+        recs.append({'id':'no_qr','icon':'📱',
+            'text':'ライブでの QR コード活用がまだありません。フライヤーへの掲載を検討してみてください。'})
+    elif qr > 0 and rr >= 25:
+        recs.append({'id':'qr_working','icon':'📱',
+            'text':f'QR 経由の訪問が {qr} 件あり、フライヤーからのリピーターも定着しています。'})
+
+    return recs[:5]
+
+
+def _ins_build_timeline(diaries, lives, ms_cache, window_days=90):
+    today  = _ins_today_str()
+    cutoff = _ins_add_days(today, -window_days)
+    items  = []
+
+    for d in diaries:
+        if d.get('status') != 'published':
+            continue
+        date = (d.get('createdAt') or d.get('date') or '')[:10]
+        if date >= cutoff:
+            items.append({'type':'diary','icon':'📔','label':'Diary',
+                'title': d.get('title') or '(untitled)', 'date': date})
+
+    for l in lives:
+        date = (l.get('date') or '')[:10]
+        if date >= cutoff:
+            items.append({'type':'live','icon':'🎤','label':'Live',
+                'title': l.get('venue') or 'ライブ', 'date': date})
+
+    for mid, iso in ms_cache.items():
+        if not iso:
+            continue
+        date = iso[:10]
+        if date >= cutoff:
+            icon, label = _INS_MS_LABELS.get(mid, ('🏆', mid))
+            items.append({'type':'milestone','icon':icon,'label':'Milestone',
+                'title': label, 'date': date})
+
+    items = [i for i in items if i.get('date')]
+    items.sort(key=lambda x: x['date'], reverse=True)
+    return items[:20]
+
+
 # ── Request handler ───────────────────────────────────────────────────────────
 
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
@@ -417,6 +808,10 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._serve_template('afterhours-milestones.html')
         elif path == '/api/milestones':
             self._handle_milestones_read()
+        elif path == '/afterhours/insights':
+            self._serve_template('afterhours-insights.html')
+        elif path == '/api/insights':
+            self._handle_insights_read()
         elif path == '/afterhours/diary':
             self._handle_afterhours_diary()
         elif path == '/afterhours/live':
@@ -1457,6 +1852,94 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
         print('[weather/total] %dms' % int((time.monotonic()-t_total)*1000))
         self._write_json(200, {'condition': condition, 'temp': temp_c})
+
+    # -- GET /api/insights -- rule-based insights (admin only) ------------------
+
+    def _handle_insights_read(self):
+        """GET /api/insights -- return rule-based insights for the Insights page."""
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+
+        analytics_dir = os.path.join(_DATA_DIR, 'analytics')
+        today    = _ins_today_str()
+        yesterday = _ins_add_days(today, -1)
+
+        # Week bounds
+        this_week_start = _ins_week_monday(today)
+        last_week_start = _ins_add_days(this_week_start, -7)
+        last_week_end   = _ins_add_days(this_week_start, -1)
+
+        # Month bounds
+        this_month_start        = today[:7] + '-01'
+        prev_month_s, prev_month_e = _ins_prev_month_bounds(today)
+
+        # All-time first date
+        meta_path  = os.path.join(analytics_dir, 'meta.json')
+        first_date = None
+        if os.path.exists(meta_path):
+            try:
+                first_date = json.load(open(meta_path, encoding='utf-8')).get('firstDate')
+            except Exception:
+                pass
+
+        all_dates = _ins_date_range(first_date, today) if first_date else []
+
+        def load(dates):
+            return _ins_read_analytics_days(analytics_dir, dates)
+
+        today_ev      = load([today])
+        yest_ev       = load([yesterday])
+        this_week_ev  = load(_ins_date_range(this_week_start, today))
+        last_week_ev  = load(_ins_date_range(last_week_start, last_week_end))
+        this_month_ev = load(_ins_date_range(this_month_start, today))
+        last_month_ev = load(_ins_date_range(prev_month_s, prev_month_e))
+        all_ev        = load(all_dates) if all_dates else []
+
+        all_by_date = _ins_group_by_date(all_ev)
+
+        # Content data
+        diaries, lives = [], []
+        for fname, target in (('diary.json', 'diary'), ('lives.json', 'live')):
+            fp = os.path.join(_DATA_DIR, fname)
+            try:
+                data = json.load(open(fp, encoding='utf-8'))
+                if isinstance(data, list):
+                    (diaries if target == 'diary' else lives).__iadd__(data)
+            except Exception:
+                pass
+
+        # Milestone achievement cache
+        ms_cache = {}
+        ms_cache_path = os.path.join(_DATA_DIR, 'milestones.json')
+        if os.path.exists(ms_cache_path):
+            try:
+                ms_cache = json.load(open(ms_cache_path, encoding='utf-8'))
+            except Exception:
+                pass
+
+        recent_lives = [l for l in lives
+                        if l.get('date') and l['date'][:10] >= _ins_add_days(today, -7)]
+
+        today_sec   = _ins_build_today(today_ev, yest_ev, this_week_ev, last_week_ev,
+                                       all_by_date, recent_lives, today)
+        weekly_sec  = _ins_build_weekly(this_week_ev, last_week_ev,
+                                        this_week_start, last_week_start, today)
+        monthly_sec = _ins_build_monthly(this_month_ev, last_month_ev,
+                                         lives, diaries, today[:7])
+        ach_sec     = _ins_build_achievements(ms_cache)
+        rec_sec     = _ins_build_recommendations(all_ev, lives, diaries, all_by_date)
+        tl_sec      = _ins_build_timeline(diaries, lives, ms_cache)
+
+        self._write_json(200, {
+            'generatedAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'today':        today_sec,
+            'weekly':       weekly_sec,
+            'monthly':      monthly_sec,
+            'achievements': ach_sec,
+            'recommendations': rec_sec,
+            'timeline':     tl_sec,
+        })
 
     def log_message(self, format, *args):
         print(format % args)
