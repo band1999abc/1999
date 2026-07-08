@@ -69,35 +69,33 @@ export function extractToken(req) {
 
 // ── Token denylist (Upstash KV) ───────────────────────────────────────────────
 
-async function _kv(commands) {
-    const url = process.env.UPSTASH_REDIS_REST_URL;
-    const tok = process.env.UPSTASH_REDIS_REST_TOKEN;
-    if (!url || !tok) return [];
-    const res = await fetch(`${url}/pipeline`, {
-        method:  'POST',
-        headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify(commands),
-    });
-    return res.json();
-}
-
 function _hash(token) {
     return createHash('sha256').update(token).digest('hex').slice(0, 32);
 }
 
+/** Low-level single-command Upstash REST call.  Returns the `result` field. */
+async function _kvRest(path) {
+    const base = (process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/$/, '');
+    const tok  = process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (!base || !tok) return null;
+    const res = await fetch(`${base}${path}`, {
+        headers: { Authorization: `Bearer ${tok}` },
+    });
+    if (!res.ok) throw new Error(`Upstash ${res.status}: ${await res.text()}`);
+    return (await res.json()).result;
+}
+
 /**
- * Add a token to the revocation list in KV with a TTL equal to its remaining
- * validity window.  Call on logout so the token is immediately unusable.
+ * Add a token to the revocation list in KV.
+ * TTL = MAX_AGE + 60s (deliberately over-generous; the KV key only needs to
+ * outlive the token's exp).  Using a fixed TTL avoids parsing the payload.
+ * Call on logout so the token is immediately unusable.
  */
 export async function denylistToken(token) {
     if (!token) return;
     try {
-        const dot = token.lastIndexOf('.');
-        if (dot < 1) return;
-        const data         = JSON.parse(Buffer.from(token.slice(0, dot), 'base64url').toString());
-        const remainingSec = Math.max(0, Math.ceil((data.exp - Date.now()) / 1000));
-        if (remainingSec <= 0) return; // already expired — nothing to revoke
-        await _kv([['SET', `revoked:${_hash(token)}`, '1', 'EX', String(remainingSec)]]);
+        const hash = _hash(token);
+        await _kvRest(`/set/revoked:${hash}/1/EX/${MAX_AGE + 60}`);
     } catch (e) {
         console.error('[auth] denylist error:', e.message);
     }
@@ -110,8 +108,9 @@ export async function denylistToken(token) {
 export async function isRevoked(token) {
     if (!token) return false;
     try {
-        const data = await _kv([['GET', `revoked:${_hash(token)}`]]);
-        return data?.[0]?.result === '1';
+        const hash   = _hash(token);
+        const result = await _kvRest(`/get/revoked:${hash}`);
+        return result === '1';
     } catch {
         return false;
     }

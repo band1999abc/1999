@@ -106,8 +106,6 @@ export default async function handler(req, res) {
     if (action === 'logout') {
         const token = extractToken(req);
         if (token && verifyToken(token) !== null) {
-            // Await revocation so the KV write completes before the response
-            // is sent; logout remains functional even if KV is unavailable
             await denylistToken(token);
         }
         res.setHeader('Set-Cookie', cookieHeader(null));
