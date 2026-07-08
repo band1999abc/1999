@@ -1,1 +1,70 @@
-[]
+[
+  {
+    "id": "2194afb5-e4fe-4956-a2f2-d3d34a9d7671",
+    "ja": "コーヒーが冷めないうちに、音楽を。",
+    "en": "Music before your coffee gets cold.",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "morning"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:06:25",
+    "updatedAt": "2026-07-08T08:06:25"
+  },
+  {
+    "id": "f0860bf5-f0fd-4ab5-bda5-2c7f2654d95a",
+    "ja": "今日も一日、よくがんばったね。",
+    "en": "You did well today.",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "latenight"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:06:25",
+    "updatedAt": "2026-07-08T08:06:25"
+  },
+  {
+    "id": "bd5ca0d2-ecf1-4feb-8d3b-bdb8a3f1ed3b",
+    "ja": "雨の日は、音楽が少し近く聴こえる気がする。",
+    "en": "On rainy days, music feels a little closer.",
+    "enabled": true,
+    "priority": 4,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "rain"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:06:25",
+    "updatedAt": "2026-07-08T08:06:25"
+  },
+  {
+    "id": "f879ec80-9b52-4159-9241-44de82d34970",
+    "ja": "今日、ライブがある。緊張してる。",
+    "en": "There's a show today. I'm a little nervous.",
+    "enabled": true,
+    "priority": 5,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": [
+        "live_today"
+      ]
+    },
+    "createdAt": "2026-07-08T08:06:25",
+    "updatedAt": "2026-07-08T08:06:25"
+  }
+]
