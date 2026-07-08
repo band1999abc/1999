@@ -1543,3 +1543,252 @@ body.night .ar-rank-plays   { color: var(--text-dark); }
     .ar-initial-val  { font-size: 11px; }
     .ar-initials     { gap: 10px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Visitors Analytics  (.av-*)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Section gaps ───────────────────────────────────────────────────────────── */
+
+.av-section-gap { margin-top: 18px; }
+
+/* ── Period selector ────────────────────────────────────────────────────────── */
+
+.av-period-row {
+    display: flex;
+    margin: 0 0 10px;
+}
+
+.av-period-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    padding: 4px 10px;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.av-period-btn + .av-period-btn { border-left: none; }
+
+.av-period-btn.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+body.night .av-period-btn.is-active { color: #111; }
+
+/* ── Chart ──────────────────────────────────────────────────────────────────── */
+
+.av-chart-wrap {
+    margin: 4px 0 0;
+    overflow: hidden;
+}
+
+.av-chart {
+    display: block;
+    height: auto;
+    overflow: visible;
+    width: 100%;
+}
+
+/* ── Legend ─────────────────────────────────────────────────────────────────── */
+
+.av-legend {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 6px 0 20px;
+}
+
+.av-legend-item {
+    align-items: center;
+    display: flex;
+    gap: 5px;
+}
+
+.av-legend-item span {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+}
+
+/* ── Visitor Detail table ───────────────────────────────────────────────────── */
+
+.av-detail-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.av-detail-table thead th {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    padding: 5px 6px 5px 0;
+    text-align: right;
+    text-transform: uppercase;
+}
+
+.av-detail-table thead th:first-child { text-align: left; }
+
+.av-detail-table tbody td {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    padding: 11px 6px 11px 0;
+    text-align: right;
+}
+
+.av-detail-table tbody tr:last-child td { border-bottom: none; }
+
+.av-dt-period {
+    color: var(--text-dark) !important;
+    font-size: 13px !important;
+    text-align: left !important;
+}
+
+.av-dt-rate {
+    color: var(--text-dark) !important;
+}
+
+/* ── Two-column layout (Device + Browser side by side) ──────────────────────── */
+
+.av-two-col {
+    display: grid;
+    gap: 0 24px;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 4px;
+}
+
+@media (max-width: 440px) {
+    .av-two-col { grid-template-columns: 1fr; }
+}
+
+/* ── Proportion bars ────────────────────────────────────────────────────────── */
+
+.av-bar-row {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.av-bar-label {
+    color: var(--text-dark);
+    flex-shrink: 0;
+    font-size: 12px;
+    letter-spacing: 0.01em;
+    min-width: 58px;
+}
+
+.av-bar-track {
+    background: rgba(0,0,0,.06);
+    flex: 1;
+    height: 5px;
+    overflow: hidden;
+}
+
+body.night .av-bar-track { background: rgba(255,255,255,.08); }
+
+.av-bar-fill {
+    background: var(--accent);
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.av-bar-pct {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    min-width: 30px;
+    text-align: right;
+}
+
+/* ── Country list ───────────────────────────────────────────────────────────── */
+
+.av-country-row {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    padding: 11px 0;
+}
+
+.av-country-row:last-child { border-bottom: none; }
+
+.av-country-rank {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    min-width: 16px;
+    text-align: right;
+}
+
+.av-country-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.av-country-name {
+    color: var(--text-dark);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    margin-bottom: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.av-country-bar { height: 4px; }
+
+.av-country-right {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.av-country-count {
+    color: var(--text-dark);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+}
+
+.av-country-pct {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    margin-top: 1px;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────────── */
+
+.av-empty {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    padding: 10px 0;
+}
+
+/* ── Night overrides ────────────────────────────────────────────────────────── */
+
+body.night .av-bar-fill     { background: var(--accent); }
+body.night .av-country-count { color: var(--text-dark); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+    .av-bar-label     { min-width: 50px; font-size: 11px; }
+    .av-country-count { font-size: 14px; }
+}

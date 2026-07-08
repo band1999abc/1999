@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=33">
-    <link rel="stylesheet" href="/admin.css?v=6">
+    <link rel="stylesheet" href="/admin.css?v=7">
 </head>
 <body data-page="afterhours-analytics" class="auth-hidden">
 
@@ -28,7 +28,7 @@
     -->
     <nav class="aa-nav" aria-label="Analytics sections">
         <button class="aa-nav-tab is-active" data-panel="dashboard">Dashboard</button>
-        <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Visitors</button>
+        <button class="aa-nav-tab" data-panel="visitors">Visitors</button>
         <button class="aa-nav-tab" data-panel="music">Music</button>
         <button class="aa-nav-tab" data-panel="release">Release</button>
         <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Pages</button>
@@ -151,6 +151,126 @@
         </div>
 
     </div><!-- /#aa-panel-dashboard -->
+
+    <!-- ── Visitors Analytics panel ────────────────────────────── -->
+    <div id="aa-panel-visitors" class="aa-panel" hidden>
+
+        <!-- Overview KPIs ──────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header av-section-gap">
+                <span class="aa-section-label">Overview</span>
+                <span class="aa-section-note" id="av-since-note"></span>
+            </div>
+            <div class="aa-grid aa-grid--today">
+                <div class="aa-card">
+                    <div class="aa-value" id="av-kpi-visitors">—</div>
+                    <div class="aa-card-label">Visitors</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="av-kpi-new">—</div>
+                    <div class="aa-card-label">New Visitors</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="av-kpi-returning">—</div>
+                    <div class="aa-card-label">Returning Visitors</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="av-kpi-rate">—</div>
+                    <div class="aa-card-label">Returning Rate</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="av-kpi-online">—</div>
+                    <div class="aa-card-label">Current Online</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="av-kpi-duration">—</div>
+                    <div class="aa-card-label">Avg Session Duration</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="av-kpi-ppv">—</div>
+                    <div class="aa-card-label">Pages per Visit</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart ──────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header av-section-gap">
+                <span class="aa-section-label">推移</span>
+            </div>
+            <div class="av-period-row" role="group" aria-label="表示期間">
+                <button class="av-period-btn"           data-period="7d"  type="button">7日</button>
+                <button class="av-period-btn is-active" data-period="30d" type="button">30日</button>
+                <button class="av-period-btn"           data-period="90d" type="button">90日</button>
+                <button class="av-period-btn"           data-period="all" type="button">全期間</button>
+            </div>
+            <div class="av-chart-wrap">
+                <svg id="av-chart" class="av-chart" viewBox="0 0 440 180"></svg>
+            </div>
+            <div class="av-legend" id="av-chart-legend"></div>
+        </div>
+
+        <!-- Visitor Detail ─────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header av-section-gap">
+                <span class="aa-section-label">期間別詳細</span>
+            </div>
+            <table class="av-detail-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Visitors</th>
+                        <th>New</th>
+                        <th>Returning</th>
+                        <th>Rate</th>
+                    </tr>
+                </thead>
+                <tbody id="av-detail-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Device + Browser ───────────────────────────────────── -->
+        <div class="av-two-col">
+            <div class="aa-section">
+                <div class="aa-section-header av-section-gap">
+                    <span class="aa-section-label">Device</span>
+                </div>
+                <div id="av-device-bars"></div>
+            </div>
+            <div class="aa-section">
+                <div class="aa-section-header av-section-gap">
+                    <span class="aa-section-label">Browser</span>
+                </div>
+                <div id="av-browser-bars"></div>
+            </div>
+        </div>
+
+        <!-- Returning Distribution ─────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header av-section-gap">
+                <span class="aa-section-label">Returning</span>
+            </div>
+            <div id="av-returning-bars"></div>
+        </div>
+
+        <!-- Time ───────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header av-section-gap">
+                <span class="aa-section-label">Time</span>
+                <span class="aa-section-note">JST</span>
+            </div>
+            <div id="av-time-wrap"></div>
+        </div>
+
+        <!-- Country ────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header av-section-gap">
+                <span class="aa-section-label">Country</span>
+            </div>
+            <div id="av-country-list"></div>
+        </div>
+
+    </div><!-- /#aa-panel-visitors -->
 
     <!-- ── Music Analytics panel ────────────────────────────────── -->
     <div id="aa-panel-music" class="aa-panel" hidden>
@@ -311,6 +431,7 @@
 <script src="/admin.js?v=3"></script>
 <script src="/analytics-overview.js?v=2"></script>
 <script src="/analytics-music.js?v=1"></script>
+<script src="/analytics-visitors.js?v=1"></script>
 <script src="/analytics-release.js?v=1"></script>
 
 </body>

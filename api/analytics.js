@@ -58,6 +58,36 @@ const EVENT_HANDLERS = {
     contact_view: onContactView,
 };
 
+// ── UA / geo parsing (server-side, no external deps) ─────────────────────────
+
+/**
+ * Parse User-Agent into device and browser category strings.
+ * Returns lowercase keys that the client JS maps to display labels.
+ */
+function parseUA(ua) {
+    if (!ua) return { device: 'unknown', browser: 'unknown' };
+    const s = String(ua);
+
+    // Device — order matters: tablet check before generic android
+    let device;
+    if (/iPhone/i.test(s))                                    device = 'iphone';
+    else if (/iPad/i.test(s))                                 device = 'tablet';
+    else if (/Android/i.test(s) && !/Mobile/i.test(s))       device = 'tablet';
+    else if (/Android/i.test(s))                              device = 'android';
+    else if (/Tablet|PlayBook|Kindle|Silk/i.test(s))          device = 'tablet';
+    else                                                      device = 'pc';
+
+    // Browser — Edge must come before Chrome (Edg/ appears in Chrome-based Edge UA)
+    let browser;
+    if (/Edg\//i.test(s) || /Edge\//i.test(s))               browser = 'edge';
+    else if (/Firefox\//i.test(s))                            browser = 'firefox';
+    else if (/Chrome\//i.test(s))                             browser = 'chrome';
+    else if (/Safari\//i.test(s))                             browser = 'safari';
+    else                                                      browser = 'other';
+
+    return { device, browser };
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function readBody(req) {
@@ -130,6 +160,14 @@ export default async function handler(req, res) {
         const now     = new Date();
         const dateStr = todayJST();   // JST date for daily bucketing
 
+        // Server-side device / browser / country enrichment
+        const { device, browser } = parseUA(req.headers['user-agent'] || '');
+        const country = (
+            req.headers['x-vercel-ip-country'] ||
+            req.headers['cf-ipcountry']         ||
+            'unknown'
+        ).toString().toUpperCase().slice(0, 2);
+
         const entry = {
             id:             randomUUID(),
             ts:             now.toISOString(),          // UTC timestamp
@@ -139,6 +177,9 @@ export default async function handler(req, res) {
             event:          eventKey,
             is_new_visitor: Boolean(is_new_visitor),
             props:          safeProps,
+            device,
+            browser,
+            country,
         };
 
         try {
