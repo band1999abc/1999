@@ -19,6 +19,7 @@
         jacketSrc:     null,     // base64 dataUrl of pending jacket upload
         jacketToDelete: false,   // flag: delete existing jacket on next save
         audioMeta:     null,     // { duration, fileSize, bitrate, uploadedAt } from MP3 pick
+        audioFileObj:  null,     // File object pending upload to /api/music-file/:id
         saving:        false,
         analytics:     {},       // { [trackTitle]: { total, listeners } }
     };
@@ -58,14 +59,16 @@
     var jacketAddBtn  = document.getElementById('mc-jacket-add');
     var jacketFileEl  = document.getElementById('mc-jacket-file');
 
-    // MP3 metadata picker
-    var mp3PickBtn = document.getElementById('mc-mp3-pick');
-    var mp3FileEl  = document.getElementById('mc-mp3-file');
-    var mp3MetaEl  = document.getElementById('mc-mp3-meta');
-    var mp3DurEl   = document.getElementById('mc-mp3-duration');
-    var mp3SizeEl  = document.getElementById('mc-mp3-size');
-    var mp3BrEl    = document.getElementById('mc-mp3-bitrate');
-    var mp3UpEl    = document.getElementById('mc-mp3-uploaded');
+    // MP3 picker (metadata + hosted upload)
+    var mp3PickBtn   = document.getElementById('mc-mp3-pick');
+    var mp3FileEl    = document.getElementById('mc-mp3-file');
+    var mp3MetaEl    = document.getElementById('mc-mp3-meta');
+    var mp3DurEl     = document.getElementById('mc-mp3-duration');
+    var mp3SizeEl    = document.getElementById('mc-mp3-size');
+    var mp3BrEl      = document.getElementById('mc-mp3-bitrate');
+    var mp3UpEl      = document.getElementById('mc-mp3-uploaded');
+    var fileStatusEl = document.getElementById('mc-file-status');
+    var fileDelBtn   = document.getElementById('mc-file-delete');
 
     // Preview overlay
     var previewOverlay = document.getElementById('mc-preview-overlay');
@@ -121,6 +124,67 @@
         var d = new Date(iso);
         return d.getFullYear() + '/' + pad2(d.getMonth() + 1) + '/' + pad2(d.getDate())
              + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+
+    // ── Audio file upload UI ───────────────────────────────────────────────────
+
+    function renderAudioFileUI() {
+        var t = S.editingId ? S.tracks.find(function (x) { return x.id === S.editingId; }) : null;
+        var hasServer  = !!(t && t.audioFile);
+        var hasPending = !!S.audioFileObj;
+
+        if (fileDelBtn) fileDelBtn.classList.toggle('mc-hidden', !hasServer && !hasPending);
+
+        if (!fileStatusEl) return;
+        if (hasPending) {
+            fileStatusEl.textContent = '⏳ アップロード待ち — 保存すると配信されます';
+            fileStatusEl.className = 'mc-file-status mc-file-status--pending';
+            fileStatusEl.classList.remove('mc-hidden');
+        } else if (hasServer) {
+            fileStatusEl.textContent = '✓ ファイルあり（ページ内で直接再生できます）';
+            fileStatusEl.className = 'mc-file-status mc-file-status--ok';
+            fileStatusEl.classList.remove('mc-hidden');
+        } else {
+            fileStatusEl.textContent = '';
+            fileStatusEl.className = 'mc-file-status mc-hidden';
+        }
+    }
+
+    function handleAudioFileAfterSave(musicId) {
+        if (!S.audioFileObj) return Promise.resolve();
+        if (saveBtn) saveBtn.textContent = 'アップロード中…';
+
+        return new Promise(function (resolve) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var dataUrl = e.target.result;
+                authFetch('/api/music-file/' + musicId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dataUrl: dataUrl }),
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.ok) {
+                        S.audioFileObj = null;
+                        var idx = S.tracks.findIndex(function (x) { return x.id === musicId; });
+                        if (idx >= 0) S.tracks[idx] = Object.assign({}, S.tracks[idx], { audioFile: true });
+                        renderAudioFileUI();
+                    } else {
+                        alert('ファイルのアップロードに失敗しました: ' + (resp.error || '不明なエラー'));
+                    }
+                })
+                .catch(function (err) {
+                    alert('ファイルのアップロードに失敗しました: ' + err.message);
+                })
+                .finally(resolve);
+            };
+            reader.onerror = function () {
+                alert('ファイルの読み込みに失敗しました。');
+                resolve();
+            };
+            reader.readAsDataURL(S.audioFileObj);
+        });
     }
 
     function renderAudioMeta(meta) {
@@ -422,10 +486,12 @@
 
         // Restore audio metadata — show panel if any field is present
         var hasAnyMeta = t && (t.duration != null || t.fileSize != null || !!t.uploadedAt);
-        S.audioMeta = hasAnyMeta
+        S.audioMeta    = hasAnyMeta
             ? { duration: t.duration ?? null, fileSize: t.fileSize ?? null, bitrate: t.bitrate ?? null, uploadedAt: t.uploadedAt || null }
             : null;
+        S.audioFileObj = null;  // reset pending upload when switching tracks
         renderAudioMeta(S.audioMeta);
+        renderAudioFileUI();
 
         if (editorView) editorView.scrollTop = 0;
     }
@@ -479,8 +545,10 @@
                 var bitrate = (dur != null && dur > 0)
                     ? Math.round(fileSize * 8 / dur / 1000)
                     : null;
-                S.audioMeta = { duration: dur, fileSize: fileSize, bitrate: bitrate, uploadedAt: uploadedAt };
+                S.audioMeta    = { duration: dur, fileSize: fileSize, bitrate: bitrate, uploadedAt: uploadedAt };
+                S.audioFileObj = file;   // store for upload on next save
                 renderAudioMeta(S.audioMeta);
+                renderAudioFileUI();
             }
 
             // loadedmetadata: fires first; for CBR files duration is already finite
@@ -540,6 +608,33 @@
             S.jacketSrc      = null;
             S.jacketToDelete = true;
             renderJacketUI(S.editingId ? S.tracks.find(function (x) { return x.id === S.editingId; }) : null);
+        });
+    }
+
+    if (fileDelBtn) {
+        fileDelBtn.addEventListener('click', function () {
+            var t = S.editingId ? S.tracks.find(function (x) { return x.id === S.editingId; }) : null;
+            var hasServer  = !!(t && t.audioFile);
+            var hasPending = !!S.audioFileObj;
+
+            if (hasServer) {
+                // Delete from server (and cancel any pending too)
+                openConfirm('ホスト配信ファイルを削除しますか？\nこの操作は取り消せません。', function () {
+                    authFetch('/api/music-file/' + S.editingId, { method: 'DELETE' })
+                        .then(function (r) { return r.json(); })
+                        .then(function () {
+                            var idx = S.tracks.findIndex(function (x) { return x.id === S.editingId; });
+                            if (idx >= 0) S.tracks[idx] = Object.assign({}, S.tracks[idx], { audioFile: false });
+                            S.audioFileObj = null;
+                            renderAudioFileUI();
+                        })
+                        .catch(function (err) { alert('削除に失敗しました: ' + err.message); });
+                });
+            } else if (hasPending) {
+                // Just cancel the pending selection
+                S.audioFileObj = null;
+                renderAudioFileUI();
+            }
         });
     }
 
@@ -611,6 +706,9 @@
                     if (idx >= 0) S.tracks[idx] = saved;
                 }
                 return handleJacketAfterSave(saved.id);
+           })
+           .then(function () {
+                return handleAudioFileAfterSave(S.editingId);
            })
            .then(function () {
                 var t = S.tracks.find(function (x) { return x.id === S.editingId; });

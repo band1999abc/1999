@@ -310,6 +310,15 @@ footer {
     margin-top: 60px;
 }
 
+/* Hosted audio player */
+.track-player {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    margin: 32px auto 4px;
+    border-radius: 8px;
+}
+
 .play-button {
     display: inline-block;
     margin: 32px auto 16px;

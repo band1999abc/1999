@@ -250,6 +250,7 @@ async function musicCreate(req, res) {
         status:         safeStatus,
         scheduledAt:    safeStatus === 'scheduled' ? safeSched : '',
         jacket:         false,
+        audioFile:      false,
         audioUrl:       String(audioUrl || '').trim(),
         lyrics:         String(lyrics   || ''),
         productionNote: String(productionNote || ''),

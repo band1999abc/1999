@@ -98,18 +98,21 @@
             <input type="url" id="mc-audio-url" class="admin-input"
                    placeholder="https://open.spotify.com/… or Apple Music, SoundCloud">
 
-            <div class="admin-label">MP3 メタデータ（任意）</div>
+            <div class="admin-label">MP3 ホスト配信（任意）</div>
             <div class="mc-mp3-section">
                 <div class="mc-jacket-actions">
-                    <button type="button" class="admin-btn mc-jacket-add-btn" id="mc-mp3-pick">♪ MP3 を選択して自動取得</button>
+                    <button type="button" class="admin-btn mc-jacket-add-btn" id="mc-mp3-pick">♪ MP3 を選択</button>
+                    <button type="button" class="admin-btn mc-btn-danger mc-hidden" id="mc-file-delete">削除</button>
                     <input type="file" id="mc-mp3-file" accept=".mp3,audio/mpeg" class="mc-hidden">
                 </div>
+                <div id="mc-file-status" class="mc-file-status mc-hidden"></div>
                 <div class="mc-mp3-meta mc-hidden" id="mc-mp3-meta">
                     <div class="mc-mp3-meta-row"><span class="mc-mp3-meta-label">再生時間</span><span id="mc-mp3-duration">—</span></div>
                     <div class="mc-mp3-meta-row"><span class="mc-mp3-meta-label">ファイルサイズ</span><span id="mc-mp3-size">—</span></div>
                     <div class="mc-mp3-meta-row"><span class="mc-mp3-meta-label">ビットレート</span><span id="mc-mp3-bitrate">—</span></div>
                     <div class="mc-mp3-meta-row"><span class="mc-mp3-meta-label">取得日時</span><span id="mc-mp3-uploaded">—</span></div>
                 </div>
+                <p class="mc-mp3-hint">MP3 を選ぶと保存時にサイト上で直接再生できます（推奨 6MB 以下）</p>
             </div>
 
             <div class="admin-label">歌詞</div>
@@ -184,7 +187,7 @@
 <script src="/whale.js"></script>
 <script src="/script.js?v=3"></script>
 <script src="/admin.js?v=3"></script>
-<script src="/music-admin.js?v=2"></script>
+<script src="/music-admin.js?v=3"></script>
 
 </body>
 </html>

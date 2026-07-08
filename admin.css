@@ -3901,6 +3901,30 @@ body.night .mc-badge--sched { background: rgba(50,100,170,.25); color: #7aadef; 
 }
 .mc-jacket-add-btn { margin-top: 0; }
 
+/* MP3 hosted file section */
+.mc-mp3-section { margin: 6px 0 14px; }
+.mc-mp3-hint {
+    color: var(--text-muted);
+    font-size: .78em;
+    letter-spacing: .02em;
+    margin: 6px 0 0;
+}
+.mc-file-status {
+    border-radius: 6px;
+    font-size: .82em;
+    letter-spacing: .02em;
+    margin-top: 8px;
+    padding: 7px 12px;
+}
+.mc-file-status--ok {
+    background: rgba(60,170,80,.1);
+    color: #2a7a3a;
+}
+.mc-file-status--pending {
+    background: rgba(200,140,0,.1);
+    color: #7a5c00;
+}
+
 /* MP3 metadata section */
 .mc-mp3-section { margin: 6px 0 14px; }
 .mc-mp3-meta {

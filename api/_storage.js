@@ -281,6 +281,68 @@ export async function deleteMusicJacket(musicId) {
     }
 }
 
+// ── Music audio file storage ──────────────────────────────────────────────────
+// Single hosted MP3 per track (stored as base64 data URL).
+// KV key: "music_file:{musicId}"
+// FS:     data/music_files/{musicId}.b64
+
+/**
+ * Read a music audio file (base64 data URL string).
+ * @param {string} musicId
+ * @returns {Promise<string|null>}
+ */
+export async function readMusicFile(musicId) {
+    if (upstashConfigured()) {
+        const results = await upstashCmd([['GET', `music_file:${musicId}`]]);
+        return results[0].result || null;
+    }
+    for (const base of ['/tmp', process.cwd()]) {
+        try {
+            return readFileSync(join(base, 'data', 'music_files', `${musicId}.b64`), 'utf-8');
+        } catch { /* try next */ }
+    }
+    return null;
+}
+
+/**
+ * Write a music audio file (base64 data URL string).
+ * @param {string} musicId
+ * @param {string} dataUrl  — "data:audio/mpeg;base64,..."
+ * @returns {Promise<void>}
+ */
+export async function writeMusicFile(musicId, dataUrl) {
+    if (upstashConfigured()) {
+        await upstashCmd([['SET', `music_file:${musicId}`, dataUrl]]);
+        return;
+    }
+    for (const base of [process.cwd(), '/tmp']) {
+        try {
+            const dir = join(base, 'data', 'music_files');
+            mkdirSync(dir, { recursive: true });
+            writeFileSync(join(dir, `${musicId}.b64`), dataUrl, 'utf-8');
+            return;
+        } catch { /* try next */ }
+    }
+    throw new Error(`Failed to write music file for ${musicId}`);
+}
+
+/**
+ * Delete a music audio file.
+ * @param {string} musicId
+ * @returns {Promise<void>}
+ */
+export async function deleteMusicFile(musicId) {
+    if (upstashConfigured()) {
+        await upstashCmd([['DEL', `music_file:${musicId}`]]);
+        return;
+    }
+    for (const base of [process.cwd(), '/tmp']) {
+        try {
+            unlinkSync(join(base, 'data', 'music_files', `${musicId}.b64`));
+        } catch { /* ignore */ }
+    }
+}
+
 /**
  * Delete ALL flyer slots for a live entry (used when deleting a live).
  * @param {string} liveId

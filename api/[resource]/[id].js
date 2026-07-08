@@ -509,6 +509,7 @@ async function musicPut(req, res) {
         fileSize:       fileSize   !== undefined ? sanitizeNum(fileSize,  2e9)   : (prev.fileSize  ?? null),
         bitrate:        bitrate    !== undefined ? sanitizeNum(bitrate,   10000) : (prev.bitrate   ?? null),
         uploadedAt:     uploadedAt !== undefined ? sanitizeIso(uploadedAt)       : (prev.uploadedAt ?? null),
+        audioFile:      prev.audioFile ?? false,   // managed by /api/music-file/:id only
         updatedAt:      new Date().toISOString(),
     };
 
