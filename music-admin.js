@@ -473,6 +473,8 @@
                 if (resolved) return;
                 resolved = true;
                 clearTimeout(timeout);
+                // Detach src first so the browser stops fetching, then release the blob
+                audio.src = '';
                 URL.revokeObjectURL(objUrl);
                 var bitrate = (dur != null && dur > 0)
                     ? Math.round(fileSize * 8 / dur / 1000)
@@ -504,8 +506,10 @@
             }, 6000);
 
             audio.addEventListener('error', function () {
+                if (resolved) return; // already finished OK — ignore post-revoke errors
                 clearTimeout(timeout);
                 resolved = true;
+                audio.src = '';
                 URL.revokeObjectURL(objUrl);
                 alert('音声ファイルの読み込みに失敗しました。MP3 ファイルを確認してください。');
             });
