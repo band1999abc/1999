@@ -1283,6 +1283,9 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             if not raw_sched or not _SCHED_AT_RE.match(raw_sched):
                 self._write_json(400, {'error': 'scheduledAt required (YYYY-MM-DDTHH:MM)'})
                 return
+            if raw_sched <= _now_jst():
+                self._write_json(400, {'error': 'scheduledAt must be in the future'})
+                return
         else:
             raw_sched = ''
         post = {
@@ -1328,6 +1331,9 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         if status == 'scheduled':
             if not raw_sched or not _SCHED_AT_RE.match(raw_sched):
                 self._write_json(400, {'error': 'scheduledAt required (YYYY-MM-DDTHH:MM)'})
+                return
+            if raw_sched <= _now_jst():
+                self._write_json(400, {'error': 'scheduledAt must be in the future'})
                 return
         else:
             raw_sched = ''

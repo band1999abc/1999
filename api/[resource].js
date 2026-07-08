@@ -94,6 +94,8 @@ async function diaryCreate(req, res) {
     if (safeStatus === 'scheduled') {
         if (!safeScheduledAt || !SCHED_RE.test(safeScheduledAt))
             return res.status(400).json({ error: 'scheduledAt required (YYYY-MM-DDTHH:MM)' });
+        if (safeScheduledAt <= nowJST())
+            return res.status(400).json({ error: 'scheduledAt must be in the future' });
     }
 
     const now  = new Date().toISOString();

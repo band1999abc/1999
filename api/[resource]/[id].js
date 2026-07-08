@@ -122,6 +122,8 @@ async function diaryPut(req, res) {
     if (safeStatus === 'scheduled') {
         if (!rawSched || !SCHED_RE.test(rawSched))
             return res.status(400).json({ error: 'scheduledAt required (YYYY-MM-DDTHH:MM)' });
+        if (rawSched <= nowJST())
+            return res.status(400).json({ error: 'scheduledAt must be in the future' });
     }
 
     const updated = {
