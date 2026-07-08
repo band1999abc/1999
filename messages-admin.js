@@ -89,9 +89,15 @@
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    function showView(view) {
+    function showView(view, scrollToId) {
         listViewEl.classList.toggle('da-hidden', view !== 'list');
         editorViewEl.classList.toggle('da-hidden', view !== 'editor');
+        if (view === 'list' && scrollToId) {
+            setTimeout(function () {
+                var el = listEl.querySelector('[data-id="' + scrollToId + '"]');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 50);
+        }
     }
 
     function showTab(tab) {
@@ -311,8 +317,9 @@
             } else {
                 allMessages.push(saved);
             }
+            var savedId = saved.id;
             renderList();
-            showView('list');
+            showView('list', savedId);
         })
         .catch(function (err) {
             alert((err && err.error) || '保存に失敗しました。');
@@ -447,7 +454,7 @@
     if (tabTestBtn) tabTestBtn.addEventListener('click', function () { showTab('test'); });
 
     // Editor back
-    if (editorBackBtn) editorBackBtn.addEventListener('click', function () { showView('list'); });
+    if (editorBackBtn) editorBackBtn.addEventListener('click', function () { showView('list', editingId); });
 
     // Priority stars
     if (starsRowEl) starsRowEl.addEventListener('click', function (e) {
