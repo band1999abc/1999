@@ -48,15 +48,25 @@
     var testRunBtn    = document.getElementById('mm-test-run');
     var testResultsEl = document.getElementById('mm-test-results');
 
+    // Filter bar
+    var filterSlotEl    = document.getElementById('mm-filter-slot');
+    var filterSeasonEl  = document.getElementById('mm-filter-season');
+    var filterWeatherEl = document.getElementById('mm-filter-weather');
+    var filterSpecialEl = document.getElementById('mm-filter-special');
+
     // ── State ─────────────────────────────────────────────────────────────────
-    var allMessages = [];
-    var editingId   = null;
+    var allMessages  = [];
+    var editingId    = null;
+    var filterSlot    = '';
+    var filterSeason  = '';
+    var filterWeather = '';
+    var filterSpecial = '';
 
     // ── Label maps ────────────────────────────────────────────────────────────
     var SLOT_LABELS    = { dawn:'明け方', morning:'朝', midday:'昼', afternoon:'夕方', evening:'夜', latenight:'深夜' };
     var SEASON_LABELS  = { spring:'春', rainy:'梅雨', summer:'夏', autumn:'秋', winter:'冬' };
     var WEATHER_LABELS = { clear:'晴れ', cloudy:'曇り', rain:'雨', snow:'雪', thunder:'嵐', foggy:'霧' };
-    var SPECIAL_LABELS = { live_today:'ライブ当日', live_tomorrow:'ライブ翌日', new_release:'新曲公開', anniversary:'記念日' };
+    var SPECIAL_LABELS = { rare:'レア', live_today:'ライブ当日', live_tomorrow:'ライブ翌日', new_release:'新曲公開', anniversary:'記念日' };
 
     // ── Auth fetch (mirrors admin.js — Bearer token from sessionStorage) ────────
     function authFetch(url, opts) {
@@ -135,14 +145,37 @@
             });
     }
 
+    // ── Condition filter helper ───────────────────────────────────────────────
+    // Applies one dimension of condition filtering.
+    // val === ''         → show all
+    // val === '_common'  → show only messages with empty array for this dimension
+    // val === anything   → show only messages whose array contains val
+    function condFilter(arr, val) {
+        if (!val) return true;
+        var a = arr || [];
+        if (val === '_common') return a.length === 0;
+        return a.indexOf(val) >= 0;
+    }
+
     function renderList() {
         var q    = (searchEl.value || '').toLowerCase().trim();
         var sort = sortEl.value;
+
+        // Update filter select highlight state
+        [filterSlotEl, filterSeasonEl, filterWeatherEl, filterSpecialEl].forEach(function (el) {
+            if (el) el.classList.toggle('mm-filter--active', !!(el.value));
+        });
 
         var msgs = allMessages.filter(function (m) {
             if (sort === 'enabled' && !m.enabled) return false;
             if (q && m.ja.toLowerCase().indexOf(q) < 0 &&
                     (m.en || '').toLowerCase().indexOf(q) < 0) return false;
+            // Condition filters
+            var c = m.conditions || {};
+            if (!condFilter(c.timeSlots, filterSlot))    return false;
+            if (!condFilter(c.seasons,   filterSeason))  return false;
+            if (!condFilter(c.weather,   filterWeather)) return false;
+            if (!condFilter(c.special,   filterSpecial)) return false;
             return true;
         });
 
@@ -153,10 +186,13 @@
             return (b.createdAt || '').localeCompare(a.createdAt || '');
         });
 
+        var hasFilter = filterSlot || filterSeason || filterWeather || filterSpecial;
         if (!msgs.length) {
             var emptyMsg = q
                 ? '「' + esc(q) + '」に一致するメッセージはありません。'
-                : (allMessages.length ? '有効なメッセージがありません。' : 'メッセージがまだありません。');
+                : hasFilter
+                    ? '絞り込み条件に一致するメッセージがありません。'
+                    : (allMessages.length ? '有効なメッセージがありません。' : 'メッセージがまだありません。');
             listEl.innerHTML = '<div class="mm-empty">' + emptyMsg + '</div>';
             return;
         }
@@ -451,6 +487,18 @@
 
     // Test run
     if (testRunBtn) testRunBtn.addEventListener('click', runTest);
+
+    // Filter bar
+    function onFilterChange() {
+        filterSlot    = filterSlotEl    ? filterSlotEl.value    : '';
+        filterSeason  = filterSeasonEl  ? filterSeasonEl.value  : '';
+        filterWeather = filterWeatherEl ? filterWeatherEl.value : '';
+        filterSpecial = filterSpecialEl ? filterSpecialEl.value : '';
+        renderList();
+    }
+    [filterSlotEl, filterSeasonEl, filterWeatherEl, filterSpecialEl].forEach(function (el) {
+        if (el) el.addEventListener('change', onFilterChange);
+    });
 
     // ── Init ──────────────────────────────────────────────────────────────────
     loadMessages();

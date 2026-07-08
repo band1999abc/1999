@@ -35,6 +35,48 @@
             </select>
         </div>
 
+        <!-- Filter bar -->
+        <div class="mm-filter-bar" id="mm-filter-bar">
+            <select class="mm-filter-sel" id="mm-filter-slot">
+                <option value="">時間帯：すべて</option>
+                <option value="dawn">明け方</option>
+                <option value="morning">朝</option>
+                <option value="midday">昼</option>
+                <option value="afternoon">夕方</option>
+                <option value="evening">夜</option>
+                <option value="latenight">深夜</option>
+                <option value="_common">時間帯なし</option>
+            </select>
+            <select class="mm-filter-sel" id="mm-filter-season">
+                <option value="">季節：すべて</option>
+                <option value="spring">春</option>
+                <option value="rainy">梅雨</option>
+                <option value="summer">夏</option>
+                <option value="autumn">秋</option>
+                <option value="winter">冬</option>
+                <option value="_common">季節なし</option>
+            </select>
+            <select class="mm-filter-sel" id="mm-filter-weather">
+                <option value="">天気：すべて</option>
+                <option value="clear">晴れ</option>
+                <option value="cloudy">曇り</option>
+                <option value="rain">雨</option>
+                <option value="snow">雪</option>
+                <option value="thunder">嵐</option>
+                <option value="foggy">霧</option>
+                <option value="_common">天気なし</option>
+            </select>
+            <select class="mm-filter-sel" id="mm-filter-special">
+                <option value="">特別：すべて</option>
+                <option value="live_today">ライブ当日</option>
+                <option value="live_tomorrow">ライブ翌日</option>
+                <option value="rare">レア（約2%）</option>
+                <option value="new_release">新曲公開</option>
+                <option value="anniversary">記念日</option>
+                <option value="_common">特別なし</option>
+            </select>
+        </div>
+
         <!-- Tab bar -->
         <div class="mm-tab-bar">
             <button class="mm-tab mm-tab--active" id="mm-tab-list">一覧</button>
@@ -178,6 +220,7 @@
                 <div class="mm-cond-sec">
                     <div class="mm-cond-lbl">特別条件 <span class="mm-cond-hint">（選択した日のみ表示）</span></div>
                     <div class="mm-checks">
+                        <label class="mm-check"><input type="checkbox" name="special" value="rare"> レア（約2%で選ばれる）</label>
                         <label class="mm-check"><input type="checkbox" name="special" value="live_today"> ライブ当日</label>
                         <label class="mm-check"><input type="checkbox" name="special" value="live_tomorrow"> ライブ翌日</label>
                         <label class="mm-check"><input type="checkbox" name="special" value="new_release"> 新曲公開</label>
@@ -206,7 +249,7 @@
 <script src="/whale.js"></script>
 <script src="/script.js?v=2"></script>
 <script src="/admin.js?v=3"></script>
-<script src="/messages-admin.js?v=2"></script>
+<script src="/messages-admin.js?v=3"></script>
 
 </body>
 </html>

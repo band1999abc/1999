@@ -282,9 +282,26 @@
             // キャッシュ無効 → 新規抽選
             let html;
 
+            // カスタムレアプール：special: rare を持つカスタムメッセージを現在の条件でフィルタ
+            var rareWk      = weatherKey(cond);
+            var rareSeason  = seasonKey();
+            var customRare  = customMsgs.filter(function (m) {
+                if (!m.enabled) return false;
+                var c = m.conditions || {};
+                if (!c.special || c.special.indexOf('rare') < 0) return false;
+                if (c.timeSlots && c.timeSlots.length && c.timeSlots.indexOf(tSlot)     < 0) return false;
+                if (c.seasons   && c.seasons.length   && c.seasons.indexOf(rareSeason)  < 0) return false;
+                if (c.weather   && c.weather.length) {
+                    if (!rareWk || c.weather.indexOf(rareWk) < 0) return false;
+                }
+                return true;
+            });
+            var rarePool = MSG_RARE.slice();
+            customRare.forEach(function (m) { rarePool.push(m.ja); });
+
             // レアメッセージ（約2%）
             if (Math.random() < 0.02) {
-                html = '<p>' + pick(MSG_RARE) + '</p>';
+                html = '<p>' + pick(rarePool) + '</p>';
 
             // ライブ当日
             } else if (isLiveToday(lives)) {
@@ -362,6 +379,8 @@
                 customMsgs.forEach(function (m) {
                     if (!m.enabled) return;
                     var c = m.conditions || {};
+                    // rare タグ付きはレアプールで処理済み → 通常プールから除外
+                    if (c.special && c.special.indexOf('rare') >= 0) return;
                     if (c.timeSlots && c.timeSlots.length && c.timeSlots.indexOf(tSlot)   < 0) return;
                     if (c.seasons   && c.seasons.length   && c.seasons.indexOf(cmSeason)  < 0) return;
                     if (c.weather   && c.weather.length) {

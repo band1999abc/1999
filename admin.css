@@ -4214,3 +4214,30 @@ body.night .mm-check:has(input:checked) {
     color: var(--text-muted); font-size: 12px; letter-spacing: 0.04em;
     padding: 20px 0; text-align: center;
 }
+
+/* ── Message filter bar ─────────────────────────────────────────────────── */
+.mm-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0 10px;
+}
+.mm-filter-sel {
+    flex: 1 1 auto;
+    min-width: 110px;
+    font-size: 11px;
+    padding: 4px 6px;
+    border: 1px solid var(--border, #ddd);
+    border-radius: 4px;
+    background: var(--card-bg, #faf9f7);
+    color: var(--text-muted, #999);
+    cursor: pointer;
+    appearance: auto;
+    font-family: inherit;
+    letter-spacing: 0.03em;
+}
+.mm-filter-sel.mm-filter--active {
+    border-color: var(--text, #333);
+    color: var(--text, #333);
+    background: var(--card-bg, #faf9f7);
+}

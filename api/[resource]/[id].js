@@ -598,7 +598,7 @@ const MESSAGES_FILE_ID     = 'data/messages.json';
 const MSG_VALID_SLOTS_ID   = ['dawn', 'morning', 'midday', 'afternoon', 'evening', 'latenight'];
 const MSG_VALID_SEASONS_ID = ['spring', 'rainy', 'summer', 'autumn', 'winter'];
 const MSG_VALID_WEATHER_ID = ['clear', 'cloudy', 'rain', 'snow', 'thunder', 'foggy'];
-const MSG_VALID_SPECIAL_ID = ['live_today', 'live_tomorrow', 'new_release', 'anniversary'];
+const MSG_VALID_SPECIAL_ID = ['rare', 'live_today', 'live_tomorrow', 'new_release', 'anniversary'];
 
 function cleanMsgCondId(raw) {
     const c = (raw && typeof raw === 'object') ? raw : {};
