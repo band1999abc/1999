@@ -281,13 +281,35 @@
 
             // 通常：時間帯＋季節＋天気のプールを合算してランダム
             } else {
-                // 夜を含む季節メッセージは夜の時間帯のみ追加（朝・昼に「夏の夜も…」が出ないよう）
+                const wk      = weatherKey(cond);
                 const isNight = ['evening', 'latenight', 'dawn'].indexOf(tSlot) >= 0;
-                const seasonMsgs = MSG_SEASON[seasonKey()].filter(function (m) {
+                const day     = now.getDate();
+
+                // メッセージごとの表示条件（季節プール用フィルター）
+                function seasonMsgOk(m) {
+                    // 桜：3月後半（16日〜）〜4月前半（〜15日）の昼のみ
+                    if (m === '桜が咲いているといいですね。') {
+                        var inSakura = (month === 2 && day >= 16) || (month === 3 && day <= 15);
+                        return inSakura && tSlot === 'midday';
+                    }
+                    // 春の昼向けメッセージ：昼・夕方のみ
+                    if (m === 'いい季節になりましたね。' || m === '窓を開けてみてください。') {
+                        return tSlot === 'midday' || tSlot === 'afternoon';
+                    }
+                    // 夏の夜：夜帯かつ晴れか曇りのみ
+                    if (m === '夏の夜もいいですね。') {
+                        return isNight && (wk === 'clear' || wk === 'cloudy');
+                    }
+                    // 夏の空：昼・夕方かつ晴れのみ
+                    if (m === '夏の空ですね。') {
+                        return (tSlot === 'midday' || tSlot === 'afternoon') && wk === 'clear';
+                    }
+                    // デフォルト：「夜」を含むメッセージは夜帯のみ
                     return isNight || m.indexOf('夜') === -1;
-                });
+                }
+
+                const seasonMsgs = MSG_SEASON[seasonKey()].filter(seasonMsgOk);
                 let pool = MSG_TIME[tSlot].concat(seasonMsgs);
-                const wk = weatherKey(cond);
                 if (wk && MSG_WEATHER[wk]) pool = pool.concat(MSG_WEATHER[wk]);
                 if (temp !== null && temp !== undefined) {
                     if (temp >= 30) pool = pool.concat(MSG_HOT);
