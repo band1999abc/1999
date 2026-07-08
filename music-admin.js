@@ -18,6 +18,7 @@
         editingId:     null,     // null = creating new
         jacketSrc:     null,     // base64 dataUrl of pending jacket upload
         jacketToDelete: false,   // flag: delete existing jacket on next save
+        audioMeta:     null,     // { duration, fileSize, bitrate, uploadedAt } from MP3 pick
         saving:        false,
         analytics:     {},       // { [trackTitle]: { total, listeners } }
     };
@@ -57,6 +58,15 @@
     var jacketAddBtn  = document.getElementById('mc-jacket-add');
     var jacketFileEl  = document.getElementById('mc-jacket-file');
 
+    // MP3 metadata picker
+    var mp3PickBtn = document.getElementById('mc-mp3-pick');
+    var mp3FileEl  = document.getElementById('mc-mp3-file');
+    var mp3MetaEl  = document.getElementById('mc-mp3-meta');
+    var mp3DurEl   = document.getElementById('mc-mp3-duration');
+    var mp3SizeEl  = document.getElementById('mc-mp3-size');
+    var mp3BrEl    = document.getElementById('mc-mp3-bitrate');
+    var mp3UpEl    = document.getElementById('mc-mp3-uploaded');
+
     // Preview overlay
     var previewOverlay = document.getElementById('mc-preview-overlay');
     var previewClose   = document.getElementById('mc-preview-close');
@@ -91,6 +101,36 @@
     function fmtDate(iso) {
         if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
         return iso.replace(/-/g, '.');
+    }
+
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function fmtDuration(sec) {
+        var s = Math.round(sec || 0);
+        return Math.floor(s / 60) + ':' + pad2(s % 60);
+    }
+
+    function fmtFileSize(bytes) {
+        if (!bytes) return '—';
+        if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        return Math.round(bytes / 1024) + ' KB';
+    }
+
+    function fmtDateTime(iso) {
+        if (!iso) return '—';
+        var d = new Date(iso);
+        return d.getFullYear() + '/' + pad2(d.getMonth() + 1) + '/' + pad2(d.getDate())
+             + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+
+    function renderAudioMeta(meta) {
+        if (!mp3MetaEl) return;
+        if (!meta) { mp3MetaEl.classList.add('mc-hidden'); return; }
+        mp3MetaEl.classList.remove('mc-hidden');
+        if (mp3DurEl)  mp3DurEl.textContent  = meta.duration != null ? fmtDuration(meta.duration) : '—';
+        if (mp3SizeEl) mp3SizeEl.textContent = meta.fileSize != null ? fmtFileSize(meta.fileSize) : '—';
+        if (mp3BrEl)   mp3BrEl.textContent   = meta.bitrate  != null ? meta.bitrate + ' kbps（概算）' : '—';
+        if (mp3UpEl)   mp3UpEl.textContent   = meta.uploadedAt ? fmtDateTime(meta.uploadedAt) : '—';
     }
 
     function todayIso() {
@@ -320,14 +360,18 @@
     function duplicateTrack(t) {
         var body = {
             title:          (t.title || '') + ' (コピー)',
-            titleEn:        t.titleEn       || '',
-            releaseDate:    t.releaseDate   || '',
-            type:           t.type          || 'single',
+            titleEn:        t.titleEn        || '',
+            releaseDate:    t.releaseDate    || '',
+            type:           t.type           || 'single',
             status:         'draft',
             scheduledAt:    '',
-            audioUrl:       t.audioUrl      || '',
-            lyrics:         t.lyrics        || '',
-            productionNote: t.productionNote|| '',
+            audioUrl:       t.audioUrl       || '',
+            lyrics:         t.lyrics         || '',
+            productionNote: t.productionNote || '',
+            duration:       t.duration       != null ? t.duration   : undefined,
+            fileSize:       t.fileSize       != null ? t.fileSize    : undefined,
+            bitrate:        t.bitrate        != null ? t.bitrate     : undefined,
+            uploadedAt:     t.uploadedAt     || undefined,
         };
         authFetch('/api/music', {
             method: 'POST',
@@ -375,6 +419,13 @@
 
         if (deleteBtn) deleteBtn.classList.toggle('mc-hidden', !id);
         renderJacketUI(t);
+
+        // Restore audio metadata if the track already has it
+        S.audioMeta = (t && t.duration != null)
+            ? { duration: t.duration, fileSize: t.fileSize || null, bitrate: t.bitrate || null, uploadedAt: t.uploadedAt || null }
+            : null;
+        renderAudioMeta(S.audioMeta);
+
         if (editorView) editorView.scrollTop = 0;
     }
 
@@ -400,6 +451,38 @@
                 jacketImgEl.style.display = 'none';
             }
         }
+    }
+
+    // MP3 file pick → extract duration, fileSize, bitrate, uploadedAt
+    if (mp3PickBtn && mp3FileEl) {
+        mp3PickBtn.addEventListener('click', function () { mp3FileEl.click(); });
+        mp3FileEl.addEventListener('change', function () {
+            var file = mp3FileEl.files[0];
+            if (!file) return;
+            mp3FileEl.value = '';
+
+            var uploadedAt = new Date().toISOString();
+            var fileSize   = file.size;
+            var objUrl     = URL.createObjectURL(file);
+            var audio      = new Audio();
+
+            audio.addEventListener('loadedmetadata', function () {
+                var duration = isFinite(audio.duration) ? audio.duration : null;
+                var bitrate  = (duration && duration > 0)
+                    ? Math.round(fileSize * 8 / duration / 1000)
+                    : null;
+                URL.revokeObjectURL(objUrl);
+                S.audioMeta = { duration: duration, fileSize: fileSize, bitrate: bitrate, uploadedAt: uploadedAt };
+                renderAudioMeta(S.audioMeta);
+            });
+
+            audio.addEventListener('error', function () {
+                URL.revokeObjectURL(objUrl);
+                alert('音声ファイルの読み込みに失敗しました。MP3 ファイルを確認してください。');
+            });
+
+            audio.src = objUrl;
+        });
     }
 
     // Jacket file input
@@ -465,6 +548,10 @@
             audioUrl:       audioUrlEl ? audioUrlEl.value.trim()  : '',
             lyrics:         lyricsEl   ? lyricsEl.value           : '',
             productionNote: noteEl     ? noteEl.value             : '',
+            duration:       S.audioMeta ? S.audioMeta.duration   : undefined,
+            fileSize:       S.audioMeta ? S.audioMeta.fileSize    : undefined,
+            bitrate:        S.audioMeta ? S.audioMeta.bitrate     : undefined,
+            uploadedAt:     S.audioMeta ? S.audioMeta.uploadedAt  : undefined,
         };
 
         var isNew = !S.editingId;

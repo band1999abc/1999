@@ -3901,6 +3901,22 @@ body.night .mc-badge--sched { background: rgba(50,100,170,.25); color: #7aadef; 
 }
 .mc-jacket-add-btn { margin-top: 0; }
 
+/* MP3 metadata section */
+.mc-mp3-section { margin: 6px 0 14px; }
+.mc-mp3-meta {
+    background: rgba(0,0,0,.035);
+    border-radius: 8px;
+    margin-top: 10px;
+    padding: 10px 14px;
+}
+.mc-mp3-meta-row {
+    display: flex;
+    font-size: .82em;
+    justify-content: space-between;
+    padding: 3px 0;
+}
+.mc-mp3-meta-label { color: var(--text-muted); flex-shrink: 0; margin-right: 12px; }
+
 /* Button row in editor */
 .mc-btns { flex-direction: row; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .mc-preview-btn-sm { color: var(--text-muted); }

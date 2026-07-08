@@ -211,6 +211,7 @@ async function musicCreate(req, res) {
         title = '', titleEn = '', releaseDate, type = 'single',
         status = 'draft', scheduledAt = '',
         audioUrl = '', lyrics = '', productionNote = '',
+        duration, fileSize, bitrate, uploadedAt,
     } = body;
 
     if (!String(title).trim())
@@ -236,6 +237,10 @@ async function musicCreate(req, res) {
         audioUrl:       String(audioUrl || '').trim(),
         lyrics:         String(lyrics   || ''),
         productionNote: String(productionNote || ''),
+        duration:       duration  != null ? Number(duration)  : null,
+        fileSize:       fileSize  != null ? Number(fileSize)  : null,
+        bitrate:        bitrate   != null ? Number(bitrate)   : null,
+        uploadedAt:     uploadedAt ? String(uploadedAt)        : null,
         createdAt:      now,
         updatedAt:      now,
     };

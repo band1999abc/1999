@@ -464,6 +464,7 @@ async function musicPut(req, res) {
     const {
         title, titleEn, releaseDate, type, status,
         scheduledAt, audioUrl, lyrics, productionNote,
+        duration, fileSize, bitrate, uploadedAt,
     } = body;
     const prev = items[idx];
 
@@ -488,6 +489,10 @@ async function musicPut(req, res) {
         audioUrl:       audioUrl       !== undefined ? String(audioUrl).trim()       : (prev.audioUrl || ''),
         lyrics:         lyrics         !== undefined ? String(lyrics)                : (prev.lyrics || ''),
         productionNote: productionNote !== undefined ? String(productionNote)        : (prev.productionNote || ''),
+        duration:       duration   !== undefined ? (duration  != null ? Number(duration)  : null) : (prev.duration  ?? null),
+        fileSize:       fileSize   !== undefined ? (fileSize  != null ? Number(fileSize)  : null) : (prev.fileSize  ?? null),
+        bitrate:        bitrate    !== undefined ? (bitrate   != null ? Number(bitrate)   : null) : (prev.bitrate   ?? null),
+        uploadedAt:     uploadedAt !== undefined ? (uploadedAt ? String(uploadedAt)        : null) : (prev.uploadedAt ?? null),
         updatedAt:      new Date().toISOString(),
     };
 
