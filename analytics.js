@@ -30,7 +30,8 @@
     music_play:   true,
     diary_view:   true,
     live_view:    true,
-    contact_view: true
+    contact_view: true,
+    qr_scan:      true,   // fired once per session when visitor arrives via ?ref=qr
   };
 
   // ── Identity ────────────────────────────────────────────────────────────────
@@ -138,6 +139,27 @@
       el = el.parentNode;
     }
   }, true);
+
+  // ── Auto: qr_scan — QR code landing detection ───────────────────────────────
+  // Fires once per browser session when the URL contains ?ref=qr.
+  // Props: { edition } — set from ?edition= for per-card analysis (future).
+  //
+  // Slight delay (80 ms) ensures page_view fires first so the QR scan event
+  // shares the same session_id context that has already been established.
+
+  (function () {
+    var QR_FLAG = '_ah_qrs';   // sessionStorage key — prevents double-fire
+    try {
+      var params = new URLSearchParams(location.search);
+      if (params.get('ref') === 'qr' && !sessionStorage.getItem(QR_FLAG)) {
+        sessionStorage.setItem(QR_FLAG, '1');
+        var props = {};
+        var ed = params.get('edition');
+        if (ed) props.edition = String(ed).slice(0, 50);
+        setTimeout(function () { track('qr_scan', props); }, 80);
+      }
+    } catch (_) {}
+  }());
 
   // ── Export ──────────────────────────────────────────────────────────────────
 

@@ -47,6 +47,14 @@ function onMusicPlay(props) {
 function onDiaryView(props)   { return null; }
 function onLiveView(props)    { return null; }
 function onContactView(props) { return null; }
+function onQrScan(props) {
+    // props.edition — optional QR card edition identifier (for future per-edition analysis)
+    if (props.edition !== undefined) {
+        if (typeof props.edition !== 'string') return 'props.edition must be a string';
+        if (props.edition.length > 50)         return 'props.edition too long (max 50)';
+    }
+    return null;
+}
 
 /** Registry of valid event types → validator functions. */
 const EVENT_HANDLERS = {
@@ -56,6 +64,7 @@ const EVENT_HANDLERS = {
     diary_view:   onDiaryView,
     live_view:    onLiveView,
     contact_view: onContactView,
+    qr_scan:      onQrScan,    // QR card landing — fired client-side on ?ref=qr
 };
 
 // ── UA / geo parsing (server-side, no external deps) ─────────────────────────

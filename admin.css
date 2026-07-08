@@ -1792,3 +1792,288 @@ body.night .av-country-count { color: var(--text-dark); }
     .av-bar-label     { min-width: 50px; font-size: 11px; }
     .av-country-count { font-size: 14px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   QR Analytics  (.aq-*)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Section gap ────────────────────────────────────────────────────────────── */
+
+.aq-section-gap { margin-top: 18px; }
+
+/* ── Period selector ────────────────────────────────────────────────────────── */
+
+.aq-period-row {
+    display: flex;
+    margin: 0 0 10px;
+}
+
+.aq-period-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    padding: 4px 10px;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.aq-period-btn + .aq-period-btn { border-left: none; }
+
+.aq-period-btn.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+body.night .aq-period-btn.is-active { color: #111; }
+
+/* ── Chart ──────────────────────────────────────────────────────────────────── */
+
+.aq-chart-wrap {
+    margin: 4px 0 0;
+    overflow: hidden;
+}
+
+/* ── Timeline legend ─────────────────────────────────────────────────────────── */
+
+.aq-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 6px;
+    margin-bottom: 20px;
+}
+
+.aq-legend-item {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+}
+
+.aq-legend-item span:last-child {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+}
+
+.aq-legend-dot--live {
+    background: #8a6a42;
+    display: inline-block;
+    height: 14px;
+    opacity: 0.6;
+    width: 1px;
+}
+
+/* ── Conversion Funnel ───────────────────────────────────────────────────────── */
+
+.aq-funnel { padding-top: 6px; }
+
+.aq-funnel-step {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    padding: 10px 0 6px;
+}
+
+.aq-funnel-left {
+    flex-shrink: 0;
+    width: 80px;
+}
+
+.aq-funnel-label {
+    color: var(--text-dark);
+    font-size: 12px;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
+}
+
+.aq-funnel-note {
+    color: var(--text-muted);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    margin-top: 1px;
+}
+
+.aq-funnel-bar-track {
+    background: rgba(0, 0, 0, .06);
+    border-radius: 3px;
+    flex: 1;
+    height: 7px;
+    overflow: hidden;
+}
+
+body.night .aq-funnel-bar-track { background: rgba(255, 255, 255, .08); }
+
+.aq-funnel-bar-fill {
+    background: var(--accent);
+    border-radius: 3px;
+    height: 100%;
+    transition: width 0.45s ease;
+}
+
+.aq-funnel-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+
+.aq-funnel-count {
+    color: var(--text-dark);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.aq-funnel-pct {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    margin-top: 1px;
+}
+
+/* Future / unimplemented step */
+.aq-funnel-step--future .aq-funnel-label { color: var(--text-muted); }
+.aq-funnel-step--future .aq-funnel-count { color: var(--text-muted); }
+
+.aq-funnel-step--future .aq-funnel-bar-track {
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(0, 0, 0, .06) 0px,
+        rgba(0, 0, 0, .06) 5px,
+        transparent 5px,
+        transparent 10px
+    );
+}
+body.night .aq-funnel-step--future .aq-funnel-bar-track {
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, .07) 0px,
+        rgba(255, 255, 255, .07) 5px,
+        transparent 5px,
+        transparent 10px
+    );
+}
+
+/* Conversion arrow between steps */
+.aq-funnel-arrow {
+    color: var(--text-muted);
+    font-size: 11px;
+    padding-left: 92px;   /* 80px label + 12px gap */
+}
+
+.aq-funnel-conv {
+    color: var(--text-dark);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    margin-left: 4px;
+}
+
+/* ── Rank list (Music + Pages) ────────────────────────────────────────────── */
+
+.aq-rank-row {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    padding: 11px 0;
+}
+
+.aq-rank-row:last-child { border-bottom: none; }
+
+.aq-rank-num {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    min-width: 16px;
+    text-align: right;
+}
+
+.aq-rank-info { flex: 1; min-width: 0; }
+
+.aq-rank-name {
+    color: var(--text-dark);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    margin-bottom: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.aq-rank-name--mono { font-family: 'Courier New', monospace; font-size: 11px; }
+
+.aq-rank-bar {
+    background: rgba(0, 0, 0, .06);
+    height: 4px;
+    overflow: hidden;
+}
+
+body.night .aq-rank-bar { background: rgba(255, 255, 255, .08); }
+
+.aq-rank-bar-fill {
+    background: var(--accent);
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.aq-rank-right {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.aq-rank-count {
+    color: var(--text-dark);
+    font-size: 17px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+}
+
+.aq-rank-pct {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    margin-top: 1px;
+}
+
+/* ── Returning rate sub-label ─────────────────────────────────────────────── */
+
+.aq-ret-sub {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    margin-top: 3px;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+
+.aq-empty {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    padding: 10px 0;
+}
+
+/* ── Night overrides ──────────────────────────────────────────────────────── */
+
+body.night .aq-funnel-count { color: var(--text-dark); }
+body.night .aq-rank-count   { color: var(--text-dark); }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+    .aq-funnel-left  { width: 68px; }
+    .aq-funnel-arrow { padding-left: 80px; }
+    .aq-rank-count   { font-size: 14px; }
+    .aq-funnel-count { font-size: 14px; }
+}

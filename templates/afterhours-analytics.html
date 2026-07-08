@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=33">
-    <link rel="stylesheet" href="/admin.css?v=7">
+    <link rel="stylesheet" href="/admin.css?v=8">
 </head>
 <body data-page="afterhours-analytics" class="auth-hidden">
 
@@ -32,7 +32,7 @@
         <button class="aa-nav-tab" data-panel="music">Music</button>
         <button class="aa-nav-tab" data-panel="release">Release</button>
         <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Pages</button>
-        <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">QR</button>
+        <button class="aa-nav-tab" data-panel="qr">QR</button>
     </nav>
 
     <!-- Loading / error state -->
@@ -420,6 +420,116 @@
 
     </div><!-- /#aa-panel-release -->
 
+    <!-- ── QR Analytics panel ────────────────────────────────────── -->
+    <div id="aa-panel-qr" class="aa-panel" hidden>
+
+        <!-- Overview ───────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header aq-section-gap">
+                <span class="aa-section-label">Overview</span>
+                <span class="aa-section-note" id="aq-since-note"></span>
+            </div>
+            <div class="aa-grid">
+                <div class="aa-card">
+                    <div class="aa-value" id="aq-kpi-scans">—</div>
+                    <div class="aa-card-label">QR Scans</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="aq-kpi-visitors">—</div>
+                    <div class="aa-card-label">Unique Visitors</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="aq-kpi-returning">—</div>
+                    <div class="aa-card-label">Returning Visitors</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="aq-kpi-music">—</div>
+                    <div class="aa-card-label">Music Plays</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="aq-kpi-diary">—</div>
+                    <div class="aa-card-label">Diary Views</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="aq-kpi-live">—</div>
+                    <div class="aa-card-label">Live Views</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversion Funnel ───────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header aq-section-gap">
+                <span class="aa-section-label">Conversion Funnel</span>
+            </div>
+            <div id="aq-funnel"></div>
+        </div>
+
+        <!-- Timeline ───────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header aq-section-gap">
+                <span class="aa-section-label">Timeline</span>
+            </div>
+            <div class="aq-period-row" role="group" aria-label="表示期間">
+                <button class="aq-period-btn"           data-period="7d"  type="button">7日</button>
+                <button class="aq-period-btn is-active" data-period="30d" type="button">30日</button>
+                <button class="aq-period-btn"           data-period="90d" type="button">90日</button>
+                <button class="aq-period-btn"           data-period="all" type="button">全期間</button>
+            </div>
+            <div class="aq-chart-wrap" id="aq-chart-wrap"></div>
+            <div class="aq-legend">
+                <div class="aq-legend-item">
+                    <span class="aq-legend-dot aq-legend-dot--live"></span>
+                    <span>Live</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Music ──────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header aq-section-gap">
+                <span class="aa-section-label">Music</span>
+                <span class="aa-section-note">初回再生曲 TOP 10</span>
+            </div>
+            <div id="aq-music-list"></div>
+        </div>
+
+        <!-- Pages ──────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header aq-section-gap">
+                <span class="aa-section-label">Pages</span>
+                <span class="aa-section-note">初回ページ</span>
+            </div>
+            <div id="aq-pages-list"></div>
+        </div>
+
+        <!-- Returning ──────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header aq-section-gap">
+                <span class="aa-section-label">Returning</span>
+            </div>
+            <div class="aa-grid" id="aq-returning-grid"></div>
+        </div>
+
+        <!-- Time ───────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header aq-section-gap">
+                <span class="aa-section-label">Time</span>
+                <span class="aa-section-note">JST</span>
+            </div>
+            <div id="aq-time-wrap"></div>
+        </div>
+
+        <!-- Device ─────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header aq-section-gap">
+                <span class="aa-section-label">Device</span>
+            </div>
+            <div id="aq-device-bars"></div>
+        </div>
+
+    </div><!-- /#aa-panel-qr -->
+
     <div class="admin-footer">
         <a href="/afterhours" class="back-home">← Back</a>
         <button class="admin-signout" id="signout-btn">Sign out</button>
@@ -433,6 +543,7 @@
 <script src="/analytics-music.js?v=1"></script>
 <script src="/analytics-visitors.js?v=1"></script>
 <script src="/analytics-release.js?v=1"></script>
+<script src="/analytics-qr.js?v=1"></script>
 
 </body>
 </html>
