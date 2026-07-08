@@ -155,15 +155,16 @@
         var fp    = parseDate(td.firstPlay);
         var today = parseDate(TODAY);
 
+        // Use N-1 offset so the window is exactly N days inclusive (today counts as day 1)
         var start;
         if (S.period === '7d') {
-            start = addDays(today, -7);
+            start = addDays(today, -6);
             if (start < fp) start = new Date(fp);
         } else if (S.period === '30d') {
-            start = addDays(today, -30);
+            start = addDays(today, -29);
             if (start < fp) start = new Date(fp);
         } else if (S.period === '90d') {
-            start = addDays(today, -90);
+            start = addDays(today, -89);
             if (start < fp) start = new Date(fp);
         } else {
             start = new Date(fp);
@@ -217,8 +218,8 @@
             var before = 0, after = 0;
             for (var i = 0; i < td.eventsArr.length; i++) {
                 var d = toDate(td.eventsArr[i].ts);
-                if (d >= b3 && d < lv.date)  before++;
-                if (d >= lv.date && d <= a3) after++;
+                if (d >= b3 && d < lv.date)  before++;   // [date−3, date)  = 3 days
+                if (d >  lv.date && d <= a3) after++;    // (date,   date+3] = 3 days
             }
             return { date: lv.date, before: before, after: after };
         }).filter(Boolean);
@@ -856,14 +857,17 @@
         buildTracks(S.events);
         initControls();
 
-        // Optimistic render while meta fetches
-        if (S.view === 'list')    renderList();
-        else if (S.view === 'detail')  renderDetail();
-        else if (S.view === 'compare') renderCompare();
+        // If meta is not yet loaded, render immediately (without markers) then re-render
+        // once it arrives. If already cached, loadMeta() calls back synchronously —
+        // skip the pre-render to avoid a duplicate pass.
+        if (!S._metaLoaded) {
+            if (S.view === 'list')         renderList();
+            else if (S.view === 'detail')  renderDetail();
+            else if (S.view === 'compare') renderCompare();
+        }
 
-        // Re-render with marker data
         loadMeta(function () {
-            if (S.view === 'list')    renderList();
+            if (S.view === 'list')         renderList();
             else if (S.view === 'detail')  renderDetail();
             else if (S.view === 'compare') renderCompare();
         });
