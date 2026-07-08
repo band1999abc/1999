@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-07-08 — force Vercel bundle rebuild with new music template
+ * bump: 2026-07-08b — messages filter bar + rare condition support
  */
 
 import { readFileSync } from 'fs';

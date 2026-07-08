@@ -1607,10 +1607,12 @@
       "timeSlots": [],
       "seasons": [],
       "weather": [],
-      "special": []
+      "special": [
+        "rare"
+      ]
     },
     "createdAt": "2026-07-08T08:16:18",
-    "updatedAt": "2026-07-08T08:16:18"
+    "updatedAt": "2026-07-08T08:42:47"
   },
   {
     "id": "2e9e9da3-4f0b-40a9-9c74-cece054ce212",
@@ -1622,10 +1624,12 @@
       "timeSlots": [],
       "seasons": [],
       "weather": [],
-      "special": []
+      "special": [
+        "rare"
+      ]
     },
     "createdAt": "2026-07-08T08:16:18",
-    "updatedAt": "2026-07-08T08:16:18"
+    "updatedAt": "2026-07-08T08:42:35"
   },
   {
     "id": "a742f515-65c0-43e1-996f-7ff689774b75",
@@ -1664,13 +1668,19 @@
     "enabled": true,
     "priority": 3,
     "conditions": {
-      "timeSlots": [],
+      "timeSlots": [
+        "afternoon",
+        "evening",
+        "latenight"
+      ],
       "seasons": [],
-      "weather": [],
+      "weather": [
+        "clear"
+      ],
       "special": []
     },
     "createdAt": "2026-07-08T08:16:18",
-    "updatedAt": "2026-07-08T08:16:18"
+    "updatedAt": "2026-07-08T08:42:03"
   },
   {
     "id": "fd7473e8-4c16-4401-a269-7bc98b0710f5",
@@ -1682,9 +1692,11 @@
       "timeSlots": [],
       "seasons": [],
       "weather": [],
-      "special": []
+      "special": [
+        "rare"
+      ]
     },
     "createdAt": "2026-07-08T08:16:18",
-    "updatedAt": "2026-07-08T08:16:18"
+    "updatedAt": "2026-07-08T08:41:40"
   }
 ]
