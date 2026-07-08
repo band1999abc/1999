@@ -302,6 +302,44 @@ def _delete_music_jacket(music_id):
             pass
 
 
+# ── Music audio file helpers ─────────────────────────────────────────────────
+
+def _read_music_file(music_id):
+    """Return base64 data URL for a hosted audio file, or None."""
+    for base in [_DATA_DIR, '/tmp']:
+        p = os.path.join(base, 'music_files', music_id + '.b64')
+        if os.path.exists(p):
+            try:
+                return open(p, 'r', encoding='utf-8').read().strip()
+            except OSError:
+                pass
+    return None
+
+
+def _write_music_file(music_id, data_url):
+    """Write base64 data URL for a hosted audio file."""
+    for base in [_DATA_DIR, '/tmp']:
+        try:
+            d = os.path.join(base, 'music_files')
+            os.makedirs(d, exist_ok=True)
+            with open(os.path.join(d, music_id + '.b64'), 'w', encoding='utf-8') as fh:
+                fh.write(data_url)
+            return
+        except OSError:
+            pass
+    raise OSError('Could not write music file for %s' % music_id)
+
+
+def _delete_music_file(music_id):
+    """Delete hosted audio file."""
+    for base in [_DATA_DIR, '/tmp']:
+        p = os.path.join(base, 'music_files', music_id + '.b64')
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+
+
 # ── Messages helpers ─────────────────────────────────────────────────────────
 
 _MESSAGES_FILE = os.path.join(_DATA_DIR, 'messages.json')
@@ -994,6 +1032,12 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_music_jacket_get(mid)
             else:
                 self.send_error(404)
+        elif path.startswith('/api/music-file/'):
+            mid = path[len('/api/music-file/'):]
+            if mid and '/' not in mid:
+                self._handle_music_file_get(mid)
+            else:
+                self.send_error(404)
         elif path.startswith('/api/music/'):
             mid = path[len('/api/music/'):]
             if mid and '/' not in mid:
@@ -1030,6 +1074,12 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             mid = path[len('/api/music-jacket/'):]
             if mid and '/' not in mid:
                 self._handle_music_jacket_post(mid)
+            else:
+                self.send_error(404)
+        elif path.startswith('/api/music-file/'):
+            mid = path[len('/api/music-file/'):]
+            if mid and '/' not in mid:
+                self._handle_music_file_post(mid)
             else:
                 self.send_error(404)
         else:
@@ -1093,6 +1143,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             mid = path[len('/api/music-jacket/'):]
             if mid and '/' not in mid:
                 self._handle_music_jacket_delete(mid)
+                return
+        elif path.startswith('/api/music-file/'):
+            mid = path[len('/api/music-file/'):]
+            if mid and '/' not in mid:
+                self._handle_music_file_delete(mid)
                 return
         elif path.startswith('/api/messages/'):
             mid = path[len('/api/messages/'):]
@@ -1936,6 +1991,112 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             return
         _delete_music_jacket(music_id)
         items[idx] = dict(items[idx], jacket=False,
+                          updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        _save_music(items)
+        self._write_json(200, {'ok': True})
+
+    # ── GET /api/music-file/<id> ───────────────────────────────────────────────
+
+    def _handle_music_file_get(self, music_id):
+        import base64 as _b64
+        data_url = _read_music_file(music_id)
+        if not data_url:
+            self.send_error(404)
+            return
+        try:
+            sep = ';base64,'
+            if not data_url.startswith('data:') or sep not in data_url:
+                self.send_error(500)
+                return
+            header, b64data = data_url.split(sep, 1)
+            mime_type  = header[len('data:'):]
+            audio_data = _b64.b64decode(b64data)
+            total      = len(audio_data)
+
+            # Range request support (for seeking)
+            range_header = self.headers.get('Range', '')
+            if range_header.startswith('bytes='):
+                try:
+                    rng   = range_header[len('bytes='):]
+                    s_str, e_str = rng.split('-', 1)
+                    s = int(s_str)
+                    e = int(e_str) if e_str else total - 1
+                    e = min(e, total - 1)
+                    chunk = audio_data[s:e + 1]
+                    self.send_response(206)
+                    self.send_header('Content-Type', mime_type)
+                    self.send_header('Content-Range', 'bytes %d-%d/%d' % (s, e, total))
+                    self.send_header('Content-Length', str(len(chunk)))
+                    self.send_header('Accept-Ranges', 'bytes')
+                    self.send_header('Cache-Control', 'no-store')
+                    http.server.BaseHTTPRequestHandler.end_headers(self)
+                    self.wfile.write(chunk)
+                    return
+                except Exception:
+                    pass  # fall through to full response
+
+            self.send_response(200)
+            self.send_header('Content-Type', mime_type)
+            self.send_header('Content-Length', str(total))
+            self.send_header('Accept-Ranges', 'bytes')
+            self.send_header('Cache-Control', 'no-store')
+            http.server.BaseHTTPRequestHandler.end_headers(self)
+            self.wfile.write(audio_data)
+        except Exception as e:
+            print('[music-file] GET error: %s' % e)
+            self.send_error(500)
+
+    # ── POST /api/music-file/<id> ──────────────────────────────────────────────
+
+    def _handle_music_file_post(self, music_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        length = int(self.headers.get('Content-Length', 0))
+        if length > 8 * 1024 * 1024:
+            self._write_json(413, {'error': 'ファイルが大きすぎます（目安: 6MB 以下）'})
+            return
+        try:
+            body = json.loads(self.rfile.read(length))
+        except Exception:
+            self._write_json(400, {'error': 'Bad request'})
+            return
+        data_url = body.get('dataUrl', '')
+        if not isinstance(data_url, str) or not data_url.startswith('data:audio/'):
+            self._write_json(400, {'error': 'dataUrl (audio) が必要です'})
+            return
+        if ';base64,' not in data_url:
+            self._write_json(400, {'error': 'dataUrl must be base64 encoded'})
+            return
+        items = _load_music()
+        idx = next((i for i, t in enumerate(items) if t.get('id') == music_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Track not found'})
+            return
+        try:
+            _write_music_file(music_id, data_url)
+        except OSError as e:
+            print('[music-file] POST write error: %s' % e)
+            self._write_json(500, {'error': 'Failed to save file'})
+            return
+        items[idx] = dict(items[idx], audioFile=True,
+                          updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        _save_music(items)
+        self._write_json(200, {'ok': True})
+
+    # ── DELETE /api/music-file/<id> ────────────────────────────────────────────
+
+    def _handle_music_file_delete(self, music_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        items = _load_music()
+        idx = next((i for i, t in enumerate(items) if t.get('id') == music_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Track not found'})
+            return
+        _delete_music_file(music_id)
+        items[idx] = dict(items[idx], audioFile=False,
                           updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
         _save_music(items)
         self._write_json(200, {'ok': True})

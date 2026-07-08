@@ -6,7 +6,8 @@
     "api/milestones.js":            { "includeFiles": "data/**" },
     "api/insights.js":              { "includeFiles": "data/**" },
     "api/[resource].js":            { "includeFiles": "data/**" },
-    "api/[resource]/[id].js":       { "includeFiles": "data/**" }
+    "api/[resource]/[id].js":       { "includeFiles": "data/**" },
+    "api/music-file/[id].js":       { "includeFiles": "data/**" }
   },
   "rewrites": [
     { "source": "/live",                   "destination": "/live.html"                          },
