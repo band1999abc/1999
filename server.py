@@ -308,7 +308,7 @@ _MESSAGES_FILE = os.path.join(_DATA_DIR, 'messages.json')
 
 _MSG_VALID_SLOTS   = {'dawn', 'morning', 'midday', 'afternoon', 'evening', 'latenight'}
 _MSG_VALID_SEASONS = {'spring', 'rainy', 'summer', 'autumn', 'winter'}
-_MSG_VALID_WEATHER = {'clear', 'cloudy', 'rain', 'snow'}
+_MSG_VALID_WEATHER = {'clear', 'cloudy', 'rain', 'snow', 'thunder', 'foggy'}
 _MSG_VALID_SPECIAL = {'live_today', 'live_tomorrow', 'new_release', 'anniversary'}
 
 def _load_messages():

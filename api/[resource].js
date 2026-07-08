@@ -257,7 +257,7 @@ const MESSAGES_FILE = 'data/messages.json';
 
 const MSG_VALID_SLOTS   = ['dawn', 'morning', 'midday', 'afternoon', 'evening', 'latenight'];
 const MSG_VALID_SEASONS = ['spring', 'rainy', 'summer', 'autumn', 'winter'];
-const MSG_VALID_WEATHER = ['clear', 'cloudy', 'rain', 'snow'];
+const MSG_VALID_WEATHER = ['clear', 'cloudy', 'rain', 'snow', 'thunder', 'foggy'];
 const MSG_VALID_SPECIAL = ['live_today', 'live_tomorrow', 'new_release', 'anniversary'];
 
 function cleanMsgCond(raw) {

@@ -1,8 +1,8 @@
 [
   {
-    "id": "2194afb5-e4fe-4956-a2f2-d3d34a9d7671",
-    "ja": "コーヒーが冷めないうちに、音楽を。",
-    "en": "Music before your coffee gets cold.",
+    "id": "17647bd0-d539-4d9b-8826-02a393e7987d",
+    "ja": "おはようございます。",
+    "en": "",
     "enabled": true,
     "priority": 3,
     "conditions": {
@@ -13,13 +13,455 @@
       "weather": [],
       "special": []
     },
-    "createdAt": "2026-07-08T08:06:25",
-    "updatedAt": "2026-07-08T08:06:25"
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
   },
   {
-    "id": "f0860bf5-f0fd-4ab5-bda5-2c7f2654d95a",
-    "ja": "今日も一日、よくがんばったね。",
-    "en": "You did well today.",
+    "id": "901106a8-2c07-41f1-bd0c-a4a0fbafabcd",
+    "ja": "今日もいい朝を。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "morning"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "33fc4a03-776e-4a46-88a0-c3b50550c74f",
+    "ja": "コーヒーでもどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "morning"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "d733c375-2b4a-43c8-aa6b-069d68c5c0d4",
+    "ja": "ゆっくり目を覚まして。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "morning"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "0b3d7e46-8470-46d8-bc1f-b24b4327841e",
+    "ja": "今日はどんな一日でしょうか。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "morning"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a5b5f318-bc3f-4b9e-a4d8-aadd357b552a",
+    "ja": "朝の音楽もいいですよ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "morning"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "687688e1-89f2-446d-8188-9345fcfeb89b",
+    "ja": "いい朝ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "morning"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "87e6983d-80b4-4e4c-9b44-78b06e79f0d3",
+    "ja": "ごゆっくり。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "midday"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "dba581d0-2b16-45a3-af1c-02f5dc18ba22",
+    "ja": "今日はのんびりどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "midday"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "21c7ed71-cd29-497b-8e6d-1423789acbce",
+    "ja": "少し休んでいきませんか。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "midday"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "32f9be12-5003-4d2e-9446-e314b2a2087a",
+    "ja": "気になるところからどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "midday"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "70851402-5da8-4012-a2cc-e6577b14dede",
+    "ja": "今日も開いています。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "midday"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "3383b32d-484b-4717-a984-25314b1b1833",
+    "ja": "音楽でもどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "midday"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a85f1886-350e-4050-8b61-7c846faefe9a",
+    "ja": "お昼の時間に来てくれたんですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "midday"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "269d9b29-cf3a-4c03-a5d3-535aeb945a4c",
+    "ja": "一息つきませんか。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "afternoon"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "ee5c9550-5e4e-46bb-bff8-560e46fbcaa6",
+    "ja": "もうすぐ夜ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "afternoon"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "c65b2999-8d87-49cc-b7cc-c3607be93b52",
+    "ja": "お疲れ様でした。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "afternoon"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "3bd5b0c5-dfce-41eb-b111-20789da5304e",
+    "ja": "夕暮れ前のひとときを。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "afternoon"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a8c428e5-d601-49a9-8337-3323f21e3ae0",
+    "ja": "今日もありがとうございます。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "afternoon"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "9e8ebe87-4ecc-498b-8fa4-18e14d276939",
+    "ja": "ゆっくりしていきませんか。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "afternoon"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "28f6c02a-d0ba-41ab-825c-55a88dfe9fbc",
+    "ja": "もう少しで終わりますね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "afternoon"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "14a4d245-6b73-448b-a555-5732e8a1044b",
+    "ja": "今夜もどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "evening"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "ae38c118-e99b-47d1-a850-e392368d37fd",
+    "ja": "ゆっくりどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "evening"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a6de6034-b003-46b9-b9d2-00c7f535f280",
+    "ja": "夜の音楽もいいですよ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "evening"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "4a0576f0-ee87-4a50-84d1-2be3047ffb2e",
+    "ja": "静かな夜に。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "evening"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "f5d5cdac-e3ee-431c-8bcb-6fe2dbc32ae0",
+    "ja": "夜のはじまりに。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "evening"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "2574d8c2-daab-490e-977c-2fcc4cc2eb01",
+    "ja": "今夜はいい夜ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "evening"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "33f10dc7-0950-4623-a158-fffeb5588f17",
+    "ja": "こんな時間に来てくれたんですね。",
+    "en": "",
     "enabled": true,
     "priority": 3,
     "conditions": {
@@ -30,15 +472,794 @@
       "weather": [],
       "special": []
     },
-    "createdAt": "2026-07-08T08:06:25",
-    "updatedAt": "2026-07-08T08:06:25"
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
   },
   {
-    "id": "bd5ca0d2-ecf1-4feb-8d3b-bdb8a3f1ed3b",
-    "ja": "雨の日は、音楽が少し近く聴こえる気がする。",
-    "en": "On rainy days, music feels a little closer.",
+    "id": "5f25c709-9fc3-4bbd-8b65-9ee546d6469c",
+    "ja": "眠れない夜ですか。",
+    "en": "",
     "enabled": true,
-    "priority": 4,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "latenight"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "11df50ed-7dfd-4e0b-b042-794debabe5ac",
+    "ja": "深夜のひとときを。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "latenight"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "469d03c7-9dd1-45aa-9084-e43862c07dc5",
+    "ja": "静かですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "latenight"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "4217b836-11c1-4242-80d0-99297444d890",
+    "ja": "夜中の音楽もどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "latenight"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "3140b125-5c9d-45e0-86dd-70ee367ac507",
+    "ja": "ゆっくりどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "latenight"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a5750d0f-3253-4a16-ac9c-225d8586cf26",
+    "ja": "夜明け前ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "dawn"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "353d427a-21a1-4e15-8de7-3da8aa23ae48",
+    "ja": "もう少しで朝です。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "dawn"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "349a9343-931d-47c6-be86-a1a17022e672",
+    "ja": "静かな時間ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "dawn"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "b5472e6a-00a3-4373-93ba-15c651feb17e",
+    "ja": "夜が明けていきますね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "dawn"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "57306578-6cc1-42ba-9ffc-bc12dbbc7571",
+    "ja": "朝が来る前に。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [
+        "dawn"
+      ],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "cfa47959-e1b3-4d76-a2bf-09b84b7f14a4",
+    "ja": "暑い日が続きますね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "b6575371-2603-4220-ac00-dda3730fd42a",
+    "ja": "今日も暑いですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "4ec9d30c-7316-43ea-b0b1-337f0a0e487b",
+    "ja": "涼しくしてお過ごしください。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "04bc13af-9fe3-4a14-abe3-803b4c0a46a0",
+    "ja": "冷たいものでも飲みながらどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "754d3d63-5065-4cd0-98fe-c441c16d628f",
+    "ja": "熱中症に気をつけてください。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "04e01935-1d5e-4ff6-ad71-acbd8c006192",
+    "ja": "寒い日が続きますね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "73a3789c-3df7-48eb-97e9-056697ea541c",
+    "ja": "今日は特に寒いですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "71218dbd-3670-42c6-a27b-6592a351d1b2",
+    "ja": "温かい飲み物がおすすめです。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a6b4135b-85c7-4e65-b9a8-6548e826836d",
+    "ja": "暖かくしてどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "74c0cd24-5f39-4f42-8679-9caa9196dab7",
+    "ja": "温かいところでゆっくりどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "961e7069-2a99-44dc-8d7d-b04b00a06857",
+    "ja": "桜が咲いているといいですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "spring"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "918798d7-1a71-4e15-bfa2-ed236ac58e8a",
+    "ja": "いい季節になりましたね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "spring"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "2aeda92b-86fa-40c1-8c68-bccc12d8f3cd",
+    "ja": "春の夜も悪くないですよ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "spring"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "79737cfd-2b6b-44fb-8d41-299548658022",
+    "ja": "窓を開けてみてください。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "spring"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "eb08e01d-3367-4f58-a1c1-f16b81182669",
+    "ja": "春の音楽をどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "spring"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "8350dbd2-936e-4d6d-a7c0-b01fa65b7caf",
+    "ja": "過ごしやすい季節ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "spring"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "facff962-f733-4d02-b914-ee744dc298b7",
+    "ja": "夏の夜もいいですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "summer"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "01419a9d-525f-4da4-935d-4d172b34f9e9",
+    "ja": "夏の音楽でもどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "summer"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "e1500867-7889-4327-839b-f0ed6fa27363",
+    "ja": "夏ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "summer"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "5ee657f9-f02d-4242-93de-cb205dc88a8a",
+    "ja": "夏の空ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "summer"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "28ba2d4c-cbba-4232-b9bb-572deb19173e",
+    "ja": "暑い日もここで一息。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "summer"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "ec9e0ada-170b-4888-b9c0-ecb71bdfcc6a",
+    "ja": "秋の夜長に。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "autumn"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "01fc53ca-6463-4380-a843-37c094c5b941",
+    "ja": "過ごしやすい季節になりましたね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "autumn"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "ec04b253-1904-4a58-a2d3-44737ff2f918",
+    "ja": "秋の音楽もいいですよ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "autumn"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "7799e350-ab05-4413-a7d6-4f79b2b26f13",
+    "ja": "深まる秋の夜に。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "autumn"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "45c925fc-f85b-4eb8-bb57-32d3d313025b",
+    "ja": "ゆっくりした夜に。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "autumn"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "7d3558eb-ef52-4c42-9890-85c77ce461f4",
+    "ja": "冬の夜もいいものですよ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [
+        "winter"
+      ],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "19e41fce-0c51-4dc1-9b51-0f969559719d",
+    "ja": "いい天気ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "clear"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "09ef319f-7169-4f0a-aa9a-dc3791cce27c",
+    "ja": "晴れた日は気持ちいいですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "clear"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "d03acc26-2e95-46af-9398-b16b488062ad",
+    "ja": "今日は外も気持ちよさそう。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "clear"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "77c62a4b-061e-49e8-b668-47be3d014b1c",
+    "ja": "きれいな空が広がっています。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "clear"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "15321631-4cf3-4c7a-beb9-655dcee6bcf9",
+    "ja": "晴れの日の音楽もいいですよ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "clear"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "0f6f393b-2487-4116-9be0-c44872c66a11",
+    "ja": "曇り空もいいものです。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "cloudy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "34acb023-f790-4bca-8523-6f750dc49e3d",
+    "ja": "穏やかな天気ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "cloudy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "f7cc3563-c2e9-4155-a1c0-7702f2468a8f",
+    "ja": "静かな一日ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "cloudy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "1aeddd72-549e-42a6-87e9-86e2f57ee4d4",
+    "ja": "曇りの日はゆっくりするのがいい。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "cloudy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "acb2bc4d-80dd-406e-ba5c-137484c9e447",
+    "ja": "どんよりした日も悪くないです。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "cloudy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "ecf57bd5-baf9-448e-8b39-65c10658bf4f",
+    "ja": "雨音も悪くないですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
     "conditions": {
       "timeSlots": [],
       "seasons": [],
@@ -47,24 +1268,420 @@
       ],
       "special": []
     },
-    "createdAt": "2026-07-08T08:06:25",
-    "updatedAt": "2026-07-08T08:06:25"
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
   },
   {
-    "id": "f879ec80-9b52-4159-9241-44de82d34970",
-    "ja": "今日、ライブがある。緊張してる。",
-    "en": "There's a show today. I'm a little nervous.",
+    "id": "7e84ac6a-9b3a-4374-be8a-40db03411fbe",
+    "ja": "雨の日はゆっくりするのがいい。",
+    "en": "",
     "enabled": true,
-    "priority": 5,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "rain"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "5931a979-5c48-4779-8c1e-4001303bdd8f",
+    "ja": "雨音を聞きながらどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "rain"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "947270a1-c774-4ee0-b5db-438419bcf7cd",
+    "ja": "雨の日の音楽もどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "rain"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "04119ab5-8a53-4aa5-9b3a-c7d1223f04e2",
+    "ja": "今日は雨ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "rain"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "1eeceeb1-da50-40b1-a95f-6823145780cf",
+    "ja": "外は雨ですよ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "rain"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "b74d072f-120c-489b-9fdd-4610daddf16d",
+    "ja": "雪が降っているようですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "snow"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "c7d1ac47-cebe-4fb2-af87-3e7651b27088",
+    "ja": "静かな雪の日に。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "snow"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "f0b63ea1-50ab-4f8b-b399-adb9650e124a",
+    "ja": "雪の夜はいいものです。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "snow"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "34496303-d910-4e03-b6b3-059d38934e12",
+    "ja": "外は雪です。暖かくしてどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "snow"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "c623076c-e813-4547-b257-d389cc16fd53",
+    "ja": "雪の日はゆっくりしましょう。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "snow"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a86f5a49-0b5e-414b-aa30-8869a169999a",
+    "ja": "嵐の夜ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "thunder"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "5de61a24-7b26-4d3f-8a11-e73f0cd97487",
+    "ja": "外は荒れていますね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "thunder"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a795b33c-b1fc-48db-bbde-0efa8195ebf0",
+    "ja": "今夜は家でゆっくりしましょう。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "thunder"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "85c8aaee-33e9-473a-80b4-9409832c788b",
+    "ja": "雨風が強いですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "thunder"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "5267374d-59d6-4fc4-89dc-5a9b2817ecb9",
+    "ja": "安全な場所でどうぞ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "thunder"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "c9376627-1c18-4722-8701-88f09b3e7f81",
+    "ja": "霧がかかっていますね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "foggy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "16ad921c-dbbb-4557-b944-f27c7cc37b94",
+    "ja": "今日はぼんやりした天気ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "foggy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "f92e1df8-5d58-4f63-a61b-6e1a07af369a",
+    "ja": "霧の日も悪くないですよ。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "foggy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "27f5f301-f792-48b8-b4f0-243b7c5da7cf",
+    "ja": "煙るような空ですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [
+        "foggy"
+      ],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "f83be102-597c-44b7-911e-f59684bbb60c",
+    "ja": "今日はクジラが近くまで来ています。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
     "conditions": {
       "timeSlots": [],
       "seasons": [],
       "weather": [],
-      "special": [
-        "live_today"
-      ]
+      "special": []
     },
-    "createdAt": "2026-07-08T08:06:25",
-    "updatedAt": "2026-07-08T08:06:25"
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "2e9e9da3-4f0b-40a9-9c74-cece054ce212",
+    "ja": "少しだけ潮の匂いがします。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "a742f515-65c0-43e1-996f-7ff689774b75",
+    "ja": "音楽日和です。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "2eb2d33a-4ba0-4af1-917c-cec54f1aa9b9",
+    "ja": "いつもありがとうございます。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "b72f55fb-d229-4ec4-9eb2-0fd63cbf3314",
+    "ja": "今夜、星が見えるといいですね。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
+  },
+  {
+    "id": "fd7473e8-4c16-4401-a269-7bc98b0710f5",
+    "ja": "どこかで誰かも同じ音楽を聴いているかもしれません。",
+    "en": "",
+    "enabled": true,
+    "priority": 3,
+    "conditions": {
+      "timeSlots": [],
+      "seasons": [],
+      "weather": [],
+      "special": []
+    },
+    "createdAt": "2026-07-08T08:16:18",
+    "updatedAt": "2026-07-08T08:16:18"
   }
 ]

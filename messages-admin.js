@@ -55,7 +55,7 @@
     // ── Label maps ────────────────────────────────────────────────────────────
     var SLOT_LABELS    = { dawn:'明け方', morning:'朝', midday:'昼', afternoon:'夕方', evening:'夜', latenight:'深夜' };
     var SEASON_LABELS  = { spring:'春', rainy:'梅雨', summer:'夏', autumn:'秋', winter:'冬' };
-    var WEATHER_LABELS = { clear:'晴れ', cloudy:'曇り', rain:'雨', snow:'雪' };
+    var WEATHER_LABELS = { clear:'晴れ', cloudy:'曇り', rain:'雨', snow:'雪', thunder:'嵐', foggy:'霧' };
     var SPECIAL_LABELS = { live_today:'ライブ当日', live_tomorrow:'ライブ翌日', new_release:'新曲公開', anniversary:'記念日' };
 
     // ── Auth fetch (mirrors admin.js — Bearer token from sessionStorage) ────────
