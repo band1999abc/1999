@@ -58,10 +58,18 @@
     var WEATHER_LABELS = { clear:'晴れ', cloudy:'曇り', rain:'雨', snow:'雪' };
     var SPECIAL_LABELS = { live_today:'ライブ当日', live_tomorrow:'ライブ翌日', new_release:'新曲公開', anniversary:'記念日' };
 
-    // ── Auth fetch ────────────────────────────────────────────────────────────
+    // ── Auth fetch (mirrors admin.js — Bearer token from sessionStorage) ────────
     function authFetch(url, opts) {
-        if (window._adminAuthFetch) return window._adminAuthFetch(url, opts);
-        return fetch(url, opts);
+        var token = sessionStorage.getItem('admin_token') || '';
+        opts = opts || {};
+        opts.headers = Object.assign({}, opts.headers || {});
+        if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+        return fetch(url, opts).then(function (res) {
+            if (res.status === 401) {
+                window.location.replace('/afterhours/login');
+            }
+            return res;
+        });
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
