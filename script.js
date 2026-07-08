@@ -414,12 +414,12 @@
         });
 
         // ── ライブ当日チェック ─────────────────────────────────────
-        const livePromise = fetch('/api/live')
+        const livePromise = fetch('/api/live', { credentials: 'omit' })
             .then(function (r) { return r.json(); })
             .catch(function () { return []; });
 
         // ── カスタムメッセージ取得（公開エンドポイント）──────────
-        const customMsgsPromise = fetch('/api/messages')
+        const customMsgsPromise = fetch('/api/messages', { credentials: 'omit' })
             .then(function (r) { return r.json(); })
             .catch(function () { return []; });
 

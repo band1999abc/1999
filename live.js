@@ -266,7 +266,7 @@
     // ── Load & render ─────────────────────────────────────────────────────────
     async function load() {
         try {
-            const res = await fetch('/api/live');
+            const res = await fetch('/api/live', { credentials: 'omit' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const all = await res.json();
 
