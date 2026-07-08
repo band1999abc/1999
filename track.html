@@ -11,24 +11,35 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="1999">
-    <title>Music | 1999</title>
+    <title>1999</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@200&display=swap">
     <link rel="stylesheet" href="style.css?v=33">
 </head>
-<body data-page="music">
+<body data-page="track">
 
 <div class="card">
     <img src="whale_transparent.png" class="whale-bg" alt="" aria-hidden="true" decoding="async">
 
-    <h1>Music</h1>
+    <!-- track.js が動的に書き込む -->
+    <h1 id="track-title"></h1>
 
-    <!-- Populated by music.js — After Hours が唯一の管理場所 -->
-    <div class="song-list" id="song-list" aria-live="polite"></div>
+    <p id="track-status" class="sub"></p>
+
+    <!-- 音源 URL がある場合のみ表示 -->
+    <div id="track-audio" class="play-button-wrap" hidden></div>
+
+    <!-- 歌詞がある場合のみ表示 -->
+    <div id="track-lyrics-wrap" hidden>
+        <div class="lyrics-title">
+            <span>Lyrics</span>
+        </div>
+        <div class="lyrics" id="track-lyrics"></div>
+    </div>
 
     <nav>
-        <a href="/">← Home</a>
+        <a href="music.html">← Music</a>
     </nav>
 
     <footer>©1999</footer>
@@ -37,7 +48,7 @@
 
 <script src="whale.js"></script>
 <script src="script.js?v=3"></script>
-<script src="music.js?v=1"></script>
+<script src="track.js?v=1"></script>
 <script src="analytics.js" defer></script>
 
 </body>

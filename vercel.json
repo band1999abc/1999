@@ -10,6 +10,7 @@
   },
   "rewrites": [
     { "source": "/live",                   "destination": "/live.html"                          },
+    { "source": "/track",                  "destination": "/track.html"                         },
     { "source": "/afterhours/analytics",   "destination": "/api/afterhours-pages?page=analytics"  },
     { "source": "/afterhours/milestones",  "destination": "/api/afterhours-pages?page=milestones" },
     { "source": "/afterhours/insights",    "destination": "/api/afterhours-pages?page=insights"   },

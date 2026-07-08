@@ -47,14 +47,15 @@ body {
     padding: 40px 20px;
 }
 
-/* ── music / hibiware page-specific padding ── */
+/* ── music / hibiware / track page-specific padding ── */
 body[data-page="music"] {
     align-items: flex-start;
     padding-top: 40px;
     padding-bottom: 60px;
 }
 
-body[data-page="hibiware"] {
+body[data-page="hibiware"],
+body[data-page="track"] {
     align-items: center;
     padding-top: 40px;
     padding-bottom: 100px;
@@ -655,13 +656,15 @@ body.weather-foggy::before {
     }
 
     body[data-page="music"],
-    body[data-page="hibiware"] {
+    body[data-page="hibiware"],
+    body[data-page="track"] {
         padding-top: 72px;
         padding-bottom: 72px;
     }
 
     body[data-page="music"] .card,
-    body[data-page="hibiware"] .card {
+    body[data-page="hibiware"] .card,
+    body[data-page="track"] .card {
         padding-top: 48px;
         padding-bottom: 48px;
     }
