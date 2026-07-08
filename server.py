@@ -219,6 +219,168 @@ def _save_lives(lives):
         json.dump(lives, f, ensure_ascii=False, indent=2)
 
 
+# ── Milestone helpers (used by _handle_milestones_read) ──────────────────────
+
+def _ms_nth_event(events, etype, n):
+    c = 0
+    for e in events:
+        if e.get('event') == etype:
+            c += 1
+            if c >= n:
+                return e.get('ts')
+    return None
+
+def _ms_nth_unique_visitor(events, n):
+    seen = set()
+    for e in events:
+        if e.get('event') != 'visit':
+            continue
+        vid = e.get('visitor_id')
+        if vid not in seen:
+            seen.add(vid)
+            if len(seen) >= n:
+                return e.get('ts')
+    return None
+
+def _ms_nth_returning(events, n):
+    seen = set()
+    for e in events:
+        if e.get('event') != 'visit' or e.get('is_new_visitor') is not False:
+            continue
+        vid = e.get('visitor_id')
+        if vid not in seen:
+            seen.add(vid)
+            if len(seen) >= n:
+                return e.get('ts')
+    return None
+
+def _ms_first_ret_rate_date(events, target_pct):
+    all_vis, ret_vis = set(), set()
+    for e in events:
+        if e.get('event') != 'visit':
+            continue
+        all_vis.add(e.get('visitor_id'))
+        if e.get('is_new_visitor') is False:
+            ret_vis.add(e.get('visitor_id'))
+        if all_vis and round(len(ret_vis) / len(all_vis) * 100) >= target_pct:
+            return e.get('ts')
+    return None
+
+def _ms_nth_unique_track(events, n):
+    seen = set()
+    for e in events:
+        if e.get('event') != 'music_play':
+            continue
+        track = (e.get('props') or {}).get('track')
+        if track and track not in seen:
+            seen.add(track)
+            if len(seen) >= n:
+                return e.get('ts')
+    return None
+
+def _ms_nth_diary(diaries, n):
+    # Sort by createdAt (registration time), not by `date` (content date).
+    # Records without createdAt sort last ('zzz' sentinel).
+    pub = sorted(
+        [d for d in diaries if d.get('status') == 'published'],
+        key=lambda d: d.get('createdAt') or 'zzz'
+    )
+    if len(pub) >= n:
+        return pub[n - 1].get('createdAt')
+    return None
+
+def _ms_nth_live(lives, n):
+    # Sort by createdAt (registration time), NOT by `date` (performance date).
+    srt = sorted(lives, key=lambda l: l.get('createdAt') or 'zzz')
+    if len(srt) >= n:
+        return srt[n - 1].get('createdAt')
+    return None
+
+def _ms_compute_values(events, diaries, lives):
+    music_plays = sum(1 for e in events if e.get('event') == 'music_play')
+    visitor_ids = {e.get('visitor_id') for e in events if e.get('event') == 'visit'}
+    ret_ids = {e.get('visitor_id') for e in events
+               if e.get('event') == 'visit' and e.get('is_new_visitor') is False}
+    qr_scans = sum(1 for e in events if e.get('event') == 'qr_scan')
+    tracks = {(e.get('props') or {}).get('track')
+              for e in events if e.get('event') == 'music_play'
+              and (e.get('props') or {}).get('track')}
+    diaries_pub = sum(1 for d in diaries if d.get('status') == 'published')
+    lives_count = len(lives)
+    visitors    = len(visitor_ids)
+    returning   = len(ret_ids)
+    ret_rate    = round(returning / visitors * 100) if visitors else 0
+    return {
+        'music_plays': music_plays,
+        'visitors':    visitors,
+        'returning':   returning,
+        'ret_rate':    ret_rate,
+        'qr_scans':    qr_scans,
+        'diaries':     diaries_pub,
+        'lives':       lives_count,
+        'releases':    len(tracks),
+    }
+
+def _ms_find_date(metric, target, events, diaries, lives):
+    if metric == 'music_plays':
+        return _ms_nth_event(events, 'music_play', target)
+    if metric == 'visitors':
+        return _ms_nth_unique_visitor(events, target)
+    if metric == 'returning':
+        return _ms_nth_returning(events, target)
+    if metric == 'ret_rate':
+        return _ms_first_ret_rate_date(events, target)
+    if metric == 'qr_scans':
+        return _ms_nth_event(events, 'qr_scan', target)
+    if metric == 'diaries':
+        return _ms_nth_diary(diaries, target)
+    if metric == 'lives':
+        return _ms_nth_live(lives, target)
+    if metric == 'releases':
+        return _ms_nth_unique_track(events, target)
+    return None
+
+_MILESTONES_DEFS = [
+    # Music
+    {'id': 'music_first',  'cat': 'Music',     'catIcon': '🎵', 'label': '初回再生',                  'metric': 'music_plays', 'target': 1,     'unit': 'Play'},
+    {'id': 'music_100',    'cat': 'Music',     'catIcon': '🎵', 'label': '100 Plays',                'metric': 'music_plays', 'target': 100,   'unit': 'Plays'},
+    {'id': 'music_500',    'cat': 'Music',     'catIcon': '🎵', 'label': '500 Plays',                'metric': 'music_plays', 'target': 500,   'unit': 'Plays'},
+    {'id': 'music_1000',   'cat': 'Music',     'catIcon': '🎵', 'label': '1000 Plays',               'metric': 'music_plays', 'target': 1000,  'unit': 'Plays'},
+    {'id': 'music_5000',   'cat': 'Music',     'catIcon': '🎵', 'label': '5000 Plays',               'metric': 'music_plays', 'target': 5000,  'unit': 'Plays'},
+    {'id': 'music_10000',  'cat': 'Music',     'catIcon': '🎵', 'label': '10000 Plays',              'metric': 'music_plays', 'target': 10000, 'unit': 'Plays'},
+    # Visitors
+    {'id': 'vis_first',    'cat': 'Visitors',  'catIcon': '👥', 'label': '初回訪問',                  'metric': 'visitors',    'target': 1,     'unit': 'Visitor'},
+    {'id': 'vis_100',      'cat': 'Visitors',  'catIcon': '👥', 'label': '100 Visitors',             'metric': 'visitors',    'target': 100,   'unit': 'Visitors'},
+    {'id': 'vis_500',      'cat': 'Visitors',  'catIcon': '👥', 'label': '500 Visitors',             'metric': 'visitors',    'target': 500,   'unit': 'Visitors'},
+    {'id': 'vis_1000',     'cat': 'Visitors',  'catIcon': '👥', 'label': '1000 Visitors',            'metric': 'visitors',    'target': 1000,  'unit': 'Visitors'},
+    {'id': 'vis_5000',     'cat': 'Visitors',  'catIcon': '👥', 'label': '5000 Visitors',            'metric': 'visitors',    'target': 5000,  'unit': 'Visitors'},
+    # Returning
+    {'id': 'ret_first',    'cat': 'Returning', 'catIcon': '🔄', 'label': '初めてのReturning Visitor', 'metric': 'returning',   'target': 1,     'unit': '人'},
+    {'id': 'ret_100',      'cat': 'Returning', 'catIcon': '🔄', 'label': 'Returning Visitor 100人',  'metric': 'returning',   'target': 100,   'unit': '人'},
+    {'id': 'ret_rate_25',  'cat': 'Returning', 'catIcon': '🔄', 'label': 'Returning Rate 25%',       'metric': 'ret_rate',    'target': 25,    'unit': '%'},
+    {'id': 'ret_rate_50',  'cat': 'Returning', 'catIcon': '🔄', 'label': 'Returning Rate 50%',       'metric': 'ret_rate',    'target': 50,    'unit': '%'},
+    # QR
+    {'id': 'qr_first',     'cat': 'QR',        'catIcon': '📱', 'label': '初回QR Scan',               'metric': 'qr_scans',    'target': 1,     'unit': 'Scan'},
+    {'id': 'qr_100',       'cat': 'QR',        'catIcon': '📱', 'label': '100 QR Scans',              'metric': 'qr_scans',    'target': 100,   'unit': 'Scans'},
+    {'id': 'qr_500',       'cat': 'QR',        'catIcon': '📱', 'label': '500 QR Scans',              'metric': 'qr_scans',    'target': 500,   'unit': 'Scans'},
+    {'id': 'qr_1000',      'cat': 'QR',        'catIcon': '📱', 'label': '1000 QR Scans',             'metric': 'qr_scans',    'target': 1000,  'unit': 'Scans'},
+    # Diary
+    {'id': 'diary_first',  'cat': 'Diary',     'catIcon': '📔', 'label': '初回Diary公開',             'metric': 'diaries',     'target': 1,     'unit': '件'},
+    {'id': 'diary_10',     'cat': 'Diary',     'catIcon': '📔', 'label': 'Diary 10件',               'metric': 'diaries',     'target': 10,    'unit': '件'},
+    {'id': 'diary_50',     'cat': 'Diary',     'catIcon': '📔', 'label': 'Diary 50件',               'metric': 'diaries',     'target': 50,    'unit': '件'},
+    {'id': 'diary_100',    'cat': 'Diary',     'catIcon': '📔', 'label': 'Diary 100件',              'metric': 'diaries',     'target': 100,   'unit': '件'},
+    # Live
+    {'id': 'live_first',   'cat': 'Live',      'catIcon': '🎤', 'label': '初ライブ登録',               'metric': 'lives',       'target': 1,     'unit': '本'},
+    {'id': 'live_10',      'cat': 'Live',      'catIcon': '🎤', 'label': 'ライブ 10本',               'metric': 'lives',       'target': 10,    'unit': '本'},
+    {'id': 'live_50',      'cat': 'Live',      'catIcon': '🎤', 'label': 'ライブ 50本',               'metric': 'lives',       'target': 50,    'unit': '本'},
+    # Release
+    {'id': 'rel_first',    'cat': 'Release',   'catIcon': '💿', 'label': '初リリース',                'metric': 'releases',    'target': 1,     'unit': '曲'},
+    {'id': 'rel_5',        'cat': 'Release',   'catIcon': '💿', 'label': '楽曲 5曲',                  'metric': 'releases',    'target': 5,     'unit': '曲'},
+    {'id': 'rel_10',       'cat': 'Release',   'catIcon': '💿', 'label': '楽曲 10曲',                 'metric': 'releases',    'target': 10,    'unit': '曲'},
+    {'id': 'rel_20',       'cat': 'Release',   'catIcon': '💿', 'label': '楽曲 20曲',                 'metric': 'releases',    'target': 20,    'unit': '曲'},
+]
+
+
 # ── Request handler ───────────────────────────────────────────────────────────
 
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
@@ -251,6 +413,10 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_auth_get()
         elif path == '/afterhours/analytics':
             self._serve_template('afterhours-analytics.html')
+        elif path == '/afterhours/milestones':
+            self._serve_template('afterhours-milestones.html')
+        elif path == '/api/milestones':
+            self._handle_milestones_read()
         elif path == '/afterhours/diary':
             self._handle_afterhours_diary()
         elif path == '/afterhours/live':
@@ -855,6 +1021,106 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             'count':  len(all_events),
             'events': all_events,
         })
+
+    # -- GET /api/milestones -- lifetime milestone state (admin only) ----------
+
+    def _handle_milestones_read(self):
+        """GET /api/milestones -- return all milestone states with achievement dates."""
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+
+        # ── 1. Load all-time analytics events ────────────────────────────────
+        analytics_dir = os.path.join(_DATA_DIR, 'analytics')
+        all_events    = []
+        meta_path     = os.path.join(analytics_dir, 'meta.json')
+        first_date    = None
+        if os.path.exists(meta_path):
+            try:
+                first_date = json.load(open(meta_path, encoding='utf-8')).get('firstDate')
+            except Exception:
+                pass
+
+        if first_date and os.path.isdir(analytics_dir):
+            today_jst = (datetime.datetime.now(datetime.timezone.utc)
+                         + datetime.timedelta(hours=9)).strftime('%Y-%m-%d')
+            cur  = datetime.date.fromisoformat(first_date)
+            last = datetime.date.fromisoformat(today_jst)
+            while cur <= last:
+                fp = os.path.join(analytics_dir, cur.isoformat() + '.json')
+                if os.path.exists(fp):
+                    try:
+                        data = json.load(open(fp, encoding='utf-8'))
+                        if isinstance(data, list):
+                            all_events.extend(data)
+                    except Exception:
+                        pass
+                cur += datetime.timedelta(days=1)
+
+        all_events.sort(key=lambda e: e.get('ts', ''))
+
+        # ── 2. Load content data ──────────────────────────────────────────────
+        diaries, lives = [], []
+        for path_, target in (('diary.json', None), ('lives.json', None)):
+            fp = os.path.join(_DATA_DIR, path_)
+            try:
+                data = json.load(open(fp, encoding='utf-8'))
+                if path_ == 'diary.json':
+                    diaries = data if isinstance(data, list) else []
+                else:
+                    lives   = data if isinstance(data, list) else []
+            except Exception:
+                pass
+
+        # ── 3. Compute current values ─────────────────────────────────────────
+        values = _ms_compute_values(all_events, diaries, lives)
+
+        # ── 4. Load / update achievement dates (FS cache) ─────────────────────
+        ms_cache_path = os.path.join(_DATA_DIR, 'milestones.json')
+        achieved_cache = {}
+        if os.path.exists(ms_cache_path):
+            try:
+                achieved_cache = json.load(open(ms_cache_path, encoding='utf-8'))
+            except Exception:
+                pass
+
+        cache_dirty = False
+        milestones_out = []
+        for ms in _MILESTONES_DEFS:
+            current     = values.get(ms['metric'], 0)
+            is_achieved = current >= ms['target']
+            achieved_at = achieved_cache.get(ms['id'])
+
+            if is_achieved and not achieved_at:
+                achieved_at = _ms_find_date(ms['metric'], ms['target'],
+                                            all_events, diaries, lives)
+                if not achieved_at:
+                    achieved_at = datetime.datetime.now(
+                        datetime.timezone.utc).isoformat()
+                achieved_cache[ms['id']] = achieved_at
+                cache_dirty = True
+
+            milestones_out.append({
+                'id':         ms['id'],
+                'cat':        ms['cat'],
+                'catIcon':    ms['catIcon'],
+                'label':      ms['label'],
+                'target':     ms['target'],
+                'unit':       ms['unit'],
+                'current':    current,
+                'achieved':   is_achieved,
+                'achievedAt': achieved_at,
+                'diff':       max(0, ms['target'] - current),
+            })
+
+        if cache_dirty:
+            try:
+                with open(ms_cache_path, 'w', encoding='utf-8') as fh:
+                    json.dump(achieved_cache, fh, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+
+        self._write_json(200, {'milestones': milestones_out})
 
     # ── Flyer storage helpers ─────────────────────────────────────────────────
 
