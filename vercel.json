@@ -5,6 +5,7 @@
     "api/afterhours-pages.js":      { "includeFiles": "templates/**" },
     "api/milestones.js":            { "includeFiles": "data/**" },
     "api/insights.js":              { "includeFiles": "data/**" },
+    "api/music-analytics.js":      { "includeFiles": "data/**" },
     "api/[resource].js":            { "includeFiles": "data/**" },
     "api/[resource]/[id].js":       { "includeFiles": "data/**" }
   },
@@ -13,6 +14,7 @@
     { "source": "/afterhours/analytics",   "destination": "/api/afterhours-pages?page=analytics"  },
     { "source": "/afterhours/milestones",  "destination": "/api/afterhours-pages?page=milestones" },
     { "source": "/afterhours/insights",    "destination": "/api/afterhours-pages?page=insights"   },
+    { "source": "/afterhours/music",       "destination": "/api/afterhours-pages?page=music"       },
     { "source": "/afterhours/diary",       "destination": "/api/afterhours-pages?page=diary"      },
     { "source": "/afterhours/live",        "destination": "/api/afterhours-pages?page=live"       },
     { "source": "/afterhours/login",       "destination": "/api/afterhours-pages?page=login"      },
