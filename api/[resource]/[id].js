@@ -14,7 +14,7 @@
  * in HANDLERS — no new Vercel function needed.
  */
 
-import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
+import { COOKIE_NAME, verifyToken, parseCookies, extractToken, isRevoked } from '../_auth.js';
 import {
     readJsonArray, writeJsonArray,
     readFlyerSlot, writeFlyerSlot, deleteFlyerSlot, deleteAllFlyerSlots,
@@ -44,10 +44,8 @@ async function readBodyLimited(req, maxBytes) {
 }
 
 function isAuthed(req) {
-    const auth = req.headers['authorization'] || '';
-    if (auth.startsWith('Bearer ') && verifyToken(auth.slice(7)) !== null) return true;
-    const cookies = parseCookies(req.headers.cookie);
-    return verifyToken(cookies[COOKIE_NAME] || '') !== null;
+    // Resolved once at the top of handler(); reads req._authed set there.
+    return req._authed === true;
 }
 
 // ── Shared regex ──────────────────────────────────────────────────────────────
@@ -682,6 +680,11 @@ const HANDLERS = {
 
 export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
+
+    // Resolve auth once — includes denylist check — so all sub-handlers can
+    // call the synchronous isAuthed(req) without extra async work.
+    const _tok   = extractToken(req);
+    req._authed  = verifyToken(_tok) !== null && !(await isRevoked(_tok));
 
     const resource = req.query?.resource;
     const methods  = HANDLERS[resource];

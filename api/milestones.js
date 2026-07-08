@@ -19,7 +19,7 @@ import { readAnalyticsDays, getFirstDate } from './_analytics_store.js';
 import { getAchievementDates, setAchievementDateIfNew } from './_milestones_store.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { COOKIE_NAME, verifyToken, parseCookies } from './_auth.js';
+import { COOKIE_NAME, verifyToken, parseCookies, isRevoked } from './_auth.js';
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -270,9 +270,8 @@ export default async function handler(req, res) {
     const cookies = parseCookies(req.headers.cookie || '');
     const token   = (req.headers.authorization || '').replace(/^Bearer\s+/i, '')
                   || cookies[COOKIE_NAME] || '';
-    if (!token || !verifyToken(token)) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+    if (!token || !verifyToken(token))  return res.status(401).json({ error: 'Unauthorized' });
+    if (await isRevoked(token))         return res.status(401).json({ error: 'Unauthorized' });
 
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method Not Allowed' });

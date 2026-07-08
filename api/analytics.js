@@ -15,7 +15,7 @@
  */
 
 import { randomUUID }    from 'crypto';
-import { COOKIE_NAME, verifyToken, parseCookies } from './_auth.js';
+import { COOKIE_NAME, verifyToken, parseCookies, extractToken, isRevoked } from './_auth.js';
 import { appendAnalyticsEvent, readAnalyticsDays, getFirstDate } from './_analytics_store.js';
 
 // ── Validation constants ──────────────────────────────────────────────────────
@@ -221,6 +221,8 @@ export default async function handler(req, res) {
     // ── GET /api/analytics — query events (admin only) ─────────────────────────
     if (req.method === 'GET') {
         if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+        const _tok = extractToken(req);
+        if (_tok && await isRevoked(_tok)) return res.status(401).json({ error: 'Unauthorized' });
 
         const today     = todayJST();
         const firstDate = await getFirstDate().catch(() => null);

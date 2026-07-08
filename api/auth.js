@@ -12,7 +12,8 @@
 
 import { timingSafeEqual } from 'crypto';
 import {
-    COOKIE_NAME, makeToken, verifyToken, parseCookies, cookieHeader
+    COOKIE_NAME, makeToken, verifyToken, parseCookies, cookieHeader,
+    extractToken, denylistToken, isRevoked,
 } from './_auth.js';
 
 async function readBody(req) {
@@ -65,6 +66,9 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         const member = getAuthedMember(req);
         if (member === null) return res.status(401).json({ ok: false });
+        // Also reject if the token was explicitly revoked via logout
+        const token = extractToken(req);
+        if (token && await isRevoked(token)) return res.status(401).json({ ok: false });
         const comment = getMemberComment(member);
         return res.status(200).json({ ok: true, member, comment });
     }
@@ -100,6 +104,12 @@ export default async function handler(req, res) {
 
     /* ── POST logout ──────────────────────────────────────────── */
     if (action === 'logout') {
+        const token = extractToken(req);
+        if (token && verifyToken(token) !== null) {
+            // Await revocation so the KV write completes before the response
+            // is sent; logout remains functional even if KV is unavailable
+            await denylistToken(token);
+        }
         res.setHeader('Set-Cookie', cookieHeader(null));
         return res.status(200).json({ ok: true });
     }
