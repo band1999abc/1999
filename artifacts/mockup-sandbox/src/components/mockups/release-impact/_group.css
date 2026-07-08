@@ -1,0 +1,164 @@
+/* Release Impact — design tokens matching After Hours admin */
+.ri-root {
+  --accent:      #8a6a42;
+  --text-dark:   #2f2f2f;
+  --text-muted:  #999;
+  --border:      #ddd;
+  --bg:          #ffffff;
+  --bg-card:     #fafafa;
+  --green:       #4a7c59;
+  --red:         #a34a4a;
+
+  background: var(--bg);
+  color: var(--text-dark);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 28px 22px 48px;
+  box-sizing: border-box;
+}
+
+/* ── Typography ── */
+.ri-page-title {
+  color: var(--text-dark);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 24px;
+}
+
+.ri-section-label {
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 7px;
+  margin-bottom: 10px;
+}
+
+/* ── Stat card ── */
+.ri-card {
+  border: 1px solid var(--border);
+  padding: 16px 14px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ri-card-value {
+  color: var(--text-dark);
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ri-card-label {
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+}
+
+/* ── Back button ── */
+.ri-back {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 0;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* ── Toggle buttons ── */
+.ri-toggle-group {
+  display: flex;
+  margin: 0;
+}
+
+.ri-toggle-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  padding: 4px 10px;
+}
+
+.ri-toggle-btn + .ri-toggle-btn { border-left: none; }
+
+.ri-toggle-btn.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ── Delta badge ── */
+.ri-delta {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  padding: 2px 5px;
+}
+.ri-delta--up   { color: var(--green); }
+.ri-delta--down { color: var(--red); }
+.ri-delta--neu  { color: var(--text-muted); }
+
+/* ── Divider ── */
+.ri-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 20px 0;
+}
+
+/* ── Table ── */
+.ri-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.ri-table th {
+  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-align: right;
+  padding: 5px 6px 5px 0;
+  font-size: 9px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.ri-table th:first-child { text-align: left; }
+
+.ri-table td {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  padding: 9px 6px 9px 0;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+
+.ri-table td:first-child {
+  text-align: left;
+  color: var(--text-dark);
+  font-size: 12px;
+}
+
+.ri-table td.ri-td--main {
+  color: var(--text-dark);
+  font-size: 13px;
+}
+
+.ri-table tr:last-child td { border-bottom: none; }
