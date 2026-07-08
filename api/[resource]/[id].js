@@ -19,6 +19,7 @@ import {
     readJsonArray, writeJsonArray,
     readFlyerSlot, writeFlyerSlot, deleteFlyerSlot, deleteAllFlyerSlots,
     readMusicJacket, writeMusicJacket, deleteMusicJacket,
+    readMusicFile, writeMusicFile, deleteMusicFile,
 } from '../_storage.js';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -614,6 +615,94 @@ async function musicJacketDelete(req, res) {
     return res.status(200).json({ ok: true });
 }
 
+// ── Music file (hosted MP3) ───────────────────────────────────────────────────
+
+const FILE_MAX_BYTES = 8 * 1024 * 1024;   // 8 MB request body ≈ 6 MB raw audio
+
+async function musicFileGet(req, res) {
+    const { id } = req.query;
+    const stored = await readMusicFile(id);
+    if (!stored) return res.status(404).end();
+
+    const comma  = stored.indexOf(',');
+    const rawB64 = comma >= 0 ? stored.slice(comma + 1) : stored;
+    const buf    = Buffer.from(rawB64, 'base64');
+    const total  = buf.length;
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'no-store');
+
+    const range = req.headers['range'];
+    if (range) {
+        const m = range.match(/bytes=(\d+)-(\d*)/);
+        if (!m) {
+            res.setHeader('Content-Range', `bytes */${total}`);
+            return res.status(416).end();
+        }
+        const s = parseInt(m[1], 10);
+        const e = m[2] !== '' ? parseInt(m[2], 10) : total - 1;
+        if (s >= total || e >= total || s > e) {
+            res.setHeader('Content-Range', `bytes */${total}`);
+            return res.status(416).end();
+        }
+        res.setHeader('Content-Range',  `bytes ${s}-${e}/${total}`);
+        res.setHeader('Content-Length', e - s + 1);
+        return res.status(206).end(buf.slice(s, e + 1));
+    }
+    res.setHeader('Content-Length', total);
+    return res.status(200).end(buf);
+}
+
+async function musicFilePost(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.query;
+    const items  = await readJsonArray(MUSIC_FILE);
+    const idx    = items.findIndex(x => x.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Track not found' });
+
+    let body;
+    try { body = await readBodyLimited(req, FILE_MAX_BYTES); }
+    catch { return res.status(413).json({ error: 'ファイルが大きすぎます（目安: 6MB 以下）' }); }
+
+    const { dataUrl } = body;
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:audio/'))
+        return res.status(400).json({ error: 'dataUrl (audio) が必要です' });
+    if (!dataUrl.includes(';base64,'))
+        return res.status(400).json({ error: 'dataUrl must be base64 encoded' });
+
+    try {
+        await writeMusicFile(id, dataUrl);
+    } catch (e) {
+        console.error('[music-file] write error:', e);
+        return res.status(500).json({ error: 'Failed to save file' });
+    }
+
+    items[idx] = { ...items[idx], audioFile: true, updatedAt: new Date().toISOString() };
+    await writeJsonArray(MUSIC_FILE, items);
+
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({ ok: true });
+}
+
+async function musicFileDelete(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.query;
+    const items  = await readJsonArray(MUSIC_FILE);
+    const idx    = items.findIndex(x => x.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Track not found' });
+
+    await deleteMusicFile(id).catch(e => console.error('[music-file] delete error:', e));
+
+    items[idx] = { ...items[idx], audioFile: false, updatedAt: new Date().toISOString() };
+    await writeJsonArray(MUSIC_FILE, items);
+
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({ ok: true });
+}
+
 // ── Messages ──────────────────────────────────────────────────────────────────
 
 const MESSAGES_FILE_ID     = 'data/messages.json';
@@ -697,6 +786,7 @@ const HANDLERS = {
     flyer:        { GET: flyerGet,       POST: flyerPost,     PUT: flyerPut,  DELETE: flyerDelete              },
     music:        { GET: musicGet,       PUT: musicPut,       DELETE: musicDelete                              },
     'music-jacket': { GET: musicJacketGet, POST: musicJacketPost, DELETE: musicJacketDelete                    },
+    'music-file':   { GET: musicFileGet,   POST: musicFilePost,   DELETE: musicFileDelete                       },
     messages:     { GET: messageGet,     PUT: messagePut,     DELETE: messageDelete                            },
 };
 
