@@ -1080,3 +1080,466 @@ body.night .am-period-btn.is-active { color: #111; }
 
 /* list section gap (replaces inline style) */
 .am-list-header-gap { margin-top: 20px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Release Impact  (.ar-*)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── List header + sort row ─────────────────────────────────────────────────── */
+
+.ar-section-gap { margin-top: 18px; }
+
+.ar-sort-row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+    min-height: 30px;
+}
+
+/* Compare button */
+.ar-compare-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    padding: 0;
+    text-transform: uppercase;
+    transition: opacity 0.2s ease;
+}
+.ar-compare-btn:hover { opacity: 0.7; }
+
+/* ── Toggle / period buttons (mirrors .am-toggle-btn) ───────────────────────── */
+
+.ar-toggle-group,
+.ar-period-row {
+    display: flex;
+}
+
+.ar-toggle-btn,
+.ar-period-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    padding: 4px 10px;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ar-toggle-btn + .ar-toggle-btn,
+.ar-period-btn + .ar-period-btn { border-left: none; }
+
+.ar-toggle-btn.is-active,
+.ar-period-btn.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+body.night .ar-toggle-btn.is-active,
+body.night .ar-period-btn.is-active { color: #111; }
+
+.ar-period-row { margin: 6px 0 8px; }
+
+/* ── Track list ─────────────────────────────────────────────────────────────── */
+
+.ar-track-list { border-top: 1px solid var(--border); }
+
+.ar-track-row {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 14px 4px;
+    transition: background 0.15s ease;
+}
+
+.ar-track-row:hover { background: rgba(0,0,0,.025); }
+body.night .ar-track-row:hover { background: rgba(255,255,255,.03); }
+
+.ar-track-main { flex: 1; min-width: 0; }
+
+.ar-track-name-row {
+    align-items: center;
+    display: flex;
+    gap: 7px;
+    margin-bottom: 3px;
+}
+
+.ar-track-name {
+    color: var(--text-dark);
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ar-badge-new {
+    background: var(--accent);
+    color: #fff;
+    flex-shrink: 0;
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    padding: 2px 5px;
+    text-transform: uppercase;
+}
+
+.ar-track-sub {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    margin-bottom: 8px;
+}
+
+.ar-initials {
+    display: flex;
+    gap: 14px;
+}
+
+.ar-initial-cell { text-align: center; }
+
+.ar-initial-val {
+    color: var(--text-dark);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+.ar-initial-lbl {
+    color: var(--text-muted);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ar-track-right {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.ar-track-total {
+    color: var(--text-dark);
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.ar-track-total-lbl {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+}
+
+/* ── Back button + hero ─────────────────────────────────────────────────────── */
+
+.ar-back {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    margin-top: 16px;
+    padding: 0;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+}
+.ar-back:hover { color: var(--text-dark); }
+
+.ar-hero { margin: 14px 0 2px; }
+
+.ar-hero-title {
+    color: var(--text-dark);
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    margin-bottom: 5px;
+}
+
+.ar-hero-meta {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+}
+
+/* ── 初動 table ──────────────────────────────────────────────────────────────── */
+
+.ar-table {
+    border-collapse: collapse;
+    margin-bottom: 4px;
+    width: 100%;
+}
+
+.ar-table th {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    padding: 5px 6px 5px 0;
+    text-align: right;
+    text-transform: uppercase;
+}
+
+.ar-table th:first-child { text-align: left; }
+
+.ar-table td {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    padding: 10px 6px 10px 0;
+    text-align: right;
+}
+
+.ar-table td:first-child {
+    color: var(--text-dark);
+    font-size: 12px;
+    text-align: left;
+}
+
+.ar-table .ar-td-main {
+    color: var(--text-dark);
+    font-size: 14px;
+}
+
+.ar-table tr:last-child td { border-bottom: none; }
+
+/* ── Chart ──────────────────────────────────────────────────────────────────── */
+
+.ar-chart-wrap {
+    margin: 6px 0 4px;
+    overflow: hidden;
+}
+
+.ar-chart {
+    display: block;
+    overflow: visible;
+    width: 100%;
+    height: auto;
+}
+
+/* ── Legend ─────────────────────────────────────────────────────────────────── */
+
+.ar-legend {
+    align-items: center;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 18px;
+    margin-top: 4px;
+}
+
+.ar-legend-item {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+}
+
+.ar-legend-item span {
+    color: var(--text-muted);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* ── 分析 ────────────────────────────────────────────────────────────────────── */
+
+.ar-analysis-row {
+    align-items: baseline;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 12px 0;
+}
+
+.ar-analysis-left { flex: 1; min-width: 0; }
+
+.ar-analysis-label {
+    color: var(--text-dark);
+    font-size: 12px;
+    letter-spacing: 0.01em;
+    margin-bottom: 2px;
+}
+
+.ar-analysis-note {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+}
+
+.ar-analysis-val {
+    color: var(--text-dark);
+    flex-shrink: 0;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+}
+
+.ar-analysis-val--pos { color: #4a7c59; }
+.ar-analysis-val--neg { color: #a34a4a; }
+
+body.night .ar-analysis-val--pos { color: #6bab7d; }
+body.night .ar-analysis-val--neg { color: #c97070; }
+
+/* ── Comparison: rank table ─────────────────────────────────────────────────── */
+
+.ar-cmp-table {
+    border-collapse: collapse;
+    margin-bottom: 4px;
+    width: 100%;
+}
+
+.ar-cmp-table thead th {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    padding: 5px 6px 5px 0;
+    text-align: right;
+    text-transform: uppercase;
+}
+
+.ar-cmp-table tbody td {
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    padding: 9px 6px 9px 0;
+    text-align: right;
+}
+
+.ar-cmp-table tbody tr:last-child td { border-bottom: none; }
+
+.ar-cmp-rank {
+    color: var(--text-muted);
+    font-size: 11px;
+    min-width: 18px;
+    text-align: right !important;
+}
+
+.ar-cmp-name {
+    color: var(--text-dark);
+    overflow: hidden;
+    text-align: left !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ar-cmp-val {
+    color: var(--text-dark);
+    font-size: 13px !important;
+}
+
+.ar-cmp-muted { color: var(--text-muted); }
+
+/* ── Comparison: rank list ──────────────────────────────────────────────────── */
+
+.ar-rank-list { border-top: 1px solid var(--border); }
+
+.ar-rank-row {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    padding: 11px 0;
+}
+
+.ar-rank-num {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    min-width: 16px;
+    text-align: right;
+}
+
+.ar-rank-info { flex: 1; min-width: 0; }
+
+.ar-rank-name {
+    color: var(--text-dark);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ar-rank-sub {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+}
+
+.ar-rank-delta {
+    flex-shrink: 0;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+}
+
+.ar-rank-delta--pos { color: #4a7c59; }
+.ar-rank-delta--neu { color: var(--text-muted); }
+
+body.night .ar-rank-delta--pos { color: #6bab7d; }
+
+.ar-rank-right { flex-shrink: 0; text-align: right; }
+
+.ar-rank-plays {
+    color: var(--text-dark);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+}
+
+.ar-rank-plays-lbl {
+    color: var(--text-muted);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* ── Divider ────────────────────────────────────────────────────────────────── */
+
+.ar-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+}
+
+/* ── Night mode overrides ───────────────────────────────────────────────────── */
+
+body.night .ar-initial-val  { color: var(--text-dark); }
+body.night .ar-track-total  { color: var(--text-dark); }
+body.night .ar-hero-title   { color: var(--text-dark); }
+body.night .ar-analysis-val { color: var(--text-dark); }
+body.night .ar-cmp-val      { color: var(--text-dark); }
+body.night .ar-rank-plays   { color: var(--text-dark); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+    .ar-hero-title   { font-size: 22px; }
+    .ar-track-total  { font-size: 17px; }
+    .ar-initial-val  { font-size: 11px; }
+    .ar-initials     { gap: 10px; }
+}

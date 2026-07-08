@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=33">
-    <link rel="stylesheet" href="/admin.css?v=5">
+    <link rel="stylesheet" href="/admin.css?v=6">
 </head>
 <body data-page="afterhours-analytics" class="auth-hidden">
 
@@ -30,6 +30,7 @@
         <button class="aa-nav-tab is-active" data-panel="dashboard">Dashboard</button>
         <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Visitors</button>
         <button class="aa-nav-tab" data-panel="music">Music</button>
+        <button class="aa-nav-tab" data-panel="release">Release</button>
         <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Pages</button>
         <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">QR</button>
     </nav>
@@ -209,6 +210,96 @@
 
     </div><!-- /#aa-panel-music -->
 
+    <!-- ── Release Impact panel ─────────────────────────────── -->
+    <div id="aa-panel-release" class="aa-panel" hidden>
+
+        <!-- List view ───────────────────────────────────────── -->
+        <div id="ar-list">
+            <div class="aa-section-header ar-section-gap">
+                <span class="aa-section-label">Release Impact</span>
+                <button class="ar-compare-btn" id="ar-compare-btn" type="button">比較 →</button>
+            </div>
+            <div class="ar-sort-row">
+                <span class="aa-section-note" id="ar-track-count"></span>
+                <div class="ar-toggle-group" id="ar-sort-group">
+                    <button class="ar-toggle-btn is-active" data-sort="release" type="button">Release</button>
+                    <button class="ar-toggle-btn"           data-sort="plays"   type="button">Plays</button>
+                    <button class="ar-toggle-btn"           data-sort="7d"      type="button">7d</button>
+                </div>
+            </div>
+            <div id="ar-tracks"></div>
+        </div>
+
+        <!-- Detail view ─────────────────────────────────────── -->
+        <div id="ar-detail" hidden>
+            <button class="ar-back" id="ar-back" type="button">← Release Impact</button>
+
+            <div class="ar-hero">
+                <div class="ar-hero-title" id="ar-track-title"></div>
+                <div class="ar-hero-meta"  id="ar-track-meta"></div>
+            </div>
+
+            <!-- 概要 -->
+            <div class="aa-section-header ar-section-gap">
+                <span class="aa-section-label">概要</span>
+            </div>
+            <div class="aa-grid" id="ar-overview-grid"></div>
+
+            <!-- 初動 -->
+            <div class="aa-section-header ar-section-gap">
+                <span class="aa-section-label">初動</span>
+            </div>
+            <table class="ar-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Plays</th>
+                        <th>Visitors</th>
+                        <th>Returning</th>
+                    </tr>
+                </thead>
+                <tbody id="ar-hatsudo-body"></tbody>
+            </table>
+
+            <!-- 推移 -->
+            <div class="aa-section-header ar-section-gap">
+                <span class="aa-section-label">推移</span>
+                <div class="ar-toggle-group" id="ar-mode-group">
+                    <button class="ar-toggle-btn is-active" data-mode="cumulative" type="button">累計</button>
+                    <button class="ar-toggle-btn"           data-mode="daily"      type="button">日別</button>
+                </div>
+            </div>
+            <div class="ar-period-row">
+                <div class="ar-toggle-group" id="ar-period-group">
+                    <button class="ar-period-btn"           data-period="7d"  type="button">7日</button>
+                    <button class="ar-period-btn"           data-period="30d" type="button">30日</button>
+                    <button class="ar-period-btn"           data-period="90d" type="button">90日</button>
+                    <button class="ar-period-btn is-active" data-period="all" type="button">全期間</button>
+                </div>
+            </div>
+            <div class="ar-chart-wrap">
+                <svg id="ar-chart" class="ar-chart" viewBox="0 0 440 180"></svg>
+            </div>
+            <div class="ar-legend" id="ar-legend"></div>
+
+            <!-- 分析 -->
+            <div class="aa-section-header ar-section-gap">
+                <span class="aa-section-label">分析</span>
+            </div>
+            <div id="ar-analysis"></div>
+        </div><!-- /#ar-detail -->
+
+        <!-- Comparison view ─────────────────────────────────── -->
+        <div id="ar-compare" hidden>
+            <button class="ar-back" id="ar-compare-back" type="button">← Release Impact</button>
+            <div class="ar-hero">
+                <div class="ar-hero-title">比較</div>
+            </div>
+            <div id="ar-compare-body"></div>
+        </div><!-- /#ar-compare -->
+
+    </div><!-- /#aa-panel-release -->
+
     <div class="admin-footer">
         <a href="/afterhours" class="back-home">← Back</a>
         <button class="admin-signout" id="signout-btn">Sign out</button>
@@ -220,6 +311,7 @@
 <script src="/admin.js?v=3"></script>
 <script src="/analytics-overview.js?v=2"></script>
 <script src="/analytics-music.js?v=1"></script>
+<script src="/analytics-release.js?v=1"></script>
 
 </body>
 </html>
