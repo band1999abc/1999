@@ -159,8 +159,11 @@
     }
 
     /**
-     * Returning distribution: count how many visitors have 1 / 2 / 3+ sessions
-     * (always computed over ALL events, not filtered, to reflect lifetime behaviour).
+     * Returning distribution: count how many visitors have 1 / 2 / 3+ sessions.
+     *
+     * CONTRACT: always pass S.events (full, unfiltered dataset).
+     * This function counts lifetime sessions per visitor; passing a date-filtered
+     * subset would silently undercount returning visitors and distort the chart.
      */
     function returningDistribution(events) {
         var visitorSess = {};

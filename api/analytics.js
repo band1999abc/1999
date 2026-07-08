@@ -64,26 +64,44 @@ const EVENT_HANDLERS = {
  * Parse User-Agent into device and browser category strings.
  * Returns lowercase keys that the client JS maps to display labels.
  */
-function parseUA(ua) {
-    if (!ua) return { device: 'unknown', browser: 'unknown' };
-    const s = String(ua);
+/**
+ * Parse User-Agent (+ optional Client Hint headers) into device and browser.
+ *
+ * iPadOS 13+ quirk: Safari on iPad reports "Macintosh" in the UA string, not
+ * "iPad". We resolve this with two signals in priority order:
+ *   1. Sec-CH-UA-Platform = '"iOS"' + Sec-CH-UA-Mobile = '?0'  → tablet
+ *   2. Legacy UA heuristics (iPhone / iPad / Android / etc.)
+ *
+ * @param {string} ua        User-Agent header value
+ * @param {object} hints     Partial request headers for client-hint fallback
+ */
+function parseUA(ua, hints = {}) {
+    const s = String(ua || '');
 
-    // Device — order matters: tablet check before generic android
+    // --- Device ---
+    // Client hints (sent automatically by Chromium-family; Safari 15.4+ with permissions)
+    const platform = String(hints['sec-ch-ua-platform'] || '');
+    const mobile   = String(hints['sec-ch-ua-mobile']   || '');
+
     let device;
-    if (/iPhone/i.test(s))                                    device = 'iphone';
-    else if (/iPad/i.test(s))                                 device = 'tablet';
-    else if (/Android/i.test(s) && !/Mobile/i.test(s))       device = 'tablet';
-    else if (/Android/i.test(s))                              device = 'android';
-    else if (/Tablet|PlayBook|Kindle|Silk/i.test(s))          device = 'tablet';
-    else                                                      device = 'pc';
+    if      (/iPhone/i.test(s))                                device = 'iphone';
+    else if (/iPad/i.test(s))                                  device = 'tablet';
+    // iPadOS 13+: UA says "Macintosh" — detect via client hints if available
+    else if (platform === '"iOS"' && mobile === '?0')           device = 'tablet';
+    // Android tablet: no "Mobile" token in UA
+    else if (/Android/i.test(s) && !/Mobile/i.test(s))        device = 'tablet';
+    else if (/Android/i.test(s))                               device = 'android';
+    else if (/Tablet|PlayBook|Kindle|Silk/i.test(s))           device = 'tablet';
+    else                                                       device = 'pc';
 
-    // Browser — Edge must come before Chrome (Edg/ appears in Chrome-based Edge UA)
+    // --- Browser ---
+    // Edge must precede Chrome: Chromium-based Edge includes "Chrome/" in its UA.
     let browser;
-    if (/Edg\//i.test(s) || /Edge\//i.test(s))               browser = 'edge';
-    else if (/Firefox\//i.test(s))                            browser = 'firefox';
-    else if (/Chrome\//i.test(s))                             browser = 'chrome';
-    else if (/Safari\//i.test(s))                             browser = 'safari';
-    else                                                      browser = 'other';
+    if      (/Edg\//i.test(s) || /Edge\//i.test(s))            browser = 'edge';
+    else if (/Firefox\//i.test(s))                             browser = 'firefox';
+    else if (/Chrome\//i.test(s))                              browser = 'chrome';
+    else if (/Safari\//i.test(s))                              browser = 'safari';
+    else                                                       browser = 'other';
 
     return { device, browser };
 }
@@ -161,12 +179,11 @@ export default async function handler(req, res) {
         const dateStr = todayJST();   // JST date for daily bucketing
 
         // Server-side device / browser / country enrichment
-        const { device, browser } = parseUA(req.headers['user-agent'] || '');
-        const country = (
-            req.headers['x-vercel-ip-country'] ||
-            req.headers['cf-ipcountry']         ||
-            'unknown'
-        ).toString().toUpperCase().slice(0, 2);
+        const { device, browser } = parseUA(req.headers['user-agent'] || '', req.headers);
+        // Country: expect ISO 3166-1 alpha-2 (2 uppercase letters) from edge headers.
+        // Fallback to 'Unknown' — NOT sliced from a longer string — to avoid 'UN' artefacts.
+        const rawCountry = req.headers['x-vercel-ip-country'] || req.headers['cf-ipcountry'] || '';
+        const country    = rawCountry.length === 2 ? rawCountry.toUpperCase() : 'Unknown';
 
         const entry = {
             id:             randomUUID(),
