@@ -54,6 +54,22 @@ const DATE_RE  = /^\d{4}-\d{2}-\d{2}$/;
 const SCHED_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const TIME_RE  = /^\d{1,2}:\d{2}$/;
 
+// ── Audio metadata helpers ────────────────────────────────────────────────────
+
+/** Coerce to a finite, non-negative number ≤ max, or null if invalid. */
+function sanitizeNum(val, max) {
+    if (val == null) return null;
+    const n = Number(val);
+    return (isFinite(n) && n >= 0 && n <= max) ? n : null;
+}
+
+/** Validate an ISO-8601 datetime string; return the string or null. */
+function sanitizeIso(val) {
+    if (!val) return null;
+    const s = String(val);
+    return (!isNaN(new Date(s).getTime())) ? s : null;
+}
+
 // ── Diary ─────────────────────────────────────────────────────────────────────
 
 const DIARY_FILE = 'data/diary.json';
@@ -489,10 +505,10 @@ async function musicPut(req, res) {
         audioUrl:       audioUrl       !== undefined ? String(audioUrl).trim()       : (prev.audioUrl || ''),
         lyrics:         lyrics         !== undefined ? String(lyrics)                : (prev.lyrics || ''),
         productionNote: productionNote !== undefined ? String(productionNote)        : (prev.productionNote || ''),
-        duration:       duration   !== undefined ? (duration  != null ? Number(duration)  : null) : (prev.duration  ?? null),
-        fileSize:       fileSize   !== undefined ? (fileSize  != null ? Number(fileSize)  : null) : (prev.fileSize  ?? null),
-        bitrate:        bitrate    !== undefined ? (bitrate   != null ? Number(bitrate)   : null) : (prev.bitrate   ?? null),
-        uploadedAt:     uploadedAt !== undefined ? (uploadedAt ? String(uploadedAt)        : null) : (prev.uploadedAt ?? null),
+        duration:       duration   !== undefined ? sanitizeNum(duration,  86400) : (prev.duration  ?? null),
+        fileSize:       fileSize   !== undefined ? sanitizeNum(fileSize,  2e9)   : (prev.fileSize  ?? null),
+        bitrate:        bitrate    !== undefined ? sanitizeNum(bitrate,   10000) : (prev.bitrate   ?? null),
+        uploadedAt:     uploadedAt !== undefined ? sanitizeIso(uploadedAt)       : (prev.uploadedAt ?? null),
         updatedAt:      new Date().toISOString(),
     };
 

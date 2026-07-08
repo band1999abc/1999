@@ -420,9 +420,10 @@
         if (deleteBtn) deleteBtn.classList.toggle('mc-hidden', !id);
         renderJacketUI(t);
 
-        // Restore audio metadata if the track already has it
-        S.audioMeta = (t && t.duration != null)
-            ? { duration: t.duration, fileSize: t.fileSize || null, bitrate: t.bitrate || null, uploadedAt: t.uploadedAt || null }
+        // Restore audio metadata — show panel if any field is present
+        var hasAnyMeta = t && (t.duration != null || t.fileSize != null || !!t.uploadedAt);
+        S.audioMeta = hasAnyMeta
+            ? { duration: t.duration ?? null, fileSize: t.fileSize ?? null, bitrate: t.bitrate ?? null, uploadedAt: t.uploadedAt || null }
             : null;
         renderAudioMeta(S.audioMeta);
 
@@ -465,18 +466,46 @@
             var fileSize   = file.size;
             var objUrl     = URL.createObjectURL(file);
             var audio      = new Audio();
+            var resolved   = false;
+            var timeout;
 
-            audio.addEventListener('loadedmetadata', function () {
-                var duration = isFinite(audio.duration) ? audio.duration : null;
-                var bitrate  = (duration && duration > 0)
-                    ? Math.round(fileSize * 8 / duration / 1000)
-                    : null;
+            function finalize(dur) {
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(timeout);
                 URL.revokeObjectURL(objUrl);
-                S.audioMeta = { duration: duration, fileSize: fileSize, bitrate: bitrate, uploadedAt: uploadedAt };
+                var bitrate = (dur != null && dur > 0)
+                    ? Math.round(fileSize * 8 / dur / 1000)
+                    : null;
+                S.audioMeta = { duration: dur, fileSize: fileSize, bitrate: bitrate, uploadedAt: uploadedAt };
                 renderAudioMeta(S.audioMeta);
+            }
+
+            // loadedmetadata: fires first; for CBR files duration is already finite
+            audio.addEventListener('loadedmetadata', function () {
+                if (isFinite(audio.duration)) {
+                    finalize(audio.duration);
+                } else {
+                    // VBR / stream-like: seek far to force browser to compute total duration
+                    audio.currentTime = 1e9;
+                }
             });
 
+            // durationchange: fires again after seek resolves Infinity → actual value
+            audio.addEventListener('durationchange', function () {
+                if (!resolved && isFinite(audio.duration)) {
+                    finalize(audio.duration);
+                }
+            });
+
+            // Timeout fallback: store what we have (null duration if still Infinity)
+            timeout = setTimeout(function () {
+                finalize(isFinite(audio.duration) ? audio.duration : null);
+            }, 6000);
+
             audio.addEventListener('error', function () {
+                clearTimeout(timeout);
+                resolved = true;
                 URL.revokeObjectURL(objUrl);
                 alert('音声ファイルの読み込みに失敗しました。MP3 ファイルを確認してください。');
             });

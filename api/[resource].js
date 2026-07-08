@@ -36,6 +36,22 @@ const DATE_RE  = /^\d{4}-\d{2}-\d{2}$/;
 const SCHED_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const TIME_RE  = /^\d{1,2}:\d{2}$/;
 
+// ── Audio metadata helpers ────────────────────────────────────────────────────
+
+/** Coerce to a finite, non-negative number ≤ max, or null if invalid. */
+function sanitizeNum(val, max) {
+    if (val == null) return null;
+    const n = Number(val);
+    return (isFinite(n) && n >= 0 && n <= max) ? n : null;
+}
+
+/** Validate an ISO-8601 datetime string; return the string or null. */
+function sanitizeIso(val) {
+    if (!val) return null;
+    const s = String(val);
+    return (!isNaN(new Date(s).getTime())) ? s : null;
+}
+
 // ── Diary ─────────────────────────────────────────────────────────────────────
 
 const DIARY_FILE = 'data/diary.json';
@@ -237,10 +253,10 @@ async function musicCreate(req, res) {
         audioUrl:       String(audioUrl || '').trim(),
         lyrics:         String(lyrics   || ''),
         productionNote: String(productionNote || ''),
-        duration:       duration  != null ? Number(duration)  : null,
-        fileSize:       fileSize  != null ? Number(fileSize)  : null,
-        bitrate:        bitrate   != null ? Number(bitrate)   : null,
-        uploadedAt:     uploadedAt ? String(uploadedAt)        : null,
+        duration:       sanitizeNum(duration,  86400),   // max 24h in seconds
+        fileSize:       sanitizeNum(fileSize,  2e9),     // max ~2 GB
+        bitrate:        sanitizeNum(bitrate,   10000),   // max 10 000 kbps
+        uploadedAt:     sanitizeIso(uploadedAt),
         createdAt:      now,
         updatedAt:      now,
     };
