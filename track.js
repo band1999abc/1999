@@ -46,27 +46,30 @@
         if (titleEl) titleEl.textContent = track.title || '';
 
         // 音源 URL の有無で分岐
-        if (track.audioUrl && track.audioUrl.trim()) {
-            // 音源あり：「聴く」ボタンを表示
+        var rawUrl = (track.audioUrl || '').trim();
+        // URL スキームを https: / http: のみ許可（javascript: 等を排除）
+        var isSafeUrl = rawUrl && /^https?:\/\//i.test(rawUrl);
+
+        if (isSafeUrl) {
+            // 音源あり：DOM APIで安全に構築（innerHTML を使わない）
             if (statusEl) statusEl.textContent = '';
             if (audioEl) {
                 audioEl.hidden = false;
-                audioEl.innerHTML = '<a href="' + esc(track.audioUrl) + '"'
-                    + ' class="play-button"'
-                    + ' target="_blank" rel="noopener noreferrer"'
-                    + ' id="track-listen-btn">'
-                    + '▶ 聴く'
-                    + '</a>';
+                var btn = document.createElement('a');
+                btn.setAttribute('href', rawUrl);          // esc 済み（scheme 検証後）
+                btn.className    = 'play-button';
+                btn.target       = '_blank';
+                btn.rel          = 'noopener noreferrer';
+                btn.textContent  = '▶ 聴く';               // textContent で XSS を防止
 
-                // Analytics: 「聴く」クリックで music_play を発火
-                var btn = document.getElementById('track-listen-btn');
-                if (btn) {
-                    btn.addEventListener('click', function () {
-                        if (window.AH && window.AH.track) {
-                            window.AH.track('music_play', { track: track.title || '' });
-                        }
-                    });
-                }
+                // Analytics: クリック時に music_play を発火
+                btn.addEventListener('click', function () {
+                    if (window.AH && window.AH.track) {
+                        window.AH.track('music_play', { track: track.title || '' });
+                    }
+                });
+
+                audioEl.appendChild(btn);
             }
         } else {
             // 音源なし：準備中メッセージ
