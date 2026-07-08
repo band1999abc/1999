@@ -37,9 +37,18 @@
         return `${y}-${m}-${day}`;
     }
 
-    /** Current JST datetime as 'YYYY-MM-DDTHH:MM' for datetime-local default. */
+    /** Current JST datetime as 'YYYY-MM-DDTHH:MM'. */
     function nowJSTLocal() {
-        const d   = new Date(Date.now() + 9 * 60 * 60 * 1000);
+        const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+        return d.toISOString().slice(0, 16);
+    }
+
+    /** Default scheduledAt: tomorrow noon JST ('YYYY-MM-DDTHH:MM').
+     *  Using "now" as default caused instant auto-promotion on save. */
+    function defaultSchedAt() {
+        const d = new Date(Date.now() + 9 * 60 * 60 * 1000); // JST now
+        d.setUTCDate(d.getUTCDate() + 1);                    // +1 day
+        d.setUTCHours(12, 0, 0, 0);                          // noon JST
         return d.toISOString().slice(0, 16);
     }
 
@@ -77,7 +86,14 @@
 
     function toggleSchedWrap(mode) {
         if (!schedWrapEl) return;
-        schedWrapEl.classList.toggle('da-hidden', mode !== 'scheduled');
+        const showing = mode === 'scheduled';
+        schedWrapEl.classList.toggle('da-hidden', !showing);
+        if (showing && schedAtEl) {
+            // Keep min current so past times are visually blocked
+            schedAtEl.min = nowJSTLocal();
+            // Auto-fill with a sensible future default if empty
+            if (!schedAtEl.value) schedAtEl.value = defaultSchedAt();
+        }
     }
 
     // ── Pub-mode radio → show/hide datetime picker ─────────────────────────
@@ -152,7 +168,9 @@
             ? post.status : 'draft';
         setPubMode(mode);
         if (schedAtEl) {
-            schedAtEl.value = post.scheduledAt || nowJSTLocal();
+            schedAtEl.min   = nowJSTLocal();
+            // Use saved scheduledAt, or default to tomorrow noon (never "now")
+            schedAtEl.value = post.scheduledAt || defaultSchedAt();
         }
         deleteBtn.classList.remove('da-hidden');
         renderList();
@@ -220,6 +238,11 @@
             const at = schedAtEl ? schedAtEl.value : '';
             if (!at) {
                 alert('公開日時を入力してください。');
+                schedAtEl && schedAtEl.focus();
+                return;
+            }
+            if (at <= nowJSTLocal()) {
+                alert('公開日時は現在より未来の日時を入力してください。');
                 schedAtEl && schedAtEl.focus();
                 return;
             }

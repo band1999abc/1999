@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-07-08c — scroll-to-item on save/back; messages-admin v4
+ * bump: 2026-07-08d — diary scheduled default fixed; diary-admin v4
  */
 
 import { readFileSync } from 'fs';
