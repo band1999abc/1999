@@ -18,6 +18,7 @@ import { COOKIE_NAME, verifyToken, parseCookies } from '../_auth.js';
 import {
     readJsonArray, writeJsonArray,
     readFlyerSlot, writeFlyerSlot, deleteFlyerSlot, deleteAllFlyerSlots,
+    readMusicJacket, writeMusicJacket, deleteMusicJacket,
 } from '../_storage.js';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -411,15 +412,197 @@ async function flyerDelete(req, res) {
     return res.status(200).json({ ok: true, images: [] });
 }
 
+// ── Music ─────────────────────────────────────────────────────────────────────
+
+const MUSIC_FILE = 'data/music.json';
+
+const MUSIC_VALID_STATUSES = ['published', 'draft', 'scheduled'];
+const MUSIC_VALID_TYPES    = ['single', 'ep', 'album'];
+
+function nowJSTMusic() {
+    const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    return d.toISOString().slice(0, 16);
+}
+
+function autoPromoteMusic(items) {
+    const now = nowJSTMusic();
+    let changed = false;
+    for (const t of items) {
+        if (t.status === 'scheduled' && t.scheduledAt && t.scheduledAt <= now) {
+            t.status    = 'published';
+            t.updatedAt = new Date().toISOString();
+            changed     = true;
+        }
+    }
+    return changed;
+}
+
+async function musicGet(req, res) {
+    const { id } = req.query;
+    const items  = await readJsonArray(MUSIC_FILE);
+    if (autoPromoteMusic(items)) {
+        await writeJsonArray(MUSIC_FILE, items).catch(e =>
+            console.error('[music/id] auto-promote error:', e)
+        );
+    }
+    const t = items.find(x => x.id === id);
+    if (!t) return res.status(404).json({ error: 'Not found' });
+    if (t.status !== 'published' && !isAuthed(req))
+        return res.status(404).json({ error: 'Not found' });
+    return res.status(200).json(t);
+}
+
+async function musicPut(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.query;
+    const items  = await readJsonArray(MUSIC_FILE);
+    const idx    = items.findIndex(x => x.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Not found' });
+
+    const body = await readBody(req);
+    const {
+        title, titleEn, releaseDate, type, status,
+        scheduledAt, audioUrl, lyrics, productionNote,
+    } = body;
+    const prev = items[idx];
+
+    if (title !== undefined && !String(title).trim())
+        return res.status(400).json({ error: 'title cannot be empty' });
+    if (releaseDate !== undefined && releaseDate && !DATE_RE.test(String(releaseDate)))
+        return res.status(400).json({ error: 'Invalid releaseDate format' });
+
+    const safeStatus = status && MUSIC_VALID_STATUSES.includes(status) ? status : prev.status;
+    const rawSched   = scheduledAt !== undefined ? String(scheduledAt).trim() : (prev.scheduledAt || '');
+    if (safeStatus === 'scheduled' && (!rawSched || !SCHED_RE.test(rawSched)))
+        return res.status(400).json({ error: 'scheduledAt required (YYYY-MM-DDTHH:MM)' });
+
+    const updated = {
+        ...prev,
+        title:          title          !== undefined ? String(title).trim()          : prev.title,
+        titleEn:        titleEn        !== undefined ? String(titleEn).trim()        : (prev.titleEn || ''),
+        releaseDate:    releaseDate    !== undefined ? String(releaseDate)            : prev.releaseDate,
+        type:           type && MUSIC_VALID_TYPES.includes(type) ? type             : (prev.type || 'single'),
+        status:         safeStatus,
+        scheduledAt:    safeStatus === 'scheduled' ? rawSched                        : '',
+        audioUrl:       audioUrl       !== undefined ? String(audioUrl).trim()       : (prev.audioUrl || ''),
+        lyrics:         lyrics         !== undefined ? String(lyrics)                : (prev.lyrics || ''),
+        productionNote: productionNote !== undefined ? String(productionNote)        : (prev.productionNote || ''),
+        updatedAt:      new Date().toISOString(),
+    };
+
+    try {
+        items[idx] = updated;
+        await writeJsonArray(MUSIC_FILE, items);
+    } catch (e) {
+        console.error('[music] update error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(200).json(updated);
+}
+
+async function musicDelete(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.query;
+    const items  = await readJsonArray(MUSIC_FILE);
+    const idx    = items.findIndex(x => x.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Not found' });
+
+    try {
+        items.splice(idx, 1);
+        await writeJsonArray(MUSIC_FILE, items);
+        // Best-effort jacket cleanup
+        await deleteMusicJacket(id).catch(() => {});
+    } catch (e) {
+        console.error('[music] delete error:', e);
+        return res.status(500).json({ error: 'Failed to delete' });
+    }
+    return res.status(200).json({ ok: true });
+}
+
+// ── Music jacket ──────────────────────────────────────────────────────────────
+
+const JACKET_MAX_BYTES = 4 * 1024 * 1024;   // 4 MB
+
+async function musicJacketGet(req, res) {
+    const { id } = req.query;
+    const items  = await readJsonArray(MUSIC_FILE);
+    const t      = items.find(x => x.id === id);
+    if (!t) return res.status(404).send('Not found');
+    if (t.status !== 'published' && !isAuthed(req))
+        return res.status(404).send('Not found');
+
+    const dataUrl = await readMusicJacket(id);
+    if (!dataUrl) return res.status(404).send('Not found');
+
+    return serveDataUrl(res, dataUrl);
+}
+
+async function musicJacketPost(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.query;
+    const items  = await readJsonArray(MUSIC_FILE);
+    const idx    = items.findIndex(x => x.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Track not found' });
+
+    let body;
+    try { body = await readBodyLimited(req, JACKET_MAX_BYTES); }
+    catch { return res.status(413).json({ error: 'Image too large (max ~3 MB)' }); }
+
+    const { dataUrl } = body;
+    if (!dataUrl || typeof dataUrl !== 'string')
+        return res.status(400).json({ error: 'Missing dataUrl' });
+    if (!dataUrl.startsWith('data:image/'))
+        return res.status(400).json({ error: 'dataUrl must be an image' });
+    if (!dataUrl.includes(';base64,'))
+        return res.status(400).json({ error: 'dataUrl must be base64 encoded' });
+
+    try {
+        await writeMusicJacket(id, dataUrl);
+    } catch (e) {
+        console.error('[music-jacket] write error:', e);
+        return res.status(500).json({ error: 'Failed to save image' });
+    }
+
+    items[idx] = { ...items[idx], jacket: true, updatedAt: new Date().toISOString() };
+    await writeJsonArray(MUSIC_FILE, items);
+
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({ ok: true });
+}
+
+async function musicJacketDelete(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.query;
+    const items  = await readJsonArray(MUSIC_FILE);
+    const idx    = items.findIndex(x => x.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Track not found' });
+
+    await deleteMusicJacket(id).catch(e =>
+        console.error('[music-jacket] delete error:', e)
+    );
+
+    items[idx] = { ...items[idx], jacket: false, updatedAt: new Date().toISOString() };
+    await writeJsonArray(MUSIC_FILE, items);
+
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({ ok: true });
+}
+
 // ── Resource router ───────────────────────────────────────────────────────────
 //
 // Add new resources here. Each entry is a map of HTTP method → handler.
 // Unknown resources → 404. Unknown methods → 405.
 
 const HANDLERS = {
-    diary: { GET: diaryGet,  PUT: diaryPut,  DELETE: diaryDelete                            },
-    live:  { GET: liveGet,   PUT: livePut,   DELETE: liveDelete                             },
-    flyer: { GET: flyerGet,  POST: flyerPost, PUT: flyerPut, DELETE: flyerDelete            },
+    diary:        { GET: diaryGet,       PUT: diaryPut,       DELETE: diaryDelete                               },
+    live:         { GET: liveGet,        PUT: livePut,        DELETE: liveDelete                               },
+    flyer:        { GET: flyerGet,       POST: flyerPost,     PUT: flyerPut,  DELETE: flyerDelete              },
+    music:        { GET: musicGet,       PUT: musicPut,       DELETE: musicDelete                              },
+    'music-jacket': { GET: musicJacketGet, POST: musicJacketPost, DELETE: musicJacketDelete                    },
 };
 
 export default async function handler(req, res) {

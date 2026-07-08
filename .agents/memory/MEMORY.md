@@ -1,1 +1,2 @@
 - [Upstash KV storage](upstash-storage.md) — Vercel uses Upstash REST API for Live/Diary persistence; filesystem is fallback for local dev
+- [Music CMS architecture](music-cms.md) — Music admin page pattern, schema, API endpoints, storage, and auth gate rule

@@ -171,6 +171,86 @@ async function liveCreate(req, res) {
     return res.status(201).json(live);
 }
 
+// ── Music ─────────────────────────────────────────────────────────────────────
+
+const MUSIC_FILE = 'data/music.json';
+
+const MUSIC_VALID_STATUSES = ['published', 'draft', 'scheduled'];
+const MUSIC_VALID_TYPES    = ['single', 'ep', 'album'];
+
+function autoPromoteMusic(items) {
+    const now = nowJST();
+    let changed = false;
+    for (const t of items) {
+        if (t.status === 'scheduled' && t.scheduledAt && t.scheduledAt <= now) {
+            t.status    = 'published';
+            t.updatedAt = new Date().toISOString();
+            changed     = true;
+        }
+    }
+    return changed;
+}
+
+async function musicList(req, res) {
+    let items = await readJsonArray(MUSIC_FILE);
+    if (autoPromoteMusic(items)) {
+        await writeJsonArray(MUSIC_FILE, items).catch(e =>
+            console.error('[music] auto-promote error:', e)
+        );
+    }
+    if (!isAuthed(req)) items = items.filter(t => t.status === 'published');
+    items.sort((a, b) => (b.releaseDate || '').localeCompare(a.releaseDate || ''));
+    return res.status(200).json(items);
+}
+
+async function musicCreate(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const body = await readBody(req);
+    const {
+        title = '', titleEn = '', releaseDate, type = 'single',
+        status = 'draft', scheduledAt = '',
+        audioUrl = '', lyrics = '', productionNote = '',
+    } = body;
+
+    if (!String(title).trim())
+        return res.status(400).json({ error: 'title is required' });
+    if (releaseDate && !DATE_RE.test(String(releaseDate)))
+        return res.status(400).json({ error: 'Invalid releaseDate format; expected YYYY-MM-DD' });
+
+    const safeStatus = MUSIC_VALID_STATUSES.includes(status) ? status : 'draft';
+    const safeSched  = String(scheduledAt || '').trim();
+    if (safeStatus === 'scheduled' && (!safeSched || !SCHED_RE.test(safeSched)))
+        return res.status(400).json({ error: 'scheduledAt required (YYYY-MM-DDTHH:MM)' });
+
+    const now   = new Date().toISOString();
+    const track = {
+        id:             randomUUID(),
+        title:          String(title).trim(),
+        titleEn:        String(titleEn || '').trim(),
+        releaseDate:    (releaseDate && DATE_RE.test(String(releaseDate))) ? String(releaseDate) : '',
+        type:           MUSIC_VALID_TYPES.includes(type) ? type : 'single',
+        status:         safeStatus,
+        scheduledAt:    safeStatus === 'scheduled' ? safeSched : '',
+        jacket:         false,
+        audioUrl:       String(audioUrl || '').trim(),
+        lyrics:         String(lyrics   || ''),
+        productionNote: String(productionNote || ''),
+        createdAt:      now,
+        updatedAt:      now,
+    };
+
+    try {
+        const items = await readJsonArray(MUSIC_FILE);
+        items.unshift(track);
+        await writeJsonArray(MUSIC_FILE, items);
+    } catch (e) {
+        console.error('[music] create error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(201).json(track);
+}
+
 // ── Resource router ───────────────────────────────────────────────────────────
 //
 // Add new resources here. Each entry is a { GET?, POST? } map of method handlers.
@@ -179,6 +259,7 @@ async function liveCreate(req, res) {
 const HANDLERS = {
     diary: { GET: diaryList,  POST: diaryCreate  },
     live:  { GET: liveList,   POST: liveCreate   },
+    music: { GET: musicList,  POST: musicCreate  },
 };
 
 export default async function handler(req, res) {

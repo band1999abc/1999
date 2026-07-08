@@ -219,6 +219,88 @@ def _save_lives(lives):
         json.dump(lives, f, ensure_ascii=False, indent=2)
 
 
+
+
+# ── Music storage helpers ─────────────────────────────────────────────────────
+
+_DATE_RE_M  = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+_SCHED_RE_M = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$')
+_MUSIC_VALID_STATUSES = {'published', 'draft', 'scheduled'}
+_MUSIC_VALID_TYPES    = {'single', 'ep', 'album'}
+
+
+def _load_music():
+    path = os.path.join(_DATA_DIR, 'music.json')
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            print('[music] WARNING: music.json is not a list, resetting to []')
+            return []
+        return data
+    except (json.JSONDecodeError, OSError) as e:
+        print(f'[music] WARNING: could not load music.json: {e}')
+        return []
+
+
+def _save_music(items):
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    path = os.path.join(_DATA_DIR, 'music.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(items, f, ensure_ascii=False, indent=2)
+
+
+def _auto_promote_music(items):
+    """Promote 'scheduled' tracks whose scheduledAt has passed (compared in JST = UTC+9)."""
+    import datetime as _dt
+    now = (_dt.datetime.now(_dt.timezone.utc) + _dt.timedelta(hours=9)).strftime('%Y-%m-%dT%H:%M')
+    changed = False
+    for t in items:
+        if t.get('status') == 'scheduled' and t.get('scheduledAt', '') <= now:
+            t['status']    = 'published'
+            t['updatedAt'] = time.strftime('%Y-%m-%dT%H:%M:%S')
+            changed = True
+    return changed
+
+
+def _read_music_jacket(music_id):
+    """Return base64 data URL for a music jacket, or None."""
+    for base in [_DATA_DIR, '/tmp']:
+        p = os.path.join(base, 'music_jackets', music_id + '.b64')
+        if os.path.exists(p):
+            try:
+                return open(p, 'r', encoding='utf-8').read().strip()
+            except OSError:
+                pass
+    return None
+
+
+def _write_music_jacket(music_id, data_url):
+    """Write base64 data URL for a music jacket."""
+    for base in [_DATA_DIR, '/tmp']:
+        try:
+            d = os.path.join(base, 'music_jackets')
+            os.makedirs(d, exist_ok=True)
+            with open(os.path.join(d, music_id + '.b64'), 'w', encoding='utf-8') as fh:
+                fh.write(data_url)
+            return
+        except OSError:
+            pass
+    raise OSError('Could not write music jacket for %s' % music_id)
+
+
+def _delete_music_jacket(music_id):
+    """Delete music jacket files."""
+    for base in [_DATA_DIR, '/tmp']:
+        p = os.path.join(base, 'music_jackets', music_id + '.b64')
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+
 # ── Milestone helpers (used by _handle_milestones_read) ──────────────────────
 
 def _ms_nth_event(events, etype, n):
@@ -847,6 +929,22 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_flyer_get(item_id, slot_id)
             else:
                 self.send_error(404)
+        elif path == '/afterhours/music':
+            self._serve_template('afterhours-music.html')
+        elif path == '/api/music':
+            self._handle_music_list()
+        elif path.startswith('/api/music-jacket/'):
+            mid = path[len('/api/music-jacket/'):]
+            if mid and '/' not in mid:
+                self._handle_music_jacket_get(mid)
+            else:
+                self.send_error(404)
+        elif path.startswith('/api/music/'):
+            mid = path[len('/api/music/'):]
+            if mid and '/' not in mid:
+                self._handle_music_get(mid)
+            else:
+                self.send_error(404)
         elif path == '/sw.js':
             # Service worker must never be cached by HTTP cache
             self._serve_static_nocache('sw.js', 'application/javascript')
@@ -869,6 +967,14 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_flyer_post(item_id)
             else:
                 self.send_error(404)
+        elif path == '/api/music':
+            self._handle_music_create()
+        elif path.startswith('/api/music-jacket/'):
+            mid = path[len('/api/music-jacket/'):]
+            if mid and '/' not in mid:
+                self._handle_music_jacket_post(mid)
+            else:
+                self.send_error(404)
         else:
             self.send_error(404)
 
@@ -888,6 +994,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             item_id = path[len('/api/flyer/'):]
             if item_id and '/' not in item_id:
                 self._handle_flyer_put(item_id)
+                return
+        elif path.startswith('/api/music/'):
+            mid = path[len('/api/music/'):]
+            if mid and '/' not in mid:
+                self._handle_music_update(mid)
                 return
         self.send_error(404)
 
@@ -910,6 +1021,16 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 qs_params = urllib.parse.parse_qs(parsed_qs.query)
                 slot_id   = qs_params.get('s', [None])[0]
                 self._handle_flyer_delete(item_id, slot_id)
+                return
+        elif path.startswith('/api/music/'):
+            mid = path[len('/api/music/'):]
+            if mid and '/' not in mid:
+                self._handle_music_delete(mid)
+                return
+        elif path.startswith('/api/music-jacket/'):
+            mid = path[len('/api/music-jacket/'):]
+            if mid and '/' not in mid:
+                self._handle_music_jacket_delete(mid)
                 return
         self.send_error(404)
 
@@ -1518,6 +1639,231 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         self._write_json(200, {'milestones': milestones_out})
 
     # ── Flyer storage helpers ─────────────────────────────────────────────────
+
+
+    # ── Music handlers ────────────────────────────────────────────────────────
+
+    def _handle_music_list(self):
+        items = _load_music()
+        if _auto_promote_music(items):
+            try:
+                _save_music(items)
+            except Exception as e:
+                print('[music] auto-promote save error: %s' % e)
+        if not self._is_authed():
+            items = [t for t in items if t.get('status') == 'published']
+        items.sort(key=lambda t: t.get('releaseDate', ''), reverse=True)
+        self._write_json(200, items)
+
+    def _handle_music_get(self, item_id):
+        items = _load_music()
+        if _auto_promote_music(items):
+            _save_music(items)
+        t = next((x for x in items if x.get('id') == item_id), None)
+        if not t:
+            self.send_error(404)
+            return
+        if t.get('status') != 'published' and not self._is_authed():
+            self.send_error(404)
+            return
+        self._write_json(200, t)
+
+    def _handle_music_create(self):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        title = str(body.get('title', '')).strip()
+        if not title:
+            self._write_json(400, {'error': 'title is required'})
+            return
+        release_date = str(body.get('releaseDate', '') or '').strip()
+        if release_date and not _DATE_RE_M.match(release_date):
+            self._write_json(400, {'error': 'Invalid releaseDate format'})
+            return
+        status = body.get('status', 'draft')
+        if status not in _MUSIC_VALID_STATUSES:
+            status = 'draft'
+        sched_at = str(body.get('scheduledAt', '') or '').strip()
+        if status == 'scheduled' and not _SCHED_RE_M.match(sched_at):
+            self._write_json(400, {'error': 'scheduledAt required (YYYY-MM-DDTHH:MM)'})
+            return
+        track_type = body.get('type', 'single')
+        if track_type not in _MUSIC_VALID_TYPES:
+            track_type = 'single'
+        now = time.strftime('%Y-%m-%dT%H:%M:%S')
+        import uuid
+        track = {
+            'id':             str(uuid.uuid4()),
+            'title':          title,
+            'titleEn':        str(body.get('titleEn', '') or '').strip(),
+            'releaseDate':    release_date,
+            'type':           track_type,
+            'status':         status,
+            'scheduledAt':    sched_at if status == 'scheduled' else '',
+            'jacket':         False,
+            'audioUrl':       str(body.get('audioUrl', '') or '').strip(),
+            'lyrics':         str(body.get('lyrics', '') or ''),
+            'productionNote': str(body.get('productionNote', '') or ''),
+            'createdAt':      now,
+            'updatedAt':      now,
+        }
+        items = _load_music()
+        items.insert(0, track)
+        _save_music(items)
+        self._write_json(201, track)
+
+    def _handle_music_update(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        items = _load_music()
+        idx = next((i for i, t in enumerate(items) if t.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        prev = items[idx]
+        title = body.get('title')
+        if title is not None and not str(title).strip():
+            self._write_json(400, {'error': 'title cannot be empty'})
+            return
+        release_date = body.get('releaseDate')
+        if release_date is not None and release_date and not _DATE_RE_M.match(str(release_date)):
+            self._write_json(400, {'error': 'Invalid releaseDate format'})
+            return
+        new_status = body.get('status', prev.get('status', 'draft'))
+        if new_status not in _MUSIC_VALID_STATUSES:
+            new_status = prev.get('status', 'draft')
+        sched_at = body.get('scheduledAt', prev.get('scheduledAt', ''))
+        sched_at = str(sched_at or '').strip()
+        if new_status == 'scheduled' and not _SCHED_RE_M.match(sched_at):
+            self._write_json(400, {'error': 'scheduledAt required (YYYY-MM-DDTHH:MM)'})
+            return
+        track_type = body.get('type', prev.get('type', 'single'))
+        if track_type not in _MUSIC_VALID_TYPES:
+            track_type = prev.get('type', 'single')
+        updated = dict(prev)
+        if title is not None:        updated['title']          = str(title).strip()
+        if 'titleEn' in body:        updated['titleEn']        = str(body['titleEn'] or '').strip()
+        if release_date is not None: updated['releaseDate']    = str(release_date)
+        updated['type']           = track_type
+        updated['status']         = new_status
+        updated['scheduledAt']    = sched_at if new_status == 'scheduled' else ''
+        if 'audioUrl'       in body: updated['audioUrl']       = str(body['audioUrl'] or '').strip()
+        if 'lyrics'         in body: updated['lyrics']         = str(body['lyrics'] or '')
+        if 'productionNote' in body: updated['productionNote'] = str(body['productionNote'] or '')
+        updated['updatedAt'] = time.strftime('%Y-%m-%dT%H:%M:%S')
+        items[idx] = updated
+        _save_music(items)
+        self._write_json(200, updated)
+
+    def _handle_music_delete(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        items = _load_music()
+        idx = next((i for i, t in enumerate(items) if t.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        items.pop(idx)
+        _save_music(items)
+        _delete_music_jacket(item_id)
+        self._write_json(200, {'ok': True})
+
+    # ── GET /api/music-jacket/<id> ─────────────────────────────────────────────
+
+    def _handle_music_jacket_get(self, music_id):
+        import base64 as _b64
+        items = _load_music()
+        t = next((x for x in items if x.get('id') == music_id), None)
+        if not t:
+            self.send_error(404)
+            return
+        if t.get('status') != 'published' and not self._is_authed():
+            self.send_error(404)
+            return
+        data_url = _read_music_jacket(music_id)
+        if not data_url:
+            self.send_error(404)
+            return
+        try:
+            sep = ';base64,'
+            if not data_url.startswith('data:') or sep not in data_url:
+                self.send_error(500)
+                return
+            header, b64data = data_url.split(sep, 1)
+            mime_type = header[len('data:'):]
+            img_data  = _b64.b64decode(b64data)
+            self.send_response(200)
+            self.send_header('Content-Type', mime_type)
+            self.send_header('Content-Length', str(len(img_data)))
+            self.send_header('Cache-Control', 'public, max-age=86400')
+            http.server.BaseHTTPRequestHandler.end_headers(self)
+            self.wfile.write(img_data)
+        except Exception as e:
+            print('[music-jacket] GET error: %s' % e)
+            self.send_error(500)
+
+    # ── POST /api/music-jacket/<id> ────────────────────────────────────────────
+
+    def _handle_music_jacket_post(self, music_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        length = int(self.headers.get('Content-Length', 0))
+        if length > 6 * 1024 * 1024:
+            self._write_json(413, {'error': 'Image too large (max ~4 MB)'})
+            return
+        try:
+            body = json.loads(self.rfile.read(length))
+        except Exception:
+            self._write_json(400, {'error': 'Bad request'})
+            return
+        data_url = body.get('dataUrl', '')
+        if not isinstance(data_url, str) or not data_url.startswith('data:image/'):
+            self._write_json(400, {'error': 'Invalid image dataUrl'})
+            return
+        if ';base64,' not in data_url:
+            self._write_json(400, {'error': 'dataUrl must be base64 encoded'})
+            return
+        items = _load_music()
+        idx = next((i for i, t in enumerate(items) if t.get('id') == music_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Track not found'})
+            return
+        try:
+            _write_music_jacket(music_id, data_url)
+        except OSError as e:
+            print('[music-jacket] POST write error: %s' % e)
+            self._write_json(500, {'error': 'Failed to save image'})
+            return
+        items[idx] = dict(items[idx], jacket=True,
+                          updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        _save_music(items)
+        self._write_json(200, {'ok': True})
+
+    # ── DELETE /api/music-jacket/<id> ──────────────────────────────────────────
+
+    def _handle_music_jacket_delete(self, music_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        items = _load_music()
+        idx = next((i for i, t in enumerate(items) if t.get('id') == music_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Track not found'})
+            return
+        _delete_music_jacket(music_id)
+        items[idx] = dict(items[idx], jacket=False,
+                          updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
+        _save_music(items)
+        self._write_json(200, {'ok': True})
 
     def _normalize_flyer(self, live):
         """Normalise live['flyer'] → list of slot IDs."""

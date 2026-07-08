@@ -219,6 +219,68 @@ export async function deleteFlyerSlot(liveId, slotId) {
     }
 }
 
+// ── Music jacket image storage ────────────────────────────────────────────────
+// Single jacket per track.
+// KV key: "music_jacket:{musicId}"
+// FS:     data/music_jackets/{musicId}.b64
+
+/**
+ * Read a music jacket data URL.
+ * @param {string} musicId
+ * @returns {Promise<string|null>}
+ */
+export async function readMusicJacket(musicId) {
+    if (upstashConfigured()) {
+        const results = await upstashCmd([['GET', `music_jacket:${musicId}`]]);
+        return results[0].result || null;
+    }
+    for (const base of ['/tmp', process.cwd()]) {
+        try {
+            return readFileSync(join(base, 'data', 'music_jackets', `${musicId}.b64`), 'utf-8');
+        } catch { /* try next */ }
+    }
+    return null;
+}
+
+/**
+ * Write a music jacket data URL.
+ * @param {string} musicId
+ * @param {string} dataUrl
+ * @returns {Promise<void>}
+ */
+export async function writeMusicJacket(musicId, dataUrl) {
+    if (upstashConfigured()) {
+        await upstashCmd([['SET', `music_jacket:${musicId}`, dataUrl]]);
+        return;
+    }
+    for (const base of [process.cwd(), '/tmp']) {
+        try {
+            const dir = join(base, 'data', 'music_jackets');
+            mkdirSync(dir, { recursive: true });
+            writeFileSync(join(dir, `${musicId}.b64`), dataUrl, 'utf-8');
+            return;
+        } catch { /* try next */ }
+    }
+    throw new Error(`Failed to write music jacket for ${musicId}`);
+}
+
+/**
+ * Delete a music jacket.
+ * @param {string} musicId
+ * @returns {Promise<void>}
+ */
+export async function deleteMusicJacket(musicId) {
+    if (upstashConfigured()) {
+        await upstashCmd([['DEL', `music_jacket:${musicId}`]]);
+        return;
+    }
+    for (const base of [process.cwd(), '/tmp']) {
+        try {
+            unlinkSync(join(base, 'data', 'music_jackets', `${musicId}.b64`));
+        } catch { /* ignore */ }
+    }
+}
+
 /**
  * Delete ALL flyer slots for a live entry (used when deleting a live).
  * @param {string} liveId

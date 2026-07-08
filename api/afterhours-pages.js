@@ -22,6 +22,7 @@ const TEMPLATES = {
     home:       'afterhours.html',
     diary:      'afterhours-diary.html',
     live:       'afterhours-live.html',
+    music:      'afterhours-music.html',
     login:      'login.html',
     analytics:  'afterhours-analytics.html',
     milestones: 'afterhours-milestones.html',

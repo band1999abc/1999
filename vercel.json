@@ -15,6 +15,7 @@
     { "source": "/afterhours/insights",    "destination": "/api/afterhours-pages?page=insights"   },
     { "source": "/afterhours/diary",       "destination": "/api/afterhours-pages?page=diary"      },
     { "source": "/afterhours/live",        "destination": "/api/afterhours-pages?page=live"       },
+    { "source": "/afterhours/music",       "destination": "/api/afterhours-pages?page=music"      },
     { "source": "/afterhours/login",       "destination": "/api/afterhours-pages?page=login"      },
     { "source": "/afterhours",             "destination": "/api/afterhours-pages?page=home"       }
   ],

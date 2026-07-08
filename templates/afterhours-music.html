@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music — After Hours | 1999</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/style.css?v=33">
+    <link rel="stylesheet" href="/admin.css?v=14">
+</head>
+<body data-page="afterhours-music" class="auth-hidden">
+
+<div class="card">
+    <img src="/whale_transparent.png" class="whale-bg" alt="" aria-hidden="true" decoding="async">
+
+    <h1>1999</h1>
+    <div class="sub">Music</div>
+
+    <!-- ── List View ──────────────────────────────────────────────────────── -->
+    <div id="mc-list-view">
+
+        <!-- Toolbar: search + new button -->
+        <div class="mc-toolbar">
+            <div class="mc-search-wrap">
+                <input type="search" id="mc-search" class="mc-search" placeholder="楽曲を検索…">
+            </div>
+            <button class="admin-btn mc-new-btn" id="mc-new-btn" type="button">＋ 新規</button>
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="mc-filter-bar" id="mc-filter-bar" role="group" aria-label="ステータスフィルター">
+            <button class="mc-filter-btn is-active" data-filter="all"       type="button">すべて <span id="mc-count"></span></button>
+            <button class="mc-filter-btn"            data-filter="published" type="button">公開中</button>
+            <button class="mc-filter-btn"            data-filter="scheduled" type="button">予約</button>
+            <button class="mc-filter-btn"            data-filter="draft"     type="button">下書き</button>
+        </div>
+
+        <!-- Sort bar -->
+        <div class="mc-sort-bar" id="mc-sort-bar">
+            <span class="mc-sort-label">並び替え：</span>
+            <button class="mc-sort-btn is-active" data-sort="release" type="button">リリース日</button>
+            <button class="mc-sort-btn"           data-sort="plays"   type="button">人気順</button>
+            <button class="mc-sort-btn"           data-sort="title"   type="button">タイトル</button>
+        </div>
+
+        <!-- Track list (rendered by JS) -->
+        <div id="mc-list" class="mc-list">
+            <p class="mc-empty">読み込み中…</p>
+        </div>
+
+    </div><!-- /#mc-list-view -->
+
+    <!-- ── Editor View ────────────────────────────────────────────────────── -->
+    <div id="mc-editor-view" class="mc-hidden">
+
+        <div class="mc-editor-header">
+            <button class="mc-back-btn" id="mc-back" type="button">← 楽曲一覧</button>
+            <div class="mc-editor-title-row">
+                <div class="mc-editor-heading" id="mc-editor-title">新規楽曲</div>
+                <button class="mc-delete-btn mc-hidden" id="mc-delete" type="button">削除</button>
+            </div>
+        </div>
+
+        <form id="mc-form" class="mc-form" autocomplete="off" onsubmit="return false;">
+
+            <div class="admin-label">タイトル *</div>
+            <input type="text" id="mc-title" class="admin-input" placeholder="例：シアワセノコダマ" maxlength="200" required>
+
+            <div class="admin-label">英語タイトル（任意）</div>
+            <input type="text" id="mc-title-en" class="admin-input" placeholder="e.g. Echo of Happiness" maxlength="200">
+
+            <div class="admin-label">リリース日</div>
+            <input type="date" id="mc-release-date" class="admin-input da-date-input">
+
+            <div class="admin-label">種別</div>
+            <select id="mc-type" class="admin-input mc-select">
+                <option value="single">Single</option>
+                <option value="ep">EP</option>
+                <option value="album">Album</option>
+            </select>
+
+            <div class="admin-label">ジャケット画像</div>
+            <div class="mc-jacket-section">
+                <div class="mc-jacket-wrap mc-hidden" id="mc-jacket-wrap">
+                    <img id="mc-jacket-img" class="mc-jacket-preview" src="" alt="ジャケット">
+                    <button class="mc-jacket-delete" id="mc-jacket-delete" type="button">✕ 削除</button>
+                </div>
+                <div class="mc-jacket-empty" id="mc-jacket-empty">画像なし</div>
+                <div class="mc-jacket-actions">
+                    <button type="button" class="admin-btn mc-jacket-add-btn" id="mc-jacket-add">＋ 画像を選択</button>
+                    <input type="file" id="mc-jacket-file" accept="image/*" class="mc-hidden">
+                </div>
+            </div>
+
+            <div class="admin-label">音源 URL（任意）</div>
+            <input type="url" id="mc-audio-url" class="admin-input"
+                   placeholder="https://open.spotify.com/… or Apple Music, SoundCloud">
+
+            <div class="admin-label">歌詞</div>
+            <textarea id="mc-lyrics"
+                      class="admin-input mc-textarea"
+                      placeholder="歌詞を入力…"
+                      rows="12"></textarea>
+
+            <div class="admin-label">制作ノート（任意）</div>
+            <textarea id="mc-note"
+                      class="admin-input mc-textarea"
+                      placeholder="曲にまつわるエピソードなど…"
+                      rows="5"></textarea>
+
+            <div class="admin-label">公開状態</div>
+            <div class="da-radios">
+                <label class="da-radio">
+                    <input type="radio" name="mc-pub-mode" value="published">
+                    <span>公開</span>
+                </label>
+                <label class="da-radio">
+                    <input type="radio" name="mc-pub-mode" value="scheduled">
+                    <span>予約投稿</span>
+                </label>
+                <label class="da-radio">
+                    <input type="radio" name="mc-pub-mode" value="draft" checked>
+                    <span>下書き</span>
+                </label>
+            </div>
+
+            <div class="mc-hidden" id="mc-sched-wrap">
+                <div class="admin-label">公開日時</div>
+                <input type="datetime-local" id="mc-publish-at" class="admin-input">
+            </div>
+
+            <div class="da-btns mc-btns">
+                <button type="button" class="admin-btn" id="mc-save">保存</button>
+                <button type="button" class="admin-btn mc-preview-btn-sm" id="mc-preview-btn">プレビュー</button>
+            </div>
+
+        </form>
+    </div><!-- /#mc-editor-view -->
+
+    <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+    <div class="admin-footer">
+        <a href="/afterhours" class="back-home">← After Hours</a>
+        <button class="admin-signout" id="signout-btn">Sign out</button>
+    </div>
+
+</div><!-- /.card -->
+
+<!-- ── Preview Overlay ─────────────────────────────────────────────────────── -->
+<div class="mc-preview-overlay" id="mc-preview-overlay">
+    <div class="mc-preview-inner">
+        <button class="mc-preview-close" id="mc-preview-close" type="button">✕ 閉じる</button>
+        <div class="mc-preview-badge">プレビュー</div>
+        <div id="mc-preview-body"></div>
+    </div>
+</div>
+
+<!-- ── Confirm Delete Modal ────────────────────────────────────────────────── -->
+<div class="mc-confirm-modal" id="mc-confirm-modal">
+    <div class="mc-confirm-inner">
+        <div class="mc-confirm-msg" id="mc-confirm-msg">削除しますか？</div>
+        <div class="mc-confirm-btns">
+            <button class="admin-btn mc-confirm-ok"     id="mc-confirm-ok"     type="button">削除</button>
+            <button class="admin-btn mc-confirm-cancel" id="mc-confirm-cancel" type="button">キャンセル</button>
+        </div>
+    </div>
+</div>
+
+<script src="/whale.js"></script>
+<script src="/script.js?v=2"></script>
+<script src="/admin.js?v=2"></script>
+<script src="/music-admin.js?v=1"></script>
+
+</body>
+</html>
