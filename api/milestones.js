@@ -54,10 +54,15 @@ function nthEvent(events, type, n) {
     return null;
 }
 
+// フロントエンドは 'page_view' を送信する（'visit' は未使用だが後方互換で残す）
+function _isVisitEvent(e) {
+    return e.event === 'page_view' || e.event === 'visit';
+}
+
 function nthUniqueVisitor(events, n) {
     const seen = new Set();
     for (const e of events) {
-        if (e.event !== 'visit' || seen.has(e.visitor_id)) continue;
+        if (!_isVisitEvent(e) || seen.has(e.visitor_id)) continue;
         seen.add(e.visitor_id);
         if (seen.size >= n) return e.ts;
     }
@@ -67,7 +72,7 @@ function nthUniqueVisitor(events, n) {
 function nthReturningVisitor(events, n) {
     const seen = new Set();
     for (const e of events) {
-        if (e.event !== 'visit' || e.is_new_visitor !== false || seen.has(e.visitor_id)) continue;
+        if (!_isVisitEvent(e) || e.is_new_visitor !== false || seen.has(e.visitor_id)) continue;
         seen.add(e.visitor_id);
         if (seen.size >= n) return e.ts;
     }
@@ -77,7 +82,7 @@ function nthReturningVisitor(events, n) {
 function firstReturnRateDate(events, targetPct) {
     const all = new Set(), ret = new Set();
     for (const e of events) {
-        if (e.event !== 'visit') continue;
+        if (!_isVisitEvent(e)) continue;
         all.add(e.visitor_id);
         if (e.is_new_visitor === false) ret.add(e.visitor_id);
         if (all.size && Math.round(ret.size / all.size * 100) >= targetPct) return e.ts;
@@ -118,8 +123,8 @@ function nthLive(lives, n) {
 // ── Shared current-value helpers ─────────────────────────────────────────────
 
 const _musicPlays    = (ev)       => ev.filter(e => e.event === 'music_play').length;
-const _visitors      = (ev)       => new Set(ev.filter(e => e.event === 'visit').map(e => e.visitor_id)).size;
-const _returning     = (ev)       => new Set(ev.filter(e => e.event === 'visit' && e.is_new_visitor === false).map(e => e.visitor_id)).size;
+const _visitors      = (ev)       => new Set(ev.filter(_isVisitEvent).map(e => e.visitor_id)).size;
+const _returning     = (ev)       => new Set(ev.filter(e => _isVisitEvent(e) && e.is_new_visitor === false).map(e => e.visitor_id)).size;
 const _retRate       = (ev)       => { const v = _visitors(ev); return v ? Math.round(_returning(ev) / v * 100) : 0; };
 const _qrScans       = (ev)       => ev.filter(e => e.event === 'qr_scan').length;
 const _releases      = (ev)       => new Set(ev.filter(e => e.event === 'music_play' && e.props?.track).map(e => e.props.track)).size;

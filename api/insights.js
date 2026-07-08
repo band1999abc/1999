@@ -87,7 +87,8 @@ function prevMonthBounds(dateStr) {
 
 // ── Event metric helpers ──────────────────────────────────────────────────────
 
-const isVisit   = e => e.event === 'visit';
+// フロントエンドは 'page_view' を送信する（'visit' は未使用だが後方互換で残す）
+const isVisit   = e => e.event === 'page_view' || e.event === 'visit';
 const isPlay    = e => e.event === 'music_play';
 const isQR      = e => e.event === 'qr_scan';
 const isPage    = e => e.event === 'page_view';
