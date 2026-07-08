@@ -3,16 +3,20 @@
   "outputDirectory": ".",
   "functions": {
     "api/afterhours-pages.js":      { "includeFiles": "templates/**" },
+    "api/milestones.js":            { "includeFiles": "data/**" },
+    "api/insights.js":              { "includeFiles": "data/**" },
     "api/[resource].js":            { "includeFiles": "data/**" },
     "api/[resource]/[id].js":       { "includeFiles": "data/**" }
   },
   "rewrites": [
-    { "source": "/live",                  "destination": "/live.html"                         },
-    { "source": "/afterhours/analytics",  "destination": "/api/afterhours-pages?page=analytics" },
-    { "source": "/afterhours/diary",      "destination": "/api/afterhours-pages?page=diary"     },
-    { "source": "/afterhours/live",       "destination": "/api/afterhours-pages?page=live"      },
-    { "source": "/afterhours/login",      "destination": "/api/afterhours-pages?page=login"     },
-    { "source": "/afterhours",            "destination": "/api/afterhours-pages?page=home"      }
+    { "source": "/live",                   "destination": "/live.html"                          },
+    { "source": "/afterhours/analytics",   "destination": "/api/afterhours-pages?page=analytics"  },
+    { "source": "/afterhours/milestones",  "destination": "/api/afterhours-pages?page=milestones" },
+    { "source": "/afterhours/insights",    "destination": "/api/afterhours-pages?page=insights"   },
+    { "source": "/afterhours/diary",       "destination": "/api/afterhours-pages?page=diary"      },
+    { "source": "/afterhours/live",        "destination": "/api/afterhours-pages?page=live"       },
+    { "source": "/afterhours/login",       "destination": "/api/afterhours-pages?page=login"      },
+    { "source": "/afterhours",             "destination": "/api/afterhours-pages?page=home"       }
   ],
   "headers": [
     {

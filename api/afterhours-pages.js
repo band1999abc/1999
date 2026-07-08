@@ -11,17 +11,21 @@
  *   /afterhours/live       → ?page=live
  *   /afterhours/login      → ?page=login
  *   /afterhours/analytics  → ?page=analytics
+ *   /afterhours/milestones → ?page=milestones
+ *   /afterhours/insights   → ?page=insights
  */
 
 import { readFileSync } from 'fs';
 import { join }         from 'path';
 
 const TEMPLATES = {
-    home:      'afterhours.html',
-    diary:     'afterhours-diary.html',
-    live:      'afterhours-live.html',
-    login:     'login.html',
-    analytics: 'afterhours-analytics.html',
+    home:       'afterhours.html',
+    diary:      'afterhours-diary.html',
+    live:       'afterhours-live.html',
+    login:      'login.html',
+    analytics:  'afterhours-analytics.html',
+    milestones: 'afterhours-milestones.html',
+    insights:   'afterhours-insights.html',
 };
 
 export default function handler(req, res) {
