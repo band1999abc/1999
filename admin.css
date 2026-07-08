@@ -2077,3 +2077,330 @@ body.night .aq-rank-count   { color: var(--text-dark); }
     .aq-rank-count   { font-size: 14px; }
     .aq-funnel-count { font-size: 14px; }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   Pages Analytics  (.ap-*)
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── SVG chart ────────────────────────────────────────────────── */
+
+.ap-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.ap-svg-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ap-svg-area { fill: url(#apGrad); }
+
+.ap-svg-grid {
+    stroke: var(--border);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+}
+
+.ap-svg-label,
+.ap-svg-ylabel {
+    fill: var(--text-muted);
+    font-size: 9px;
+    font-family: inherit;
+    text-anchor: middle;
+    letter-spacing: 0.02em;
+}
+
+.ap-svg-ylabel { text-anchor: end; }
+
+/* ── Period selector ──────────────────────────────────────────── */
+
+.ap-period-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+}
+
+.ap-period-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding: 5px 14px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.ap-period-btn + .ap-period-btn { border-left: none; }
+
+.ap-period-btn.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 500;
+}
+
+body.night .ap-period-btn.is-active { color: #111; }
+
+/* ── Rank lists (Popular / Entry / Exit) ──────────────────────── */
+
+.ap-rank-header,
+.ap-rank-row {
+    align-items: center;
+    display: grid;
+    gap: 8px;
+    /* name | bar | val | extra | exit */
+    grid-template-columns: 90px 1fr 42px 56px 38px;
+    padding: 5px 0;
+}
+
+.ap-rank-header {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+/* Entry / Exit list — simpler 3-column grid (no time/exit cols) */
+#ap-entry-list .ap-rank-row,
+#ap-exit-list  .ap-rank-row {
+    grid-template-columns: 90px 1fr 42px;
+}
+
+.ap-rank-name {
+    color: var(--text-dark);
+    font-size: 13px;
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ap-rank-bar-wrap {
+    background: var(--bg-card);
+    border-radius: 2px;
+    height: 6px;
+    overflow: hidden;
+}
+
+.ap-rank-bar {
+    background: var(--accent);
+    border-radius: 2px;
+    display: block;
+    height: 100%;
+    opacity: 0.6;
+    transition: width 0.4s ease;
+}
+
+.ap-rank-val {
+    color: var(--text-dark);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.ap-rank-extra {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: right;
+}
+
+.ap-rank-time { font-variant-numeric: tabular-nums; }
+
+.ap-rank-exit {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: right;
+}
+
+/* ── Entry & Exit two-column layout ──────────────────────────── */
+
+.ap-two-col {
+    display: grid;
+    gap: 28px;
+    grid-template-columns: 1fr 1fr;
+}
+
+.ap-col-label {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+/* ── Navigation — Top Paths ───────────────────────────────────── */
+
+.ap-nav-sub-label {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+}
+
+.ap-flow { display: flex; flex-direction: column; gap: 7px; }
+
+.ap-flow-row {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border-radius: 6px;
+    flex-wrap: wrap;
+}
+
+.ap-flow-path {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.ap-flow-step {
+    background: rgba(var(--accent-rgb, 180, 140, 100), 0.12);
+    border-radius: 4px;
+    color: var(--text-dark);
+    font-size: 12px;
+    padding: 3px 8px;
+}
+
+.ap-flow-arrow {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.ap-flow-count {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ── Navigation — Next Step ───────────────────────────────────── */
+
+.ap-next-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.ap-next-block {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.ap-next-from {
+    color: var(--text-dark);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.ap-next-row {
+    align-items: center;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: 80px 1fr 30px;
+    padding: 3px 0;
+}
+
+.ap-next-dest {
+    color: var(--text-muted);
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ap-next-dest--exit { color: var(--text-muted); opacity: 0.55; }
+
+.ap-next-bar-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    height: 5px;
+    overflow: hidden;
+}
+
+.ap-next-bar {
+    background: var(--accent);
+    display: block;
+    height: 100%;
+    opacity: 0.55;
+    transition: width 0.4s ease;
+}
+
+.ap-next-bar--exit {
+    background: var(--text-muted);
+    opacity: 0.35;
+}
+
+.ap-next-pct {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* ── Empty state ──────────────────────────────────────────────── */
+
+.ap-empty {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    padding: 10px 0;
+}
+
+/* ── Night mode ───────────────────────────────────────────────── */
+
+body.night .ap-rank-bar-wrap,
+body.night .ap-next-bar-wrap { background: rgba(255, 255, 255, .05); }
+
+body.night .ap-rank-bar      { background: rgba(255, 255, 255, .15); }
+
+body.night .ap-flow-step      { background: rgba(255, 255, 255, .06); }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .ap-two-col { grid-template-columns: 1fr; }
+
+    .ap-rank-header,
+    .ap-rank-row {
+        grid-template-columns: 80px 1fr 36px 44px 32px;
+    }
+
+    .ap-next-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+    .ap-rank-header,
+    .ap-rank-row {
+        grid-template-columns: 70px 1fr 32px;
+    }
+
+    /* Hide Avg Time and Exit% columns on very small screens */
+    .ap-rank-extra,
+    .ap-rank-exit,
+    .ap-rank-header .ap-rank-extra,
+    .ap-rank-header .ap-rank-exit { display: none; }
+
+    .ap-next-grid { grid-template-columns: 1fr; }
+}

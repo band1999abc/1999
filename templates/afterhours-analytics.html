@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=33">
-    <link rel="stylesheet" href="/admin.css?v=8">
+    <link rel="stylesheet" href="/admin.css?v=9">
 </head>
 <body data-page="afterhours-analytics" class="auth-hidden">
 
@@ -31,7 +31,7 @@
         <button class="aa-nav-tab" data-panel="visitors">Visitors</button>
         <button class="aa-nav-tab" data-panel="music">Music</button>
         <button class="aa-nav-tab" data-panel="release">Release</button>
-        <button class="aa-nav-tab aa-nav-tab--soon" title="準備中">Pages</button>
+        <button class="aa-nav-tab" data-panel="pages">Pages</button>
         <button class="aa-nav-tab" data-panel="qr">QR</button>
     </nav>
 
@@ -530,6 +530,85 @@
 
     </div><!-- /#aa-panel-qr -->
 
+    <!-- ── Pages Analytics panel ─────────────────────────────────── -->
+    <div id="aa-panel-pages" class="aa-panel" hidden>
+
+        <!-- Overview ────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header">
+                <span class="aa-section-label">Overview</span>
+            </div>
+            <div class="aa-grid">
+                <div class="aa-card">
+                    <div class="aa-value" id="ap-kpi-views">—</div>
+                    <div class="aa-card-label">Page Views</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="ap-kpi-visitors">—</div>
+                    <div class="aa-card-label">Unique Visitors</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="ap-kpi-duration">—</div>
+                    <div class="aa-card-label">Avg Session Duration</div>
+                </div>
+                <div class="aa-card">
+                    <div class="aa-value" id="ap-kpi-pages">—</div>
+                    <div class="aa-card-label">Pages / Session</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline ────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header">
+                <span class="aa-section-label">Timeline</span>
+                <span class="aa-section-note">Page Views / 日</span>
+            </div>
+            <div class="ap-period-row" role="group" aria-label="表示期間">
+                <button class="ap-period-btn"           data-period="7d"  type="button">7日</button>
+                <button class="ap-period-btn is-active" data-period="30d" type="button">30日</button>
+                <button class="ap-period-btn"           data-period="90d" type="button">90日</button>
+                <button class="ap-period-btn"           data-period="all" type="button">全期間</button>
+            </div>
+            <div id="ap-chart-wrap"></div>
+        </div>
+
+        <!-- Popular Pages ───────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header">
+                <span class="aa-section-label">Popular Pages</span>
+            </div>
+            <div id="ap-popular-list"></div>
+        </div>
+
+        <!-- Entry &amp; Exit ──────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header">
+                <span class="aa-section-label">Entry &amp; Exit Pages</span>
+            </div>
+            <div class="ap-two-col">
+                <div>
+                    <p class="ap-col-label">Entry Pages</p>
+                    <div id="ap-entry-list"></div>
+                </div>
+                <div>
+                    <p class="ap-col-label">Exit Pages</p>
+                    <div id="ap-exit-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation ──────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header">
+                <span class="aa-section-label">Navigation</span>
+                <span class="aa-section-note">訪問者の移動パターン</span>
+            </div>
+            <div id="ap-nav-wrap"></div>
+        </div>
+
+    </div><!-- /#aa-panel-pages -->
+
     <div class="admin-footer">
         <a href="/afterhours" class="back-home">← Back</a>
         <button class="admin-signout" id="signout-btn">Sign out</button>
@@ -544,6 +623,7 @@
 <script src="/analytics-visitors.js?v=1"></script>
 <script src="/analytics-release.js?v=1"></script>
 <script src="/analytics-qr.js?v=1"></script>
+<script src="/analytics-pages.js?v=1"></script>
 
 </body>
 </html>
