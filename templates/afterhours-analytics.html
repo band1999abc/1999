@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=33">
-    <link rel="stylesheet" href="/admin.css?v=9">
+    <link rel="stylesheet" href="/admin.css?v=13">
 </head>
 <body data-page="afterhours-analytics" class="auth-hidden">
 
@@ -275,33 +275,52 @@
     <!-- ── Music Analytics panel ────────────────────────────────── -->
     <div id="aa-panel-music" class="aa-panel" hidden>
 
-        <!-- Track list ─────────────────────────────────────────── -->
+        <!-- ── List view ──────────────────────────────────────── -->
         <div id="am-list">
+
+            <!-- Overview stat cards -->
+            <div id="am-overview" class="am-ov-grid"></div>
+
+            <!-- Section header + sort bar -->
             <div class="aa-section-header am-list-header-gap">
-                <span class="aa-section-label">Music</span>
+                <span class="aa-section-label">Songs</span>
                 <span class="aa-section-note" id="am-list-count"></span>
             </div>
+            <div class="am-sort-bar" id="am-sort-bar">
+                <button class="am-sort-btn is-active" data-sort="plays"   type="button">人気順</button>
+                <button class="am-sort-btn"            data-sort="release" type="button">リリース順</button>
+                <button class="am-sort-btn"            data-sort="alpha"   type="button">五十音順</button>
+            </div>
+
+            <!-- Column headers (5 cols) -->
             <div class="am-col-header">
                 <span>Track</span>
                 <span>Total</span>
-                <span>Today</span>
-                <span>Week</span>
-                <span>Month</span>
+                <span>今週</span>
                 <span>Listeners</span>
+                <span>Returning</span>
             </div>
             <div id="am-tracks"></div>
-        </div>
 
-        <!-- Detail view ─────────────────────────────────────────── -->
+            <!-- Achievements + Insights (rendered by JS) -->
+            <div id="am-achievements"></div>
+            <div id="am-list-insights"></div>
+
+        </div><!-- /#am-list -->
+
+        <!-- ── Detail view ────────────────────────────────────── -->
         <div id="am-detail" hidden>
 
             <button class="am-back" id="am-back" type="button">← All Tracks</button>
 
-            <!-- Hero: track name + summary -->
+            <!-- Hero -->
             <div class="am-hero">
                 <div class="am-hero-title" id="am-track-title"></div>
                 <div class="am-hero-meta"  id="am-track-meta"></div>
             </div>
+
+            <!-- Key stats grid (rendered by JS) -->
+            <div id="am-detail-stats"></div>
 
             <!-- Controls: mode toggle + period selector -->
             <div class="am-controls">
@@ -317,14 +336,33 @@
                 </div>
             </div>
 
+            <!-- Compare controls -->
+            <div class="am-cmp-bar">
+                <button class="am-cmp-btn" id="am-cmp-btn" type="button">曲を比較</button>
+                <span id="am-cmp-label" class="am-cmp-label"></span>
+                <button class="am-cmp-clear" id="am-cmp-clear" type="button" hidden>✕</button>
+            </div>
+            <div id="am-cmp-picker" hidden></div>
+
             <!-- Chart -->
             <div class="am-chart-wrap">
                 <svg id="am-chart" class="am-chart" viewBox="0 0 440 180"></svg>
             </div>
 
-            <!-- Legend + period stats -->
+            <!-- Legend -->
             <div class="am-legend" id="am-legend"></div>
-            <div class="am-stats-row" id="am-detail-stats"></div>
+
+            <!-- Milestones (rendered by JS) -->
+            <div id="am-milestones"></div>
+
+            <!-- Release Impact (rendered by JS) -->
+            <div id="am-release-impact"></div>
+
+            <!-- Track Insights (rendered by JS) -->
+            <div id="am-track-insights"></div>
+
+            <!-- Comparison table (rendered by JS, visible when cmpTrack set) -->
+            <div id="am-comparison"></div>
 
         </div><!-- /#am-detail -->
 

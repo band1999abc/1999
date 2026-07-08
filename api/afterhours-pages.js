@@ -26,7 +26,6 @@ const TEMPLATES = {
     analytics:  'afterhours-analytics.html',
     milestones: 'afterhours-milestones.html',
     insights:   'afterhours-insights.html',
-    music:      'afterhours-music.html',
 };
 
 export default function handler(req, res) {
