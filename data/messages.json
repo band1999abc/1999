@@ -743,12 +743,14 @@
     "priority": 3,
     "conditions": {
       "timeSlots": [],
-      "seasons": [],
+      "seasons": [
+        "winter"
+      ],
       "weather": [],
       "special": []
     },
     "createdAt": "2026-07-08T08:16:18",
-    "updatedAt": "2026-07-08T08:16:18"
+    "updatedAt": "2026-07-08T08:53:33"
   },
   {
     "id": "71218dbd-3670-42c6-a27b-6592a351d1b2",
