@@ -301,6 +301,51 @@ def _delete_music_jacket(music_id):
         except OSError:
             pass
 
+
+# ── Messages helpers ─────────────────────────────────────────────────────────
+
+_MESSAGES_FILE = os.path.join(_DATA_DIR, 'messages.json')
+
+_MSG_VALID_SLOTS   = {'dawn', 'morning', 'midday', 'afternoon', 'evening', 'latenight'}
+_MSG_VALID_SEASONS = {'spring', 'rainy', 'summer', 'autumn', 'winter'}
+_MSG_VALID_WEATHER = {'clear', 'cloudy', 'rain', 'snow'}
+_MSG_VALID_SPECIAL = {'live_today', 'live_tomorrow', 'new_release', 'anniversary'}
+
+def _load_messages():
+    for path in [_MESSAGES_FILE, '/tmp/messages.json']:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as fh:
+                    return json.load(fh)
+            except (OSError, json.JSONDecodeError):
+                pass
+    return []
+
+def _save_messages(items):
+    for path in [_MESSAGES_FILE, '/tmp/messages.json']:
+        try:
+            tmp = path + '.tmp'
+            with open(tmp, 'w', encoding='utf-8') as fh:
+                json.dump(items, fh, ensure_ascii=False, indent=2)
+            os.replace(tmp, path)
+            return
+        except OSError:
+            pass
+    raise OSError('Could not save messages.json')
+
+def _clean_msg_conditions(raw):
+    if not isinstance(raw, dict):
+        raw = {}
+    def _filt(lst, valid):
+        return [v for v in (lst if isinstance(lst, list) else []) if isinstance(v, str) and v in valid]
+    return {
+        'timeSlots': _filt(raw.get('timeSlots'), _MSG_VALID_SLOTS),
+        'seasons':   _filt(raw.get('seasons'),   _MSG_VALID_SEASONS),
+        'weather':   _filt(raw.get('weather'),   _MSG_VALID_WEATHER),
+        'special':   _filt(raw.get('special'),   _MSG_VALID_SPECIAL),
+    }
+
+
 # ── Milestone helpers (used by _handle_milestones_read) ──────────────────────
 
 def _ms_nth_event(events, etype, n):
@@ -931,6 +976,16 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404)
         elif path == '/afterhours/music':
             self._serve_template('afterhours-music.html')
+        elif path == '/afterhours/messages':
+            self._serve_template('afterhours-messages.html')
+        elif path == '/api/messages':
+            self._handle_messages_list()
+        elif path.startswith('/api/messages/'):
+            mid = path[len('/api/messages/'):]
+            if mid and '/' not in mid:
+                self._handle_message_get(mid)
+            else:
+                self.send_error(404)
         elif path == '/api/music':
             self._handle_music_list()
         elif path.startswith('/api/music-jacket/'):
@@ -967,6 +1022,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_flyer_post(item_id)
             else:
                 self.send_error(404)
+        elif path == '/api/messages':
+            self._handle_message_create()
         elif path == '/api/music':
             self._handle_music_create()
         elif path.startswith('/api/music-jacket/'):
@@ -1000,6 +1057,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             if mid and '/' not in mid:
                 self._handle_music_update(mid)
                 return
+        elif path.startswith('/api/messages/'):
+            mid = path[len('/api/messages/'):]
+            if mid and '/' not in mid:
+                self._handle_message_update(mid)
+                return
         self.send_error(404)
 
     def do_DELETE(self):
@@ -1031,6 +1093,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             mid = path[len('/api/music-jacket/'):]
             if mid and '/' not in mid:
                 self._handle_music_jacket_delete(mid)
+                return
+        elif path.startswith('/api/messages/'):
+            mid = path[len('/api/messages/'):]
+            if mid and '/' not in mid:
+                self._handle_message_delete(mid)
                 return
         self.send_error(404)
 
@@ -1863,6 +1930,110 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         items[idx] = dict(items[idx], jacket=False,
                           updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
         _save_music(items)
+        self._write_json(200, {'ok': True})
+
+    # ── GET /api/messages ─────────────────────────────────────────────────────
+
+    def _handle_messages_list(self):
+        authed = self._is_authed()
+        items  = _load_messages()
+        if not authed:
+            items = [m for m in items if m.get('enabled', True)]
+        self._write_json(200, items)
+
+    # ── GET /api/messages/<id> ────────────────────────────────────────────────
+
+    def _handle_message_get(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        items = _load_messages()
+        item  = next((m for m in items if m.get('id') == item_id), None)
+        if not item:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        self._write_json(200, item)
+
+    # ── POST /api/messages ────────────────────────────────────────────────────
+
+    def _handle_message_create(self):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        ja = str(body.get('ja', '')).strip()
+        if not ja:
+            self._write_json(400, {'error': 'ja is required'})
+            return
+        now = time.strftime('%Y-%m-%dT%H:%M:%S')
+        try:
+            prio = max(1, min(5, int(body.get('priority', 3))))
+        except (TypeError, ValueError):
+            prio = 3
+        msg = {
+            'id':         str(_uuid_mod.uuid4()),
+            'ja':         ja,
+            'en':         str(body.get('en', '')).strip(),
+            'enabled':    body.get('enabled', True) is not False,
+            'priority':   prio,
+            'conditions': _clean_msg_conditions(body.get('conditions')),
+            'createdAt':  now,
+            'updatedAt':  now,
+        }
+        items = _load_messages()
+        items.append(msg)
+        _save_messages(items)
+        self._write_json(201, msg)
+
+    # ── PUT /api/messages/<id> ────────────────────────────────────────────────
+
+    def _handle_message_update(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        items = _load_messages()
+        idx   = next((i for i, m in enumerate(items) if m.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        updated = dict(items[idx])
+        if 'ja' in body:
+            ja = str(body['ja']).strip()
+            if not ja:
+                self._write_json(400, {'error': 'ja cannot be empty'})
+                return
+            updated['ja'] = ja
+        if 'en'         in body: updated['en']         = str(body.get('en', '')).strip()
+        if 'enabled'    in body: updated['enabled']    = body['enabled'] is not False
+        if 'priority'   in body:
+            try:
+                updated['priority'] = max(1, min(5, int(body['priority'])))
+            except (TypeError, ValueError):
+                pass
+        if 'conditions' in body: updated['conditions'] = _clean_msg_conditions(body['conditions'])
+        updated['updatedAt'] = time.strftime('%Y-%m-%dT%H:%M:%S')
+        items[idx] = updated
+        _save_messages(items)
+        self._write_json(200, updated)
+
+    # ── DELETE /api/messages/<id> ─────────────────────────────────────────────
+
+    def _handle_message_delete(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        items = _load_messages()
+        idx   = next((i for i, m in enumerate(items) if m.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        items.pop(idx)
+        _save_messages(items)
         self._write_json(200, {'ok': True})
 
     def _normalize_flyer(self, live):

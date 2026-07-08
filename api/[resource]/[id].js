@@ -592,6 +592,78 @@ async function musicJacketDelete(req, res) {
     return res.status(200).json({ ok: true });
 }
 
+// ── Messages ──────────────────────────────────────────────────────────────────
+
+const MESSAGES_FILE_ID     = 'data/messages.json';
+const MSG_VALID_SLOTS_ID   = ['dawn', 'morning', 'midday', 'afternoon', 'evening', 'latenight'];
+const MSG_VALID_SEASONS_ID = ['spring', 'rainy', 'summer', 'autumn', 'winter'];
+const MSG_VALID_WEATHER_ID = ['clear', 'cloudy', 'rain', 'snow'];
+const MSG_VALID_SPECIAL_ID = ['live_today', 'live_tomorrow', 'new_release', 'anniversary'];
+
+function cleanMsgCondId(raw) {
+    const c = (raw && typeof raw === 'object') ? raw : {};
+    return {
+        timeSlots: (Array.isArray(c.timeSlots) ? c.timeSlots : []).filter(v => MSG_VALID_SLOTS_ID.includes(v)),
+        seasons:   (Array.isArray(c.seasons)   ? c.seasons   : []).filter(v => MSG_VALID_SEASONS_ID.includes(v)),
+        weather:   (Array.isArray(c.weather)   ? c.weather   : []).filter(v => MSG_VALID_WEATHER_ID.includes(v)),
+        special:   (Array.isArray(c.special)   ? c.special   : []).filter(v => MSG_VALID_SPECIAL_ID.includes(v)),
+    };
+}
+
+async function messageGet(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.query;
+    const items  = await readJsonArray(MESSAGES_FILE_ID);
+    const item   = items.find(m => m.id === id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    return res.status(200).json(item);
+}
+
+async function messagePut(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.query;
+    const items  = await readJsonArray(MESSAGES_FILE_ID);
+    const idx    = items.findIndex(m => m.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Not found' });
+
+    const body    = await readBody(req);
+    const updated = { ...items[idx] };
+    if (body.ja !== undefined) {
+        if (!String(body.ja).trim()) return res.status(400).json({ error: 'ja cannot be empty' });
+        updated.ja = String(body.ja).trim();
+    }
+    if (body.en         !== undefined) updated.en         = String(body.en || '').trim();
+    if (body.enabled    !== undefined) updated.enabled    = body.enabled !== false;
+    if (body.priority   !== undefined) updated.priority   = Math.min(5, Math.max(1, parseInt(body.priority, 10) || 3));
+    if (body.conditions !== undefined) updated.conditions = cleanMsgCondId(body.conditions);
+    updated.updatedAt = new Date().toISOString();
+
+    items[idx] = updated;
+    try {
+        await writeJsonArray(MESSAGES_FILE_ID, items);
+    } catch (e) {
+        console.error('[messages] update error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(200).json(updated);
+}
+
+async function messageDelete(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.query;
+    const items  = await readJsonArray(MESSAGES_FILE_ID);
+    const idx    = items.findIndex(m => m.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Not found' });
+    items.splice(idx, 1);
+    try {
+        await writeJsonArray(MESSAGES_FILE_ID, items);
+    } catch (e) {
+        console.error('[messages] delete error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(200).json({ ok: true });
+}
+
 // ── Resource router ───────────────────────────────────────────────────────────
 //
 // Add new resources here. Each entry is a map of HTTP method → handler.
@@ -603,6 +675,7 @@ const HANDLERS = {
     flyer:        { GET: flyerGet,       POST: flyerPost,     PUT: flyerPut,  DELETE: flyerDelete              },
     music:        { GET: musicGet,       PUT: musicPut,       DELETE: musicDelete                              },
     'music-jacket': { GET: musicJacketGet, POST: musicJacketPost, DELETE: musicJacketDelete                    },
+    messages:     { GET: messageGet,     PUT: messagePut,     DELETE: messageDelete                            },
 };
 
 export default async function handler(req, res) {

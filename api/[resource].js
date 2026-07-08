@@ -251,15 +251,69 @@ async function musicCreate(req, res) {
     return res.status(201).json(track);
 }
 
+// ── Messages ──────────────────────────────────────────────────────────────────
+
+const MESSAGES_FILE = 'data/messages.json';
+
+const MSG_VALID_SLOTS   = ['dawn', 'morning', 'midday', 'afternoon', 'evening', 'latenight'];
+const MSG_VALID_SEASONS = ['spring', 'rainy', 'summer', 'autumn', 'winter'];
+const MSG_VALID_WEATHER = ['clear', 'cloudy', 'rain', 'snow'];
+const MSG_VALID_SPECIAL = ['live_today', 'live_tomorrow', 'new_release', 'anniversary'];
+
+function cleanMsgCond(raw) {
+    const c = (raw && typeof raw === 'object') ? raw : {};
+    return {
+        timeSlots: (Array.isArray(c.timeSlots) ? c.timeSlots : []).filter(v => MSG_VALID_SLOTS.includes(v)),
+        seasons:   (Array.isArray(c.seasons)   ? c.seasons   : []).filter(v => MSG_VALID_SEASONS.includes(v)),
+        weather:   (Array.isArray(c.weather)   ? c.weather   : []).filter(v => MSG_VALID_WEATHER.includes(v)),
+        special:   (Array.isArray(c.special)   ? c.special   : []).filter(v => MSG_VALID_SPECIAL.includes(v)),
+    };
+}
+
+async function messagesList(req, res) {
+    const authed = isAuthed(req);
+    let items = await readJsonArray(MESSAGES_FILE);
+    if (!authed) items = items.filter(m => m.enabled !== false);
+    return res.status(200).json(items);
+}
+
+async function messagesCreate(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const body = await readBody(req);
+    const { ja = '', en = '', enabled = true, priority = 3, conditions } = body;
+    if (!String(ja).trim()) return res.status(400).json({ error: 'ja is required' });
+    const now = new Date().toISOString();
+    const msg = {
+        id:         randomUUID(),
+        ja:         String(ja).trim(),
+        en:         String(en || '').trim(),
+        enabled:    enabled !== false,
+        priority:   Math.min(5, Math.max(1, parseInt(priority, 10) || 3)),
+        conditions: cleanMsgCond(conditions),
+        createdAt:  now,
+        updatedAt:  now,
+    };
+    try {
+        const items = await readJsonArray(MESSAGES_FILE);
+        items.push(msg);
+        await writeJsonArray(MESSAGES_FILE, items);
+    } catch (e) {
+        console.error('[messages] create error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(201).json(msg);
+}
+
 // ── Resource router ───────────────────────────────────────────────────────────
 //
 // Add new resources here. Each entry is a { GET?, POST? } map of method handlers.
 // Unknown resources → 404. Unknown methods → 405.
 
 const HANDLERS = {
-    diary: { GET: diaryList,  POST: diaryCreate  },
-    live:  { GET: liveList,   POST: liveCreate   },
-    music: { GET: musicList,  POST: musicCreate  },
+    diary:    { GET: diaryList,    POST: diaryCreate    },
+    live:     { GET: liveList,     POST: liveCreate     },
+    music:    { GET: musicList,    POST: musicCreate    },
+    messages: { GET: messagesList, POST: messagesCreate },
 };
 
 export default async function handler(req, res) {

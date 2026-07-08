@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages — After Hours</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/style.css?v=33">
+    <link rel="stylesheet" href="/admin.css?v=15">
+</head>
+<body data-page="afterhours-messages" class="auth-hidden">
+
+<div class="card">
+    <img src="/whale_transparent.png" class="whale-bg" alt="" aria-hidden="true" decoding="async">
+
+    <!-- ── List view ────────────────────────────────────────────────────── -->
+    <div id="mm-list-view">
+
+        <div class="mm-page-header">
+            <button class="admin-btn" id="mm-back-dash" style="font-size:10px;letter-spacing:.08em;padding:3px 12px;">← Back</button>
+            <h2 class="mm-heading">Message Management</h2>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="mm-toolbar">
+            <input type="search" class="admin-input mm-search" id="mm-search" placeholder="メッセージを検索...">
+            <select class="mm-sort-sel" id="mm-sort">
+                <option value="createdAt-desc">新しい順</option>
+                <option value="createdAt-asc">古い順</option>
+                <option value="priority-desc">優先度高</option>
+                <option value="priority-asc">優先度低</option>
+                <option value="enabled">有効のみ</option>
+            </select>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="mm-tab-bar">
+            <button class="mm-tab mm-tab--active" id="mm-tab-list">一覧</button>
+            <button class="mm-tab" id="mm-tab-test">テストモード</button>
+        </div>
+
+        <!-- List tab -->
+        <div id="mm-list-tab">
+            <div id="mm-list"></div>
+            <button class="admin-btn mm-add-btn" id="mm-add-btn">＋ 新しいメッセージ</button>
+        </div>
+
+        <!-- Test mode tab -->
+        <div id="mm-test-tab" class="da-hidden">
+
+            <p class="mm-test-desc">条件を指定すると、表示候補のカスタムメッセージを確認できます。<br>未選択の項目は「すべて」として扱われます。</p>
+
+            <div class="mm-test-form">
+                <div class="mm-test-selects">
+                    <select class="mm-test-sel" id="mm-test-slot">
+                        <option value="">時間帯（すべて）</option>
+                        <option value="dawn">明け方</option>
+                        <option value="morning">朝</option>
+                        <option value="midday">昼</option>
+                        <option value="afternoon">夕方</option>
+                        <option value="evening">夜</option>
+                        <option value="latenight">深夜</option>
+                    </select>
+                    <select class="mm-test-sel" id="mm-test-season">
+                        <option value="">季節（すべて）</option>
+                        <option value="spring">春（3–5月）</option>
+                        <option value="rainy">梅雨（6月）</option>
+                        <option value="summer">夏（7–8月）</option>
+                        <option value="autumn">秋（9–11月）</option>
+                        <option value="winter">冬（12–2月）</option>
+                    </select>
+                    <select class="mm-test-sel" id="mm-test-weather">
+                        <option value="">天気（指定なし）</option>
+                        <option value="clear">晴れ</option>
+                        <option value="cloudy">曇り</option>
+                        <option value="rain">雨</option>
+                        <option value="snow">雪</option>
+                    </select>
+                </div>
+                <div class="mm-cond-sec">
+                    <div class="mm-cond-lbl">特別条件</div>
+                    <div class="mm-checks">
+                        <label class="mm-check"><input type="checkbox" id="mm-test-live-today"> ライブ当日</label>
+                        <label class="mm-check"><input type="checkbox" id="mm-test-live-tomorrow"> ライブ翌日</label>
+                        <label class="mm-check"><input type="checkbox" id="mm-test-new-release"> 新曲公開</label>
+                        <label class="mm-check"><input type="checkbox" id="mm-test-anniversary"> 記念日</label>
+                    </div>
+                </div>
+                <button class="admin-btn mm-test-run-btn" id="mm-test-run">確認する</button>
+            </div>
+
+            <div id="mm-test-results"></div>
+
+        </div><!-- /mm-test-tab -->
+
+    </div><!-- /mm-list-view -->
+
+
+    <!-- ── Editor view ──────────────────────────────────────────────────── -->
+    <div id="mm-editor-view" class="da-hidden">
+
+        <div class="mm-editor-header">
+            <button class="mm-back-btn" id="mm-editor-back">← 一覧</button>
+            <h3 class="mm-editor-heading" id="mm-editor-heading">新しいメッセージ</h3>
+        </div>
+
+        <form id="mm-form" class="mm-form" novalidate>
+
+            <label class="admin-label">メッセージ（日本語）</label>
+            <textarea class="admin-input mm-textarea" id="mm-ja" rows="3" placeholder="ここにメッセージを入力..." required></textarea>
+
+            <label class="admin-label" style="margin-top:10px;">メッセージ（英語・省略可）</label>
+            <input class="admin-input" type="text" id="mm-en" placeholder="English text (optional)">
+
+            <!-- Enabled toggle -->
+            <div class="mm-toggle-row" style="margin-top:14px;">
+                <label class="mm-toggle-label">
+                    <input class="mm-toggle-cb" type="checkbox" id="mm-enabled" checked>
+                    <span class="mm-toggle-txt" id="mm-enabled-label">有効</span>
+                </label>
+            </div>
+
+            <!-- Priority -->
+            <div class="mm-priority-sec">
+                <div class="admin-label">優先度</div>
+                <div class="mm-stars-row" id="mm-stars-row">
+                    <button type="button" class="mm-star-btn" data-val="1">★</button>
+                    <button type="button" class="mm-star-btn" data-val="2">★</button>
+                    <button type="button" class="mm-star-btn" data-val="3">★</button>
+                    <button type="button" class="mm-star-btn" data-val="4">★</button>
+                    <button type="button" class="mm-star-btn" data-val="5">★</button>
+                </div>
+                <input type="hidden" id="mm-priority-val" value="3">
+            </div>
+
+            <!-- Conditions -->
+            <div class="mm-conditions">
+
+                <div class="mm-cond-sec">
+                    <div class="mm-cond-lbl">時間帯 <span class="mm-cond-hint">（未選択 ＝ すべて）</span></div>
+                    <div class="mm-checks">
+                        <label class="mm-check"><input type="checkbox" name="timeSlots" value="dawn"> 明け方</label>
+                        <label class="mm-check"><input type="checkbox" name="timeSlots" value="morning"> 朝</label>
+                        <label class="mm-check"><input type="checkbox" name="timeSlots" value="midday"> 昼</label>
+                        <label class="mm-check"><input type="checkbox" name="timeSlots" value="afternoon"> 夕方</label>
+                        <label class="mm-check"><input type="checkbox" name="timeSlots" value="evening"> 夜</label>
+                        <label class="mm-check"><input type="checkbox" name="timeSlots" value="latenight"> 深夜</label>
+                    </div>
+                </div>
+
+                <div class="mm-cond-sec">
+                    <div class="mm-cond-lbl">季節 <span class="mm-cond-hint">（未選択 ＝ すべて）</span></div>
+                    <div class="mm-checks">
+                        <label class="mm-check"><input type="checkbox" name="seasons" value="spring"> 春</label>
+                        <label class="mm-check"><input type="checkbox" name="seasons" value="rainy"> 梅雨</label>
+                        <label class="mm-check"><input type="checkbox" name="seasons" value="summer"> 夏</label>
+                        <label class="mm-check"><input type="checkbox" name="seasons" value="autumn"> 秋</label>
+                        <label class="mm-check"><input type="checkbox" name="seasons" value="winter"> 冬</label>
+                    </div>
+                </div>
+
+                <div class="mm-cond-sec">
+                    <div class="mm-cond-lbl">天気 <span class="mm-cond-hint">（未選択 ＝ すべて）</span></div>
+                    <div class="mm-checks">
+                        <label class="mm-check"><input type="checkbox" name="weather" value="clear"> 晴れ</label>
+                        <label class="mm-check"><input type="checkbox" name="weather" value="cloudy"> 曇り</label>
+                        <label class="mm-check"><input type="checkbox" name="weather" value="rain"> 雨</label>
+                        <label class="mm-check"><input type="checkbox" name="weather" value="snow"> 雪</label>
+                    </div>
+                </div>
+
+                <div class="mm-cond-sec">
+                    <div class="mm-cond-lbl">特別条件 <span class="mm-cond-hint">（選択した日のみ表示）</span></div>
+                    <div class="mm-checks">
+                        <label class="mm-check"><input type="checkbox" name="special" value="live_today"> ライブ当日</label>
+                        <label class="mm-check"><input type="checkbox" name="special" value="live_tomorrow"> ライブ翌日</label>
+                        <label class="mm-check"><input type="checkbox" name="special" value="new_release"> 新曲公開</label>
+                        <label class="mm-check"><input type="checkbox" name="special" value="anniversary"> 記念日</label>
+                    </div>
+                </div>
+
+            </div><!-- /mm-conditions -->
+
+            <div class="mm-form-btns">
+                <button type="submit" class="admin-btn" id="mm-save-btn">保存</button>
+                <button type="button" class="admin-btn mm-del-btn da-hidden" id="mm-delete-btn">削除</button>
+            </div>
+
+        </form>
+
+    </div><!-- /mm-editor-view -->
+
+
+    <div class="admin-footer">
+        <a href="/afterhours" class="back-home">← After Hours</a>
+    </div>
+
+</div><!-- /card -->
+
+<script src="/whale.js"></script>
+<script src="/script.js?v=2"></script>
+<script src="/admin.js?v=3"></script>
+<script src="/messages-admin.js?v=1"></script>
+
+</body>
+</html>

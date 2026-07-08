@@ -30,7 +30,8 @@
 
     function seasonKey() {
         if (month >= 2 && month <= 4) return 'spring';   // 3–5月
-        if (month >= 5 && month <= 7) return 'summer';   // 6–8月
+        if (month === 5)              return 'rainy';    // 6月（梅雨）
+        if (month >= 6 && month <= 7) return 'summer';   // 7–8月
         if (month >= 8 && month <= 10) return 'autumn';  // 9–11月
         return 'winter';                                  // 12–2月
     }
@@ -142,6 +143,7 @@
         ];
 
         const MSG_SEASON = {
+            rainy: [],   // 梅雨（6月）：カスタムメッセージで追加可
             spring: [
                 '桜が咲いているといいですね。',
                 'いい季節になりましたね。',
@@ -224,7 +226,7 @@
         ];
 
         // ── localStorage キャッシュ ────────────────────────────────
-        const CACHE_KEY = 'home_msg_v1';
+        const CACHE_KEY = 'home_msg_v2'; // v2: added rainy season, custom messages
 
         function loadCache() {
             try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || null; }
@@ -254,7 +256,18 @@
             return Array.isArray(lives) && lives.some(function (l) { return l.date === today; });
         }
 
-        function buildMessage(condition, temp, lives) {
+        function isLiveTomorrow(lives) {
+            if (!Array.isArray(lives)) return false;
+            const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const tmr = y + '-' + m + '-' + day;
+            return lives.some(function (l) { return l.date === tmr; });
+        }
+
+        function buildMessage(condition, temp, lives, customMsgs) {
+            customMsgs = Array.isArray(customMsgs) ? customMsgs : [];
             const today = todayStr();
             const tSlot = timeKey();
             const cond  = condition || null;
@@ -275,9 +288,31 @@
 
             // ライブ当日
             } else if (isLiveToday(lives)) {
-                html = '<p>好きなように過ごしてください。</p>' +
-                       '<p>一緒に歌ってもいいし、</p>' +
-                       '<p>コーヒーを飲みながら眺めるだけでも。</p>';
+                // カスタム live_today メッセージを全条件で絞り込む
+                var liveSeason = seasonKey();
+                var liveWk     = weatherKey(cond);
+                var liveCustom = customMsgs.filter(function (m) {
+                    if (!m.enabled) return false;
+                    var c = m.conditions || {};
+                    // live_today 特別条件が必須
+                    if (!c.special || c.special.indexOf('live_today') < 0) return false;
+                    // 時間帯フィルター
+                    if (c.timeSlots && c.timeSlots.length && c.timeSlots.indexOf(tSlot) < 0) return false;
+                    // 季節フィルター
+                    if (c.seasons   && c.seasons.length   && c.seasons.indexOf(liveSeason) < 0) return false;
+                    // 天気フィルター（天気不明の場合は天気条件付きを除外）
+                    if (c.weather   && c.weather.length) {
+                        if (!liveWk || c.weather.indexOf(liveWk) < 0) return false;
+                    }
+                    return true;
+                });
+                if (liveCustom.length) {
+                    html = '<p>' + pick(liveCustom.map(function (m) { return m.ja; })) + '</p>';
+                } else {
+                    html = '<p>好きなように過ごしてください。</p>' +
+                           '<p>一緒に歌ってもいいし、</p>' +
+                           '<p>コーヒーを飲みながら眺めるだけでも。</p>';
+                }
 
             // 通常：時間帯＋季節＋天気のプールを合算してランダム
             } else {
@@ -315,6 +350,31 @@
                     if (temp >= 30) pool = pool.concat(MSG_HOT);
                     else if (temp <= 8) pool = pool.concat(MSG_COLD);
                 }
+
+                // カスタムメッセージを条件でフィルタしてプールに追加
+                var cmSeason = seasonKey();
+                var specialActive = {
+                    live_today:    isLiveToday(lives),
+                    live_tomorrow: isLiveTomorrow(lives),
+                    new_release:   false, // 将来実装
+                    anniversary:   false, // 将来実装
+                };
+                customMsgs.forEach(function (m) {
+                    if (!m.enabled) return;
+                    var c = m.conditions || {};
+                    if (c.timeSlots && c.timeSlots.length && c.timeSlots.indexOf(tSlot)   < 0) return;
+                    if (c.seasons   && c.seasons.length   && c.seasons.indexOf(cmSeason)  < 0) return;
+                    if (c.weather   && c.weather.length) {
+                        if (!wk || c.weather.indexOf(wk) < 0) return;
+                    }
+                    if (c.special   && c.special.length) {
+                        var anyMatch = c.special.some(function (s) { return specialActive[s]; });
+                        if (!anyMatch) return;
+                    }
+                    var weight = Math.max(1, Math.min(5, parseInt(m.priority, 10) || 3));
+                    for (var wi = 0; wi < weight; wi++) pool.push(m.ja);
+                });
+
                 html = '<p>' + pick(pool) + '</p>';
             }
 
@@ -339,9 +399,14 @@
             .then(function (r) { return r.json(); })
             .catch(function () { return []; });
 
-        // ── 両方揃ったらメッセージ決定 ────────────────────────────
-        Promise.all([weatherPromise, livePromise]).then(function (results) {
-            buildMessage(results[0].condition, results[0].temp, results[1]);
+        // ── カスタムメッセージ取得（公開エンドポイント）──────────
+        const customMsgsPromise = fetch('/api/messages')
+            .then(function (r) { return r.json(); })
+            .catch(function () { return []; });
+
+        // ── 全部揃ったらメッセージ決定 ────────────────────────────
+        Promise.all([weatherPromise, livePromise, customMsgsPromise]).then(function (results) {
+            buildMessage(results[0].condition, results[0].temp, results[1], results[2]);
         });
     }
 
