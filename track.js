@@ -55,6 +55,7 @@
         barOuter.setAttribute('aria-valuemin', '0');
         barOuter.setAttribute('aria-valuemax', '100');
         barOuter.setAttribute('aria-valuenow', '0');
+        barOuter.setAttribute('tabindex',      '0');
 
         var bar = document.createElement('div');
         bar.className = 'cp-bar';
@@ -188,9 +189,29 @@
             e.preventDefault();
         }, { passive: false });
 
-        barOuter.addEventListener('touchend', function () {
+        function endSeek() {
             seeking = false;
             barOuter.classList.remove('cp-seeking');
+        }
+
+        barOuter.addEventListener('touchend',    endSeek);
+        barOuter.addEventListener('touchcancel', endSeek); // OS interrupt / notification
+
+        // ── Keyboard seek（矢印キー: 2%刻み、Page: 10%刻み、Home/End）──────────
+        barOuter.addEventListener('keydown', function (e) {
+            if (!audio.duration) return;
+            var step = audio.duration * 0.02;
+            var big  = audio.duration * 0.10;
+            if (e.key === 'Home')      { seekPct(0); e.preventDefault(); return; }
+            if (e.key === 'End')       { seekPct(1); e.preventDefault(); return; }
+            var delta = 0;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp')   delta = +step;
+            if (e.key === 'ArrowLeft'  || e.key === 'ArrowDown')  delta = -step;
+            if (e.key === 'PageUp')    delta = +big;
+            if (e.key === 'PageDown')  delta = -big;
+            if (delta === 0) return;
+            seekPct((audio.currentTime + delta) / audio.duration);
+            e.preventDefault();
         });
 
         // ── Play / Pause button ───────────────────────────────────────────────
