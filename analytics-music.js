@@ -717,6 +717,12 @@
         });
 
         // Sort buttons (delegated from bar)
+        // Release Impact → button: navigate to Release panel from Music list
+        var relBtn = document.getElementById('am-release-btn');
+        if (relBtn) relBtn.addEventListener('click', function () {
+            if (window._AA_showPanel) window._AA_showPanel('release');
+        });
+
         var sortBar = document.getElementById('am-sort-bar');
         if (sortBar) sortBar.addEventListener('click', function (e) {
             var btn = e.target.closest('.am-sort-btn');

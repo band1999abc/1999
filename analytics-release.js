@@ -793,6 +793,12 @@
         if (S._ctrlsReady) return;
         S._ctrlsReady = true;
 
+        // ← Music button: return to Music panel from Release list
+        var toMusic = document.getElementById('ar-to-music');
+        if (toMusic) toMusic.addEventListener('click', function () {
+            if (window._AA_showPanel) window._AA_showPanel('music');
+        });
+
         // Back from detail
         var backBtn = document.getElementById('ar-back');
         if (backBtn) backBtn.addEventListener('click', function () { showList(); });

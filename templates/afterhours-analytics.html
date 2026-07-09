@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
     <link rel="stylesheet" href="/style.css?v=35">
-    <link rel="stylesheet" href="/admin.css?v=14">
+    <link rel="stylesheet" href="/admin.css?v=15">
 </head>
 <body data-page="afterhours-analytics" class="auth-hidden">
 
@@ -30,7 +30,6 @@
         <button class="aa-nav-tab is-active" data-panel="dashboard">Dashboard</button>
         <button class="aa-nav-tab" data-panel="visitors">Visitors</button>
         <button class="aa-nav-tab" data-panel="music">Music</button>
-        <button class="aa-nav-tab" data-panel="release">Release</button>
         <button class="aa-nav-tab" data-panel="pages">Pages</button>
         <button class="aa-nav-tab" data-panel="qr">QR</button>
     </nav>
@@ -229,20 +228,12 @@
             </table>
         </div>
 
-        <!-- Device + Browser ───────────────────────────────────── -->
-        <div class="av-two-col">
-            <div class="aa-section">
-                <div class="aa-section-header av-section-gap">
-                    <span class="aa-section-label">Device</span>
-                </div>
-                <div id="av-device-bars"></div>
+        <!-- Device ─────────────────────────────────────────────── -->
+        <div class="aa-section">
+            <div class="aa-section-header av-section-gap">
+                <span class="aa-section-label">Device</span>
             </div>
-            <div class="aa-section">
-                <div class="aa-section-header av-section-gap">
-                    <span class="aa-section-label">Browser</span>
-                </div>
-                <div id="av-browser-bars"></div>
-            </div>
+            <div id="av-device-bars"></div>
         </div>
 
         <!-- Returning Distribution ─────────────────────────────── -->
@@ -262,14 +253,6 @@
             <div id="av-time-wrap"></div>
         </div>
 
-        <!-- Country ────────────────────────────────────────────── -->
-        <div class="aa-section">
-            <div class="aa-section-header av-section-gap">
-                <span class="aa-section-label">Country</span>
-            </div>
-            <div id="av-country-list"></div>
-        </div>
-
     </div><!-- /#aa-panel-visitors -->
 
     <!-- ── Music Analytics panel ────────────────────────────────── -->
@@ -285,6 +268,7 @@
             <div class="aa-section-header am-list-header-gap">
                 <span class="aa-section-label">Songs</span>
                 <span class="aa-section-note" id="am-list-count"></span>
+                <button class="am-release-link" id="am-release-btn" type="button">Release Impact →</button>
             </div>
             <div class="am-sort-bar" id="am-sort-bar">
                 <button class="am-sort-btn is-active" data-sort="plays"   type="button">人気順</button>
@@ -374,6 +358,7 @@
         <!-- List view ───────────────────────────────────────── -->
         <div id="ar-list">
             <div class="aa-section-header ar-section-gap">
+                <button class="ar-to-music" id="ar-to-music" type="button">← Music</button>
                 <span class="aa-section-label">Release Impact</span>
                 <button class="ar-compare-btn" id="ar-compare-btn" type="button">比較 →</button>
             </div>
@@ -558,14 +543,6 @@
             <div id="aq-time-wrap"></div>
         </div>
 
-        <!-- Device ─────────────────────────────────────────────── -->
-        <div class="aa-section">
-            <div class="aa-section-header aq-section-gap">
-                <span class="aa-section-label">Device</span>
-            </div>
-            <div id="aq-device-bars"></div>
-        </div>
-
     </div><!-- /#aa-panel-qr -->
 
     <!-- ── Pages Analytics panel ─────────────────────────────────── -->
@@ -656,11 +633,11 @@
 <script src="/whale.js"></script>
 <script src="/script.js?v=3"></script>
 <script src="/admin.js?v=3"></script>
-<script src="/analytics-overview.js?v=2"></script>
-<script src="/analytics-music.js?v=1"></script>
-<script src="/analytics-visitors.js?v=1"></script>
-<script src="/analytics-release.js?v=1"></script>
-<script src="/analytics-qr.js?v=1"></script>
+<script src="/analytics-overview.js?v=3"></script>
+<script src="/analytics-music.js?v=2"></script>
+<script src="/analytics-visitors.js?v=2"></script>
+<script src="/analytics-release.js?v=2"></script>
+<script src="/analytics-qr.js?v=2"></script>
 <script src="/analytics-pages.js?v=1"></script>
 
 </body>

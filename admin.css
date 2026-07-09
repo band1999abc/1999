@@ -1081,6 +1081,22 @@ body.night .am-period-btn.is-active { color: #111; }
 /* list section gap (replaces inline style) */
 .am-list-header-gap { margin-top: 20px; }
 
+/* Release Impact → link button (Music list header) */
+.am-release-link {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    margin-left: auto;
+    padding: 0;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+}
+.am-release-link:hover { color: var(--accent); }
+
 /* ══════════════════════════════════════════════════════════════════════════════
    Release Impact  (.ar-*)
    ══════════════════════════════════════════════════════════════════════════════ */
@@ -1111,6 +1127,21 @@ body.night .am-period-btn.is-active { color: #111; }
     transition: opacity 0.2s ease;
 }
 .ar-compare-btn:hover { opacity: 0.7; }
+
+/* ← Music back button (Release list header) */
+.ar-to-music {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 0;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+}
+.ar-to-music:hover { color: var(--text-dark); }
 
 /* ── Toggle / period buttons (mirrors .am-toggle-btn) ───────────────────────── */
 

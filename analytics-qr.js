@@ -601,44 +601,6 @@
         wrap.appendChild(svg);
     }
 
-    /* ── Section: Device ────────────────────────────────────────────────────── */
-
-    var DEVICE_LABELS = { iphone: 'iPhone', android: 'Android', pc: 'PC', tablet: 'Tablet', unknown: 'Unknown' };
-
-    function renderDevice(qr) {
-        var el = $id('aq-device-bars');
-        if (!el) return;
-
-        // Last-seen device per unique QR visitor
-        var lastDevice = {};
-        for (var i = 0; i < qr.qrEvents.length; i++) {
-            lastDevice[qr.qrEvents[i].visitor_id] = qr.qrEvents[i].device || 'unknown';
-        }
-
-        var counts = {};
-        Object.keys(lastDevice).forEach(function (v) {
-            var d = lastDevice[v];
-            counts[d] = (counts[d] || 0) + 1;
-        });
-
-        var items = Object.keys(counts)
-            .map(function (k) { return { label: DEVICE_LABELS[k] || k, count: counts[k] }; })
-            .sort(function (a, b) { return b.count - a.count; });
-
-        var total = items.reduce(function (s, it) { return s + it.count; }, 0);
-        if (!total) { el.innerHTML = '<div class="aq-empty">データなし</div>'; return; }
-
-        // Reuse .av-bar-* classes from the Visitors panel CSS
-        el.innerHTML = items.map(function (it) {
-            var pct = Math.round(it.count / total * 100);
-            return '<div class="av-bar-row">' +
-                '<div class="av-bar-label">' + esc(it.label) + '</div>' +
-                '<div class="av-bar-track"><div class="av-bar-fill" style="width:' + pct + '%"></div></div>' +
-                '<div class="av-bar-pct">' + pct + '%</div>' +
-                '</div>';
-        }).join('');
-    }
-
     /* ── Meta fetch (Live dates for timeline markers) ────────────────────────── */
 
     function loadMeta(cb) {
@@ -686,7 +648,6 @@
         renderPages(qr);
         renderReturning(qr);
         renderTime(qr);
-        renderDevice(qr);
     }
 
     /* ── Entry point ────────────────────────────────────────────────────────── */

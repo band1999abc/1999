@@ -9,10 +9,8 @@
  *   推移      — 3-series line chart (Visitors / New / Returning) with period selector
  *   期間別    — Today / Yesterday / Week / Month / All Time breakdown table
  *   Device    — iPhone / Android / PC / Tablet proportion bars
- *   Browser   — Safari / Chrome / Edge / Firefox / Other proportion bars
  *   Returning — 1st / 2nd / 3+ visit distribution bars
  *   Time      — Hourly access bar chart (JST)
- *   Country   — Country-ranked list
  */
 ;(function () {
     'use strict';
@@ -191,14 +189,6 @@
             counts[h]++;
         }
         return counts;
-    }
-
-    /** Country counts, de-duped per visitor, sorted desc. */
-    function countryCounts(events) {
-        var counts = fieldCounts(events, 'country');
-        var rows = Object.keys(counts).map(function (k) { return { code: k, count: counts[k] }; });
-        rows.sort(function (a, b) { return b.count - a.count; });
-        return rows;
     }
 
     /* ── Daily series for chart ─────────────────────────────────────────────── */
@@ -402,7 +392,6 @@
     }
 
     var DEVICE_LABELS  = { iphone: 'iPhone', android: 'Android', pc: 'PC', tablet: 'Tablet', unknown: 'Unknown' };
-    var BROWSER_LABELS = { safari: 'Safari', chrome: 'Chrome', edge: 'Edge', firefox: 'Firefox', other: 'その他', unknown: 'Unknown' };
 
     function renderDevice() {
         var counts = fieldCounts(S.events, 'device');
@@ -410,22 +399,10 @@
         var items  = order
             .filter(function (k) { return counts[k]; })
             .map(function (k) { return { label: DEVICE_LABELS[k] || k, count: counts[k] }; });
-        // Unknown last, rest sorted by count
         var known = items.filter(function (i) { return i.label !== 'Unknown'; })
                         .sort(function (a, b) { return b.count - a.count; });
         var unk   = items.filter(function (i) { return i.label === 'Unknown'; });
         renderBars('av-device-bars', known.concat(unk));
-    }
-
-    function renderBrowser() {
-        var counts = fieldCounts(S.events, 'browser');
-        var items  = Object.keys(counts).map(function (k) {
-            return { label: BROWSER_LABELS[k] || k, count: counts[k] };
-        });
-        var known = items.filter(function (i) { return i.label !== 'Unknown'; })
-                        .sort(function (a, b) { return b.count - a.count; });
-        var unk   = items.filter(function (i) { return i.label === 'Unknown'; });
-        renderBars('av-browser-bars', known.concat(unk));
     }
 
     function renderReturning() {
@@ -502,45 +479,6 @@
         wrap.appendChild(svg);
     }
 
-    /* ── Section: Country ───────────────────────────────────────────────────── */
-
-    // Simple ISO 3166-1 α-2 → display name mapping
-    var COUNTRY_NAMES = {
-        JP: 'Japan', US: 'United States', GB: 'United Kingdom',
-        KR: 'South Korea', CN: 'China', TW: 'Taiwan',
-        AU: 'Australia', CA: 'Canada', DE: 'Germany',
-        FR: 'France', SG: 'Singapore', HK: 'Hong Kong',
-        NL: 'Netherlands', BR: 'Brazil', IN: 'India',
-        Unknown: 'Unknown', unknown: 'Unknown',
-    };
-
-    function renderCountry() {
-        var el   = $id('av-country-list');
-        if (!el) return;
-        var rows = countryCounts(S.events).slice(0, 12);
-        if (!rows.length) { el.innerHTML = '<div class="av-empty">データなし</div>'; return; }
-        var total = rows.reduce(function (s, r) { return s + r.count; }, 0);
-        var maxC  = rows[0].count;
-        el.innerHTML = rows.map(function (r, i) {
-            var name   = COUNTRY_NAMES[r.code] || r.code;
-            var pct    = Math.round(r.count / total * 100);
-            var barPct = Math.round(r.count / maxC * 100);
-            return '<div class="av-country-row">' +
-                '<div class="av-country-rank">' + (i + 1) + '</div>' +
-                '<div class="av-country-main">' +
-                  '<div class="av-country-name">' + esc(name) + '</div>' +
-                  '<div class="av-bar-track av-country-bar">' +
-                    '<div class="av-bar-fill" style="width:' + barPct + '%"></div>' +
-                  '</div>' +
-                '</div>' +
-                '<div class="av-country-right">' +
-                  '<div class="av-country-count">' + fmtNum(r.count) + '</div>' +
-                  '<div class="av-country-pct">'  + pct + '%</div>' +
-                '</div>' +
-                '</div>';
-        }).join('');
-    }
-
     /* ── Controls ───────────────────────────────────────────────────────────── */
 
     var _ctrlsReady = false;
@@ -568,10 +506,8 @@
         renderChartLegend();
         renderDetail();
         renderDevice();
-        renderBrowser();
         renderReturning();
         renderTime();
-        renderCountry();
     }
 
     /* ── Entry point ────────────────────────────────────────────────────────── */

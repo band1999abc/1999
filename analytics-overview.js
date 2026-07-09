@@ -248,6 +248,9 @@
         }
     }
 
+    // Expose for cross-panel navigation (e.g. Music → Release, Release → Music)
+    window._AA_showPanel = showPanel;
+
     // ── Data fetch ────────────────────────────────────────────────────────────
 
     var _data    = null;   // full API response { firstDate, events, … }
