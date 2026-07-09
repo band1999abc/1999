@@ -154,36 +154,29 @@
         if (!S.audioFileObj) return Promise.resolve();
         if (saveBtn) saveBtn.textContent = 'アップロード中…';
 
-        return new Promise(function (resolve) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                var dataUrl = e.target.result;
-                authFetch('/api/music-file/' + musicId, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ dataUrl: dataUrl }),
-                })
-                .then(function (r) { return r.json(); })
-                .then(function (resp) {
-                    if (resp.ok) {
-                        S.audioFileObj = null;
-                        var idx = S.tracks.findIndex(function (x) { return x.id === musicId; });
-                        if (idx >= 0) S.tracks[idx] = Object.assign({}, S.tracks[idx], { audioFile: true });
-                        renderAudioFileUI();
-                    } else {
-                        alert('ファイルのアップロードに失敗しました: ' + (resp.error || '不明なエラー'));
-                    }
-                })
-                .catch(function (err) {
-                    alert('ファイルのアップロードに失敗しました: ' + err.message);
-                })
-                .finally(resolve);
-            };
-            reader.onerror = function () {
-                alert('ファイルの読み込みに失敗しました。');
-                resolve();
-            };
-            reader.readAsDataURL(S.audioFileObj);
+        var file = S.audioFileObj;
+        return authFetch('/api/music-file/' + musicId, {
+            method:  'POST',
+            headers: { 'Content-Type': file.type || 'audio/mpeg' },
+            body:    file,
+        })
+        .then(function (r) {
+            if (r.status === 413) throw new Error('ファイルが大きすぎます（目安：3MB 以下）');
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(function (resp) {
+            if (resp.ok) {
+                S.audioFileObj = null;
+                var idx = S.tracks.findIndex(function (x) { return x.id === musicId; });
+                if (idx >= 0) S.tracks[idx] = Object.assign({}, S.tracks[idx], { audioFile: true });
+                renderAudioFileUI();
+            } else {
+                alert('ファイルのアップロードに失敗しました: ' + (resp.error || '不明なエラー'));
+            }
+        })
+        .catch(function (err) {
+            alert('ファイルのアップロードに失敗しました: ' + err.message);
         });
     }
 
@@ -527,6 +520,12 @@
             var file = mp3FileEl.files[0];
             if (!file) return;
             mp3FileEl.value = '';
+
+            // Warn early if the file exceeds Vercel's body limit (~4MB raw)
+            if (file.size > 4 * 1024 * 1024) {
+                alert('ファイルが大きすぎます（' + (file.size / 1024 / 1024).toFixed(1) + ' MB）。\n4MB 以下の MP3 を選択してください。');
+                return;
+            }
 
             var uploadedAt = new Date().toISOString();
             var fileSize   = file.size;

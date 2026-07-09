@@ -2054,19 +2054,32 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             return
         length = int(self.headers.get('Content-Length', 0))
         if length > 8 * 1024 * 1024:
-            self._write_json(413, {'error': 'ファイルが大きすぎます（目安: 6MB 以下）'})
+            self._write_json(413, {'error': 'ファイルが大きすぎます（目安: 3MB 以下）'})
             return
-        try:
-            body = json.loads(self.rfile.read(length))
-        except Exception:
-            self._write_json(400, {'error': 'Bad request'})
-            return
-        data_url = body.get('dataUrl', '')
-        if not isinstance(data_url, str) or not data_url.startswith('data:audio/'):
-            self._write_json(400, {'error': 'dataUrl (audio) が必要です'})
-            return
-        if ';base64,' not in data_url:
-            self._write_json(400, {'error': 'dataUrl must be base64 encoded'})
+        ct = (self.headers.get('Content-Type', '') or '').lower().split(';')[0].strip()
+        raw_body = self.rfile.read(length)
+        if ct == 'application/json':
+            try:
+                body = json.loads(raw_body)
+            except Exception:
+                self._write_json(400, {'error': 'Bad request'})
+                return
+            data_url = body.get('dataUrl', '')
+            if not isinstance(data_url, str) or not data_url.startswith('data:audio/'):
+                self._write_json(400, {'error': 'dataUrl (audio) が必要です'})
+                return
+            if ';base64,' not in data_url:
+                self._write_json(400, {'error': 'dataUrl must be base64 encoded'})
+                return
+        elif ct.startswith('audio/') or ct == 'application/octet-stream':
+            if not raw_body:
+                self._write_json(400, {'error': 'Empty body'})
+                return
+            import base64 as _b64
+            mime = ct if ct.startswith('audio/') else 'audio/mpeg'
+            data_url = 'data:' + mime + ';base64,' + _b64.b64encode(raw_body).decode('ascii')
+        else:
+            self._write_json(400, {'error': 'Content-Type が不正です'})
             return
         items = _load_music()
         idx = next((i for i, t in enumerate(items) if t.get('id') == music_id), -1)

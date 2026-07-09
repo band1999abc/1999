@@ -4,7 +4,7 @@
  * 静的アセット: キャッシュ優先（高速化）
  */
 
-const CACHE = '1999-v10';
+const CACHE = '1999-v11';
 const STATIC_SHELL = [
   '/style.css?v=33',
   '/admin.css?v=14',
@@ -13,7 +13,7 @@ const STATIC_SHELL = [
   '/music.js?v=1',
   '/track.js?v=1',
   '/track.js?v=3',
-  '/music-admin.js?v=3',
+  '/music-admin.js?v=4',
   '/track.js?v=2',
   '/weather.js',
   '/whale.js',

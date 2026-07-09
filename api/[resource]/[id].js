@@ -44,6 +44,18 @@ async function readBodyLimited(req, maxBytes) {
     catch { return {}; }
 }
 
+/** readBody as raw Buffer with a size cap. Throws on overflow. */
+async function readBodyLimitedRaw(req, maxBytes) {
+    const chunks = [];
+    let total = 0;
+    for await (const chunk of req) {
+        total += chunk.length;
+        if (total > maxBytes) throw new Error('Request body too large');
+        chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+}
+
 function isAuthed(req) {
     // Resolved once at the top of handler(); reads req._authed set there.
     return req._authed === true;
@@ -662,15 +674,30 @@ async function musicFilePost(req, res) {
     const idx    = items.findIndex(x => x.id === id);
     if (idx < 0) return res.status(404).json({ error: 'Track not found' });
 
-    let body;
-    try { body = await readBodyLimited(req, FILE_MAX_BYTES); }
-    catch { return res.status(413).json({ error: 'ファイルが大きすぎます（目安: 6MB 以下）' }); }
+    const ct = ((req.headers['content-type'] || '').toLowerCase().split(';')[0]).trim();
+    let dataUrl;
 
-    const { dataUrl } = body;
-    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:audio/'))
-        return res.status(400).json({ error: 'dataUrl (audio) が必要です' });
-    if (!dataUrl.includes(';base64,'))
-        return res.status(400).json({ error: 'dataUrl must be base64 encoded' });
+    if (ct === 'application/json') {
+        // Legacy: base64 JSON body {"dataUrl":"data:audio/...;base64,..."}
+        let body;
+        try { body = await readBodyLimited(req, FILE_MAX_BYTES); }
+        catch { return res.status(413).json({ error: 'ファイルが大きすぎます（目安: 3MB 以下）' }); }
+        dataUrl = body?.dataUrl;
+        if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:audio/'))
+            return res.status(400).json({ error: 'dataUrl (audio) が必要です' });
+        if (!dataUrl.includes(';base64,'))
+            return res.status(400).json({ error: 'dataUrl must be base64 encoded' });
+    } else if (ct.startsWith('audio/') || ct === 'application/octet-stream') {
+        // Binary upload — eliminates the 33 % base64 overhead vs JSON path
+        let rawBuf;
+        try { rawBuf = await readBodyLimitedRaw(req, FILE_MAX_BYTES); }
+        catch { return res.status(413).json({ error: 'ファイルが大きすぎます（目安: 3MB 以下）' }); }
+        if (!rawBuf.length) return res.status(400).json({ error: 'Empty body' });
+        const mime = ct.startsWith('audio/') ? ct : 'audio/mpeg';
+        dataUrl = 'data:' + mime + ';base64,' + rawBuf.toString('base64');
+    } else {
+        return res.status(400).json({ error: 'Content-Type が不正です' });
+    }
 
     try {
         await writeMusicFile(id, dataUrl);
