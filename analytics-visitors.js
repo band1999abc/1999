@@ -226,8 +226,12 @@
             var d = toDateStr(e.ts);
             if (!dV[d]) continue;
             dV[d][e.visitor_id] = true;
-            if (e.is_new_visitor) dN[d][e.visitor_id] = true;
-            else                  dR[d][e.visitor_id] = true;
+            if (e.is_new_visitor) {
+                dN[d][e.visitor_id] = true;
+                delete dR[d][e.visitor_id]; // New 確定 → Returning から除外
+            } else if (!dN[d][e.visitor_id]) {
+                dR[d][e.visitor_id] = true;  // まだ New に分類されていない場合のみ
+            }
         }
 
         return {
