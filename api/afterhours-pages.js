@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-07-08e — unify script.js v3 + admin.css v14 across all templates
+ * bump: 2026-07-09a — analytics cleanup: Country/Browser/QR Device 削除, Release→Music 統合, admin.css v15
  */
 
 import { readFileSync } from 'fs';
