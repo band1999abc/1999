@@ -7,7 +7,7 @@
  *
  * Analytics との連携：
  *   analytics.js がキャプチャフェーズで .song-link クリックを監視し、
- *   .song-name テキストを music_play イベントのトラック名として使用する。
+ *   .song-name テキストを track_view イベントのトラック名として使用する。
  *   このファイルは同じクラス・構造を維持するため既存 Analytics は無変更で動作する。
  */
 (function () {

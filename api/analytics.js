@@ -44,6 +44,12 @@ function onMusicPlay(props) {
         return 'props.track must be a string';
     return null;
 }
+function onTrackView(props) {
+    // Fired when a visitor navigates to a track detail page (song-link click).
+    if (props.track !== undefined && typeof props.track !== 'string')
+        return 'props.track must be a string';
+    return null;
+}
 function onDiaryView(props)   { return null; }
 function onLiveView(props)    { return null; }
 function onContactView(props) { return null; }
@@ -61,6 +67,7 @@ const EVENT_HANDLERS = {
     visit:        onVisit,
     page_view:    onPageView,
     music_play:   onMusicPlay,
+    track_view:   onTrackView,   // 楽曲詳細ページへの遷移（music_play とは別）
     diary_view:   onDiaryView,
     live_view:    onLiveView,
     contact_view: onContactView,

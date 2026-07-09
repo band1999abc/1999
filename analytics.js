@@ -11,7 +11,7 @@
  *
  * Built-in auto-tracking
  *   page_view  — fires immediately on every page load
- *   music_play — fires when a .song-link element is clicked
+ *   track_view — fires when a .song-link element is clicked (楽曲詳細ページへの遷移)
  *
  * Outbound: POST /api/analytics  (sendBeacon preferred, fetch fallback)
  */
@@ -28,6 +28,7 @@
     visit:        true,
     page_view:    true,
     music_play:   true,
+    track_view:   true,   // 楽曲詳細ページへの遷移（再生とは別カウント）
     diary_view:   true,
     live_view:    true,
     contact_view: true,
@@ -98,7 +99,7 @@
 
   /**
    * Track a custom event.
-   * @param {string} event  One of: visit | page_view | music_play | diary_view | live_view | contact_view
+   * @param {string} event  One of: visit | page_view | music_play | track_view | diary_view | live_view | contact_view
    * @param {object} props  Optional extra properties (track name, post id, etc.)
    */
   function track(event, props) {
@@ -125,15 +126,17 @@
     _autoPageView();
   }
 
-  // ── Auto: music_play — .song-link click ─────────────────────────────────────
+  // ── Auto: track_view — .song-link click ──────────────────────────────────────
   // Fires in capture phase so sendBeacon survives navigation to the song page.
+  // This counts "楽曲詳細ページへの遷移" — separate from actual audio playback
+  // (music_play), which is fired by track.js when the play button is pressed.
 
   document.addEventListener('click', function (e) {
     var el = e.target;
     while (el && el !== document.body) {
       if (el.classList && el.classList.contains('song-link')) {
         var nameEl = el.querySelector('.song-name');
-        track('music_play', { track: nameEl ? nameEl.textContent.trim() : '' });
+        track('track_view', { track: nameEl ? nameEl.textContent.trim() : '' });
         return;
       }
       el = el.parentNode;
