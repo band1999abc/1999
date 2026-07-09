@@ -43,14 +43,15 @@
         var isSafeUrl = rawUrl && /^https?:\/\//i.test(rawUrl);
         var hasFile   = !!track.audioFile;
 
-        if (!hasFile && !isSafeUrl) {
-            // 音源なし
-            if (statusEl) statusEl.textContent = '準備中。';
-            return;
-        }
+        var hasAudio = hasFile || isSafeUrl;
 
-        if (statusEl) statusEl.textContent = '';
-        if (audioEl)  audioEl.hidden = false;
+        if (!hasAudio) {
+            // 音源なし — ステータスを表示するが歌詞描画は続行
+            if (statusEl) statusEl.textContent = '準備中。';
+        } else {
+            if (statusEl) statusEl.textContent = '';
+            if (audioEl)  audioEl.hidden = false;
+        }
 
         // ── 1. ホスト配信: <audio> プレーヤー ─────────────────────────────────
         if (hasFile && audioEl) {
