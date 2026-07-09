@@ -1,12 +1,12 @@
 /**
- * track.js  v2
+ * track.js  v4
  * 汎用楽曲詳細ページ（track.html）の動的レンダリング。
  *
  * URL パラメータ ?id=<trackId> を読み取り、
  * GET /api/music/<id> から楽曲データを取得して描画する。
  *
  * フィールド対応:
- *   track.audioFile → true のとき <audio> プレーヤーを埋め込み
+ *   track.audioFile → true のとき カスタムプレーヤーを表示
  *   track.audioUrl  → あれば「▶ 外部リンク」ボタン（両方あっても共存）
  *   track.title     → <h1>
  *   track.lyrics    → あれば Lyrics セクション
@@ -24,61 +24,253 @@
     var lyricsWrapEl = document.getElementById('track-lyrics-wrap');
     var lyricsEl     = document.getElementById('track-lyrics');
 
-    // ── URL から id を取得 ───────────────────────────────────────────────────
     var id = new URLSearchParams(location.search).get('id');
-    if (!id) {
-        location.replace('music.html');
-        return;
+    if (!id) { location.replace('music.html'); return; }
+
+    // ── Custom Player Builder ─────────────────────────────────────────────────
+    function buildCustomPlayer(src) {
+        var audio = document.createElement('audio');
+        audio.preload = 'none';
+        audio.src     = src;
+
+        var seeking = false;
+
+        // ── DOM ───────────────────────────────────────────────────────────────
+        var wrap = document.createElement('div');
+        wrap.className = 'cp';
+
+        // Play / Pause / Loading button
+        var btn = document.createElement('button');
+        btn.type      = 'button';
+        btn.className = 'cp-btn';
+
+        // Right column: seek bar + time display
+        var right = document.createElement('div');
+        right.className = 'cp-right';
+
+        var barOuter = document.createElement('div');
+        barOuter.className = 'cp-bar-outer';
+        barOuter.setAttribute('role',          'slider');
+        barOuter.setAttribute('aria-label',    '再生位置');
+        barOuter.setAttribute('aria-valuemin', '0');
+        barOuter.setAttribute('aria-valuemax', '100');
+        barOuter.setAttribute('aria-valuenow', '0');
+
+        var bar = document.createElement('div');
+        bar.className = 'cp-bar';
+
+        var bufFill  = document.createElement('div');
+        bufFill.className  = 'cp-buf';
+
+        var progFill = document.createElement('div');
+        progFill.className = 'cp-fill';
+
+        var thumb = document.createElement('div');
+        thumb.className = 'cp-thumb';
+
+        bar.appendChild(bufFill);
+        bar.appendChild(progFill);
+        bar.appendChild(thumb);
+        barOuter.appendChild(bar);
+
+        var timesDiv = document.createElement('div');
+        timesDiv.className = 'cp-times';
+
+        var curEl = document.createElement('span');
+        curEl.textContent = '0:00';
+
+        var durEl = document.createElement('span');
+        durEl.textContent = '—';
+
+        timesDiv.appendChild(curEl);
+        timesDiv.appendChild(durEl);
+
+        right.appendChild(barOuter);
+        right.appendChild(timesDiv);
+        wrap.appendChild(btn);
+        wrap.appendChild(right);
+
+        // ── Icon SVGs ─────────────────────────────────────────────────────────
+        var ICON = {
+            play:    '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polygon points="7,4 20,12 7,20" fill="currentColor"/></svg>',
+            pause:   '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="5"  y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="15" y="4" width="4" height="16" rx="1" fill="currentColor"/></svg>',
+            loading: '<svg class="cp-spin" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="20 12" stroke-linecap="round"/></svg>',
+        };
+
+        function setIcon(state) {
+            btn.innerHTML = ICON[state] || ICON.play;
+            btn.setAttribute('aria-label',
+                state === 'pause'   ? '一時停止' :
+                state === 'loading' ? '読み込み中' : '再生');
+        }
+
+        setIcon('play');
+
+        // ── Time formatter ────────────────────────────────────────────────────
+        function fmt(sec) {
+            if (!isFinite(sec) || sec < 0) return '—';
+            var s = Math.floor(sec);
+            var m = Math.floor(s / 60);
+            var h = Math.floor(m / 60);
+            m %= 60; s %= 60;
+            var ss = (s < 10 ? '0' : '') + s;
+            return h > 0
+                ? h + ':' + (m < 10 ? '0' : '') + m + ':' + ss
+                : m + ':' + ss;
+        }
+
+        // ── Progress & buffer update ──────────────────────────────────────────
+        function updateBar() {
+            if (seeking) return;
+            var pct = audio.duration ? audio.currentTime / audio.duration : 0;
+            var p   = (pct * 100).toFixed(2) + '%';
+            progFill.style.width = p;
+            thumb.style.left     = p;
+            curEl.textContent    = fmt(audio.currentTime);
+            barOuter.setAttribute('aria-valuenow', Math.round(pct * 100));
+        }
+
+        function updateBuf() {
+            try {
+                if (audio.buffered.length && audio.duration) {
+                    var b = (audio.buffered.end(audio.buffered.length - 1) / audio.duration * 100).toFixed(2);
+                    bufFill.style.width = b + '%';
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        // ── Seek helpers ──────────────────────────────────────────────────────
+        function seekPct(pct) {
+            pct = Math.max(0, Math.min(1, pct));
+            if (audio.duration) audio.currentTime = audio.duration * pct;
+            var p = (pct * 100).toFixed(2) + '%';
+            progFill.style.width = p;
+            thumb.style.left     = p;
+            curEl.textContent    = fmt(audio.duration ? audio.duration * pct : 0);
+        }
+
+        function pctFromX(clientX) {
+            var r = bar.getBoundingClientRect();
+            return (clientX - r.left) / r.width;
+        }
+
+        // ── Mouse seek ────────────────────────────────────────────────────────
+        barOuter.addEventListener('mousedown', function (e) {
+            if (e.button !== 0) return;
+            seeking = true;
+            barOuter.classList.add('cp-seeking');
+            seekPct(pctFromX(e.clientX));
+
+            function onMove(ev) { seekPct(pctFromX(ev.clientX)); }
+            function onUp() {
+                seeking = false;
+                barOuter.classList.remove('cp-seeking');
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup',   onUp);
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup',   onUp);
+            e.preventDefault();
+        });
+
+        // ── Touch seek ────────────────────────────────────────────────────────
+        barOuter.addEventListener('touchstart', function (e) {
+            if (e.touches.length !== 1) return;
+            seeking = true;
+            barOuter.classList.add('cp-seeking');
+            seekPct(pctFromX(e.touches[0].clientX));
+            e.preventDefault();
+        }, { passive: false });
+
+        barOuter.addEventListener('touchmove', function (e) {
+            if (!seeking || e.touches.length !== 1) return;
+            seekPct(pctFromX(e.touches[0].clientX));
+            e.preventDefault();
+        }, { passive: false });
+
+        barOuter.addEventListener('touchend', function () {
+            seeking = false;
+            barOuter.classList.remove('cp-seeking');
+        });
+
+        // ── Play / Pause button ───────────────────────────────────────────────
+        btn.addEventListener('click', function () {
+            if (audio.paused || audio.ended) {
+                audio.play().catch(function () {});
+            } else {
+                audio.pause();
+            }
+        });
+
+        // ── Audio events ──────────────────────────────────────────────────────
+        audio.addEventListener('play',            function () { setIcon('pause'); });
+        audio.addEventListener('pause',           function () { if (!audio.ended) setIcon('play'); });
+        audio.addEventListener('waiting',         function () { setIcon('loading'); });
+        audio.addEventListener('canplay',         function () { setIcon(audio.paused ? 'play' : 'pause'); });
+        audio.addEventListener('timeupdate',      updateBar);
+        audio.addEventListener('progress',        updateBuf);
+        audio.addEventListener('durationchange',  function () { durEl.textContent = fmt(audio.duration); });
+        audio.addEventListener('loadedmetadata',  function () { durEl.textContent = fmt(audio.duration); });
+
+        // 再生終了: 先頭に戻してプレイアイコンへ
+        audio.addEventListener('ended', function () {
+            setIcon('play');
+            audio.currentTime = 0;
+            progFill.style.width = '0%';
+            thumb.style.left     = '0%';
+            curEl.textContent    = '0:00';
+        });
+
+        audio.addEventListener('error', function () {
+            setIcon('play');
+            curEl.textContent = 'エラー';
+        });
+
+        return { el: wrap, audio: audio };
     }
 
-    // ── 楽曲データを描画 ─────────────────────────────────────────────────────
+    // ── Render ────────────────────────────────────────────────────────────────
     function render(track) {
-        // <title> タグを更新
         document.title = (track.title || '1999') + ' | 1999';
-
-        // h1 タイトル
         if (titleEl) titleEl.textContent = track.title || '';
 
         var rawUrl    = (track.audioUrl || '').trim();
         var isSafeUrl = rawUrl && /^https?:\/\//i.test(rawUrl);
         var hasFile   = !!track.audioFile;
-
-        var hasAudio = hasFile || isSafeUrl;
+        var hasAudio  = hasFile || isSafeUrl;
 
         if (!hasAudio) {
-            // 音源なし — ステータスを表示するが歌詞描画は続行
             if (statusEl) statusEl.textContent = '準備中。';
         } else {
             if (statusEl) statusEl.textContent = '';
             if (audioEl)  audioEl.hidden = false;
         }
 
-        // ── 1. ホスト配信: <audio> プレーヤー ─────────────────────────────────
+        // ── 1. ホスト配信: カスタムプレーヤー ────────────────────────────────
         if (hasFile && audioEl) {
-            var player = document.createElement('audio');
-            player.className = 'track-player';
-            player.controls  = true;
-            player.preload   = 'none';
-            player.src       = '/api/music-file/' + encodeURIComponent(id);
+            var cp = buildCustomPlayer('/api/music-file/' + encodeURIComponent(id));
 
-            // Analytics: 再生開始時
-            var tracked = false;
-            player.addEventListener('play', function () {
-                if (!tracked) {
-                    tracked = true;
+            // Analytics: 初回再生時のみ発火
+            var analyticsTracked = false;
+            cp.audio.addEventListener('play', function () {
+                if (!analyticsTracked) {
+                    analyticsTracked = true;
                     if (window.AH && window.AH.track) {
-                        window.AH.track('music_play', { track: track.title || '', source: 'hosted' });
+                        window.AH.track('music_play', {
+                            track:  track.title || '',
+                            source: 'hosted',
+                        });
                     }
                 }
             });
 
-            audioEl.appendChild(player);
+            audioEl.appendChild(cp.el);
         }
 
         // ── 2. 外部リンク（YouTube / Spotify / etc.）──────────────────────────
         if (isSafeUrl && audioEl) {
             var btn = document.createElement('a');
-            btn.setAttribute('href', rawUrl);   // scheme validated above
+            btn.setAttribute('href', rawUrl);
             btn.className   = 'play-button';
             btn.target      = '_blank';
             btn.rel         = 'noopener noreferrer';
@@ -86,14 +278,17 @@
 
             btn.addEventListener('click', function () {
                 if (window.AH && window.AH.track) {
-                    window.AH.track('music_play', { track: track.title || '', source: 'external' });
+                    window.AH.track('music_play', {
+                        track:  track.title || '',
+                        source: 'external',
+                    });
                 }
             });
 
             audioEl.appendChild(btn);
         }
 
-        // ── 歌詞（あれば表示）────────────────────────────────────────────────
+        // ── 3. 歌詞 ───────────────────────────────────────────────────────────
         if (track.lyrics && track.lyrics.trim()) {
             if (lyricsWrapEl) lyricsWrapEl.hidden = false;
             if (lyricsEl)     lyricsEl.textContent = track.lyrics;
@@ -104,7 +299,7 @@
     fetch('/api/music/' + encodeURIComponent(id), { credentials: 'omit' })
         .then(function (r) {
             if (r.status === 404) throw { notFound: true };
-            if (!r.ok) throw new Error('API error ' + r.status);
+            if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.json();
         })
         .then(render)

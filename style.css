@@ -310,13 +310,125 @@ footer {
     margin-top: 60px;
 }
 
-/* Hosted audio player */
-.track-player {
-    display: block;
-    width: 100%;
-    max-width: 480px;
-    margin: 32px auto 4px;
-    border-radius: 8px;
+/* ── Custom Audio Player ─────────────────────────────────────────── */
+.cp {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 28px auto 4px;
+    max-width: 400px;
+    padding: 0 4px;
+}
+
+.cp-btn {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.22s, color 0.22s, transform 0.15s;
+    padding: 0 0 0 2px; /* optical centre for play triangle */
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cp-btn:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.cp-btn:active {
+    transform: scale(0.9);
+}
+
+.cp-right {
+    flex: 1;
+    min-width: 0;
+}
+
+.cp-bar-outer {
+    padding: 10px 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.cp-bar {
+    position: relative;
+    height: 4px;
+    background: rgba(139, 106, 66, 0.18);
+    border-radius: 99px;
+    transition: height 0.15s;
+}
+
+.cp-bar-outer:hover .cp-bar,
+.cp-bar-outer.cp-seeking .cp-bar {
+    height: 6px;
+}
+
+.cp-buf {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;
+    background: rgba(139, 106, 66, 0.28);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.cp-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.cp-thumb {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    width: 13px;
+    height: 13px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.cp-bar-outer:hover .cp-thumb,
+.cp-bar-outer.cp-seeking .cp-thumb {
+    opacity: 1;
+}
+
+.cp-times {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+}
+
+@keyframes cp-spin {
+    to { transform: rotate(360deg); }
+}
+
+.cp-spin {
+    animation: cp-spin 0.85s linear infinite;
+    transform-origin: 12px 12px;
 }
 
 .play-button {
@@ -765,6 +877,22 @@ body.night .lyrics              { color: #c0bcb4; }
 body.night .lyrics-title span   { color: #8a9ab2; }
 body.night .lyrics-title::before,
 body.night .lyrics-title::after { background: #2e3550; }
+
+/* Custom player — night */
+body.night .cp-btn {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+body.night .cp-btn:hover {
+    background: var(--accent);
+    color: #1a1e2e;
+}
+body.night .cp-bar {
+    background: rgba(196, 154, 108, 0.16);
+}
+body.night .cp-buf {
+    background: rgba(196, 154, 108, 0.25);
+}
 
 /* Diary */
 body.night .diary-entry p     { color: #c0bcb4; }
