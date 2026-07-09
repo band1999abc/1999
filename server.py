@@ -2530,9 +2530,17 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 url = 'https://api.openweathermap.org/data/2.5/weather?' + qs
                 with urllib.request.urlopen(url, timeout=5) as resp:
                     data = json.loads(resp.read())
-                condition = data['weather'][0]['main']
+                raw_condition = data['weather'][0]['main']
+                _clouds = data.get('clouds')
+                clouds_all = _clouds.get('all') if isinstance(_clouds, dict) else None
+                clouds_all = clouds_all if isinstance(clouds_all, (int, float)) else None
+                # Treat as Clear when cloud cover is 80 % or below
+                if raw_condition == 'Clouds' and clouds_all is not None and clouds_all <= 80:
+                    condition = 'Clear'
+                else:
+                    condition = raw_condition
                 temp_c = data.get('main', {}).get('temp')  # °C (units=metric)
-                print('[weather/owm]   %dms  condition=%s temp=%.1f' % (int((time.monotonic()-t_owm)*1000), condition, temp_c if temp_c is not None else 0))
+                print('[weather/owm]   %dms  condition=%s (raw=%s clouds=%s%%) temp=%.1f' % (int((time.monotonic()-t_owm)*1000), condition, raw_condition, clouds_all, temp_c if temp_c is not None else 0))
             except Exception as e:
                 print('[weather/owm]   %dms  error: %s' % (int((time.monotonic()-t_owm)*1000), e))
 

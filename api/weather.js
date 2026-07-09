@@ -103,11 +103,16 @@ export default async function handler(req, res) {
 
     const upstream  = await fetch(url.toString());
     const data      = await upstream.json();
-    const condition = data?.weather?.[0]?.main ?? null;
+    const rawCondition = data?.weather?.[0]?.main ?? null;
+    const cloudsAll    = data?.clouds?.all ?? null;   // 0–100 %
+    // Treat as Clear when cloud cover is 80 % or below
+    const condition = (rawCondition === 'Clouds' && cloudsAll !== null && cloudsAll <= 80)
+      ? 'Clear'
+      : rawCondition;
     const temp      = data?.main?.temp ?? null;   // °C
     const owmMs     = Date.now() - tOwm;
 
-    console.log('[weather/owm]   ' + owmMs + 'ms  condition=' + condition + ' temp=' + temp);
+    console.log('[weather/owm]   ' + owmMs + 'ms  condition=' + condition + ' (raw=' + rawCondition + ' clouds=' + cloudsAll + '%) temp=' + temp);
     console.log('[weather/total] ' + (Date.now() - tTotal) + 'ms');
 
     return res.status(200).json({ condition, temp });
