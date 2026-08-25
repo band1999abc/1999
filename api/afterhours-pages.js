@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-08-25a — Music再生条件、Diary/Live pagination、ひび割れ表示、Node 24対応
+ * bump: 2026-08-26a — Music専用Blobアップロード管理画面
  */
 
 import { readFileSync } from 'fs';

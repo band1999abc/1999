@@ -5,5 +5,13 @@
   "type": "module",
   "engines": {
     "node": "24.x"
+  },
+  "scripts": {
+    "build:music-upload": "esbuild music-upload-client.js --bundle --format=iife --global-name=MusicBlobUpload --outfile=music-upload-client.bundle.js",
+    "seed:music-metadata": "node scripts/seed-music-metadata.mjs"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.0",
+    "esbuild": "^0.28.2"
   }
 }

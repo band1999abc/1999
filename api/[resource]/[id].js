@@ -18,9 +18,18 @@ import { COOKIE_NAME, verifyToken, parseCookies, extractToken, isRevoked } from 
 import {
     readJsonArray, writeJsonArray,
     readFlyerSlot, writeFlyerSlot, deleteFlyerSlot, deleteAllFlyerSlots,
-    readMusicJacket, writeMusicJacket, deleteMusicJacket,
-    readMusicFile, writeMusicFile, deleteMusicFile,
 } from '../_storage.js';
+import {
+    readMusicRecords,
+    writeMusicRecords,
+    readMusicRecord,
+    readMusicJacket,
+    writeMusicJacket,
+    deleteMusicJacket,
+    inspectMusicBlob,
+    deleteMusicBlob,
+    musicStorageErrorResponse,
+} from '../_music_storage.js';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -443,8 +452,6 @@ async function flyerDelete(req, res) {
 
 // ── Music ─────────────────────────────────────────────────────────────────────
 
-const MUSIC_FILE = 'data/music.json';
-
 const MUSIC_VALID_STATUSES = ['published', 'draft', 'scheduled'];
 const MUSIC_VALID_TYPES    = ['single', 'ep', 'album'];
 
@@ -467,91 +474,102 @@ function autoPromoteMusic(items) {
 }
 
 async function musicGet(req, res) {
-    const { id } = req.query;
-    const items  = await readJsonArray(MUSIC_FILE);
-    if (autoPromoteMusic(items)) {
-        await writeJsonArray(MUSIC_FILE, items).catch(e =>
-            console.error('[music/id] auto-promote error:', e)
-        );
+    try {
+        const { id } = req.query;
+        const items  = await readMusicRecords();
+        if (autoPromoteMusic(items)) await writeMusicRecords(items);
+        const t = items.find(x => x.id === id);
+        if (!t) return res.status(404).json({ error: 'Not found' });
+        if (t.status !== 'published' && !isAuthed(req))
+            return res.status(404).json({ error: 'Not found' });
+        return res.status(200).json(t);
+    } catch (e) {
+        return musicStorageErrorResponse(res, e, 'music/get');
     }
-    const t = items.find(x => x.id === id);
-    if (!t) return res.status(404).json({ error: 'Not found' });
-    if (t.status !== 'published' && !isAuthed(req))
-        return res.status(404).json({ error: 'Not found' });
-    return res.status(200).json(t);
 }
 
 async function musicPut(req, res) {
     if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.query;
-    const items  = await readJsonArray(MUSIC_FILE);
-    const idx    = items.findIndex(x => x.id === id);
-    if (idx < 0) return res.status(404).json({ error: 'Not found' });
-
-    const body = await readBody(req);
-    const {
-        title, titleEn, releaseDate, type, status,
-        scheduledAt, audioUrl, lyrics, productionNote,
-        duration, fileSize, bitrate, uploadedAt,
-    } = body;
-    const prev = items[idx];
-
-    if (title !== undefined && !String(title).trim())
-        return res.status(400).json({ error: 'title cannot be empty' });
-    if (releaseDate !== undefined && releaseDate && !DATE_RE.test(String(releaseDate)))
-        return res.status(400).json({ error: 'Invalid releaseDate format' });
-
-    const safeStatus = status && MUSIC_VALID_STATUSES.includes(status) ? status : prev.status;
-    const rawSched   = scheduledAt !== undefined ? String(scheduledAt).trim() : (prev.scheduledAt || '');
-    if (safeStatus === 'scheduled' && (!rawSched || !SCHED_RE.test(rawSched)))
-        return res.status(400).json({ error: 'scheduledAt required (YYYY-MM-DDTHH:MM)' });
-
-    const updated = {
-        ...prev,
-        title:          title          !== undefined ? String(title).trim()          : prev.title,
-        titleEn:        titleEn        !== undefined ? String(titleEn).trim()        : (prev.titleEn || ''),
-        releaseDate:    releaseDate    !== undefined ? String(releaseDate)            : prev.releaseDate,
-        type:           type && MUSIC_VALID_TYPES.includes(type) ? type             : (prev.type || 'single'),
-        status:         safeStatus,
-        scheduledAt:    safeStatus === 'scheduled' ? rawSched                        : '',
-        audioUrl:       audioUrl       !== undefined ? String(audioUrl).trim()       : (prev.audioUrl || ''),
-        lyrics:         lyrics         !== undefined ? String(lyrics)                : (prev.lyrics || ''),
-        productionNote: productionNote !== undefined ? String(productionNote)        : (prev.productionNote || ''),
-        duration:       duration   !== undefined ? sanitizeNum(duration,  86400) : (prev.duration  ?? null),
-        fileSize:       fileSize   !== undefined ? sanitizeNum(fileSize,  2e9)   : (prev.fileSize  ?? null),
-        bitrate:        bitrate    !== undefined ? sanitizeNum(bitrate,   10000) : (prev.bitrate   ?? null),
-        uploadedAt:     uploadedAt !== undefined ? sanitizeIso(uploadedAt)       : (prev.uploadedAt ?? null),
-        audioFile:      prev.audioFile ?? false,   // managed by /api/music-file/:id only
-        updatedAt:      new Date().toISOString(),
-    };
-
     try {
+        const { id } = req.query;
+        const items  = await readMusicRecords();
+        const idx    = items.findIndex(x => x.id === id);
+        if (idx < 0) return res.status(404).json({ error: 'Not found' });
+
+        const body = await readBody(req);
+        const {
+            title, titleEn, releaseDate, type, status,
+            scheduledAt, audioUrl, lyrics, productionNote,
+            duration, fileSize, bitrate, uploadedAt,
+        } = body;
+        const prev = items[idx];
+
+        if (title !== undefined && !String(title).trim())
+            return res.status(400).json({ error: 'title cannot be empty' });
+        if (releaseDate !== undefined && releaseDate && !DATE_RE.test(String(releaseDate)))
+            return res.status(400).json({ error: 'Invalid releaseDate format' });
+
+        const safeStatus = status && MUSIC_VALID_STATUSES.includes(status) ? status : prev.status;
+        const rawSched   = scheduledAt !== undefined ? String(scheduledAt).trim() : (prev.scheduledAt || '');
+        if (safeStatus === 'scheduled' && (!rawSched || !SCHED_RE.test(rawSched)))
+            return res.status(400).json({ error: 'scheduledAt required (YYYY-MM-DDTHH:MM)' });
+
+        const updated = {
+            ...prev,
+            title:          title          !== undefined ? String(title).trim()          : prev.title,
+            titleEn:        titleEn        !== undefined ? String(titleEn).trim()        : (prev.titleEn || ''),
+            releaseDate:    releaseDate    !== undefined ? String(releaseDate)            : prev.releaseDate,
+            type:           type && MUSIC_VALID_TYPES.includes(type) ? type             : (prev.type || 'single'),
+            status:         safeStatus,
+            scheduledAt:    safeStatus === 'scheduled' ? rawSched                        : '',
+            audioUrl:       audioUrl       !== undefined ? String(audioUrl).trim()       : (prev.audioUrl || ''),
+            lyrics:         lyrics         !== undefined ? String(lyrics)                : (prev.lyrics || ''),
+            productionNote: productionNote !== undefined ? String(productionNote)        : (prev.productionNote || ''),
+            duration:       duration   !== undefined ? sanitizeNum(duration,  86400) : (prev.duration  ?? null),
+            fileSize:       fileSize   !== undefined ? sanitizeNum(fileSize,  2e9)   : (prev.fileSize  ?? null),
+            bitrate:        bitrate    !== undefined ? sanitizeNum(bitrate,   10000) : (prev.bitrate   ?? null),
+            uploadedAt:     uploadedAt !== undefined ? sanitizeIso(uploadedAt)       : (prev.uploadedAt ?? null),
+            audioFile:      prev.audioFile ?? false,   // managed by /api/music-file/:id only
+            updatedAt:      new Date().toISOString(),
+        };
+
         items[idx] = updated;
-        await writeJsonArray(MUSIC_FILE, items);
+        await writeMusicRecords(items);
+        return res.status(200).json(updated);
     } catch (e) {
-        console.error('[music] update error:', e);
-        return res.status(500).json({ error: 'Failed to save' });
+        return musicStorageErrorResponse(res, e, 'music/update');
     }
-    return res.status(200).json(updated);
 }
 
 async function musicDelete(req, res) {
     if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.query;
-    const items  = await readJsonArray(MUSIC_FILE);
-    const idx    = items.findIndex(x => x.id === id);
-    if (idx < 0) return res.status(404).json({ error: 'Not found' });
-
     try {
+        const { id } = req.query;
+        const items  = await readMusicRecords();
+        const idx    = items.findIndex(x => x.id === id);
+        if (idx < 0) return res.status(404).json({ error: 'Not found' });
+        const deleted = items[idx];
+
         items.splice(idx, 1);
-        await writeJsonArray(MUSIC_FILE, items);
-        // Best-effort jacket cleanup
+        await writeMusicRecords(items);
+        // Music-only cleanup is best effort after the record is no longer public.
         await deleteMusicJacket(id).catch(() => {});
+        await deleteMusicBlob(deleted.blobUrl).catch(e =>
+            console.error('[music] Blob cleanup error:', e)
+        );
+        await deleteMusicBlob(deleted.previousAudio?.blobUrl).catch(e =>
+            console.error('[music] previous Blob cleanup error:', e)
+        );
+        await deleteMusicBlob(deleted.previousAudioCleanup?.blobUrl).catch(e =>
+            console.error('[music] pending previous Blob cleanup error:', e)
+        );
+        await deleteMusicBlob(deleted.audioDeletion?.current?.blobUrl).catch(e =>
+            console.error('[music] pending current Blob cleanup error:', e)
+        );
     } catch (e) {
-        console.error('[music] delete error:', e);
-        return res.status(500).json({ error: 'Failed to delete' });
+        return musicStorageErrorResponse(res, e, 'music/delete');
     }
     return res.status(200).json({ ok: true });
 }
@@ -561,48 +579,50 @@ async function musicDelete(req, res) {
 const JACKET_MAX_BYTES = 4 * 1024 * 1024;   // 4 MB
 
 async function musicJacketGet(req, res) {
-    const { id } = req.query;
-    const items  = await readJsonArray(MUSIC_FILE);
-    const t      = items.find(x => x.id === id);
-    if (!t) return res.status(404).send('Not found');
-    if (t.status !== 'published' && !isAuthed(req))
-        return res.status(404).send('Not found');
+    try {
+        const { id } = req.query;
+        const items  = await readMusicRecords();
+        const t      = items.find(x => x.id === id);
+        if (!t) return res.status(404).send('Not found');
+        if (t.status !== 'published' && !isAuthed(req))
+            return res.status(404).send('Not found');
 
-    const dataUrl = await readMusicJacket(id);
-    if (!dataUrl) return res.status(404).send('Not found');
+        const dataUrl = await readMusicJacket(id);
+        if (!dataUrl) return res.status(404).send('Not found');
 
-    return serveDataUrl(res, dataUrl);
+        return serveDataUrl(res, dataUrl);
+    } catch (e) {
+        return musicStorageErrorResponse(res, e, 'music-jacket/get');
+    }
 }
 
 async function musicJacketPost(req, res) {
     if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.query;
-    const items  = await readJsonArray(MUSIC_FILE);
-    const idx    = items.findIndex(x => x.id === id);
-    if (idx < 0) return res.status(404).json({ error: 'Track not found' });
-
-    let body;
-    try { body = await readBodyLimited(req, JACKET_MAX_BYTES); }
-    catch { return res.status(413).json({ error: 'Image too large (max ~3 MB)' }); }
-
-    const { dataUrl } = body;
-    if (!dataUrl || typeof dataUrl !== 'string')
-        return res.status(400).json({ error: 'Missing dataUrl' });
-    if (!dataUrl.startsWith('data:image/'))
-        return res.status(400).json({ error: 'dataUrl must be an image' });
-    if (!dataUrl.includes(';base64,'))
-        return res.status(400).json({ error: 'dataUrl must be base64 encoded' });
-
     try {
-        await writeMusicJacket(id, dataUrl);
-    } catch (e) {
-        console.error('[music-jacket] write error:', e);
-        return res.status(500).json({ error: 'Failed to save image' });
-    }
+        const { id } = req.query;
+        const items  = await readMusicRecords();
+        const idx    = items.findIndex(x => x.id === id);
+        if (idx < 0) return res.status(404).json({ error: 'Track not found' });
 
-    items[idx] = { ...items[idx], jacket: true, updatedAt: new Date().toISOString() };
-    await writeJsonArray(MUSIC_FILE, items);
+        let body;
+        try { body = await readBodyLimited(req, JACKET_MAX_BYTES); }
+        catch { return res.status(413).json({ error: 'Image too large (max ~3 MB)' }); }
+
+        const { dataUrl } = body;
+        if (!dataUrl || typeof dataUrl !== 'string')
+            return res.status(400).json({ error: 'Missing dataUrl' });
+        if (!dataUrl.startsWith('data:image/'))
+            return res.status(400).json({ error: 'dataUrl must be an image' });
+        if (!dataUrl.includes(';base64,'))
+            return res.status(400).json({ error: 'dataUrl must be base64 encoded' });
+
+        await writeMusicJacket(id, dataUrl);
+        items[idx] = { ...items[idx], jacket: true, updatedAt: new Date().toISOString() };
+        await writeMusicRecords(items);
+    } catch (e) {
+        return musicStorageErrorResponse(res, e, 'music-jacket/create');
+    }
 
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({ ok: true });
@@ -611,17 +631,18 @@ async function musicJacketPost(req, res) {
 async function musicJacketDelete(req, res) {
     if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.query;
-    const items  = await readJsonArray(MUSIC_FILE);
-    const idx    = items.findIndex(x => x.id === id);
-    if (idx < 0) return res.status(404).json({ error: 'Track not found' });
+    try {
+        const { id } = req.query;
+        const items  = await readMusicRecords();
+        const idx    = items.findIndex(x => x.id === id);
+        if (idx < 0) return res.status(404).json({ error: 'Track not found' });
 
-    await deleteMusicJacket(id).catch(e =>
-        console.error('[music-jacket] delete error:', e)
-    );
-
-    items[idx] = { ...items[idx], jacket: false, updatedAt: new Date().toISOString() };
-    await writeJsonArray(MUSIC_FILE, items);
+        await deleteMusicJacket(id);
+        items[idx] = { ...items[idx], jacket: false, updatedAt: new Date().toISOString() };
+        await writeMusicRecords(items);
+    } catch (e) {
+        return musicStorageErrorResponse(res, e, 'music-jacket/delete');
+    }
 
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({ ok: true });
@@ -629,105 +650,216 @@ async function musicJacketDelete(req, res) {
 
 // ── Music file (hosted MP3) ───────────────────────────────────────────────────
 
-const FILE_MAX_BYTES = 8 * 1024 * 1024;   // 8 MB request body ≈ 6 MB raw audio
+const MUSIC_BLOB_MAX_BYTES = 64 * 1024 * 1024;
 
 async function musicFileGet(req, res) {
-    const { id } = req.query;
-    const stored = await readMusicFile(id);
-    if (!stored) return res.status(404).end();
+    try {
+        const { id } = req.query;
+        const track = await readMusicRecord(id);
+        if (!track || !track.audioFile || !track.blobUrl) return res.status(404).end();
+        if (track.status !== 'published' && !isAuthed(req)) return res.status(404).end();
 
-    const comma  = stored.indexOf(',');
-    const rawB64 = comma >= 0 ? stored.slice(comma + 1) : stored;
-    const buf    = Buffer.from(rawB64, 'base64');
-    const total  = buf.length;
-
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Cache-Control', 'no-store');
-
-    const range = req.headers['range'];
-    if (range) {
-        const m = range.match(/bytes=(\d+)-(\d*)/);
-        if (!m) {
-            res.setHeader('Content-Range', `bytes */${total}`);
-            return res.status(416).end();
-        }
-        const s = parseInt(m[1], 10);
-        const e = m[2] !== '' ? parseInt(m[2], 10) : total - 1;
-        if (s >= total || e >= total || s > e) {
-            res.setHeader('Content-Range', `bytes */${total}`);
-            return res.status(416).end();
-        }
-        res.setHeader('Content-Range',  `bytes ${s}-${e}/${total}`);
-        res.setHeader('Content-Length', e - s + 1);
-        return res.status(206).end(buf.slice(s, e + 1));
+        // Keep the stable same-origin API URL. The browser follows this redirect
+        // and Vercel Blob serves Range / 206 responses directly from its CDN.
+        res.setHeader('Location', track.blobUrl);
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(307).end();
+    } catch (e) {
+        return musicStorageErrorResponse(res, e, 'music-file/get');
     }
-    res.setHeader('Content-Length', total);
-    return res.status(200).end(buf);
 }
 
 async function musicFilePost(req, res) {
     if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.query;
-    const items  = await readJsonArray(MUSIC_FILE);
-    const idx    = items.findIndex(x => x.id === id);
-    if (idx < 0) return res.status(404).json({ error: 'Track not found' });
-
-    const ct = ((req.headers['content-type'] || '').toLowerCase().split(';')[0]).trim();
-    let dataUrl;
-
-    if (ct === 'application/json') {
-        // Legacy: base64 JSON body {"dataUrl":"data:audio/...;base64,..."}
-        let body;
-        try { body = await readBodyLimited(req, FILE_MAX_BYTES); }
-        catch { return res.status(413).json({ error: 'ファイルが大きすぎます（目安: 3MB 以下）' }); }
-        dataUrl = body?.dataUrl;
-        if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:audio/'))
-            return res.status(400).json({ error: 'dataUrl (audio) が必要です' });
-        if (!dataUrl.includes(';base64,'))
-            return res.status(400).json({ error: 'dataUrl must be base64 encoded' });
-    } else if (ct.startsWith('audio/') || ct === 'application/octet-stream') {
-        // Binary upload — eliminates the 33 % base64 overhead vs JSON path
-        let rawBuf;
-        try { rawBuf = await readBodyLimitedRaw(req, FILE_MAX_BYTES); }
-        catch { return res.status(413).json({ error: 'ファイルが大きすぎます（目安: 3MB 以下）' }); }
-        if (!rawBuf.length) return res.status(400).json({ error: 'Empty body' });
-        const mime = ct.startsWith('audio/') ? ct : 'audio/mpeg';
-        dataUrl = 'data:' + mime + ';base64,' + rawBuf.toString('base64');
-    } else {
-        return res.status(400).json({ error: 'Content-Type が不正です' });
-    }
-
     try {
-        await writeMusicFile(id, dataUrl);
+        const { id } = req.query;
+        let body;
+        try { body = await readBodyLimited(req, 64 * 1024); }
+        catch { return res.status(413).json({ error: 'Music Blob metadata is too large' }); }
+
+        const items = await readMusicRecords();
+        const idx   = items.findIndex(x => x.id === id);
+        if (idx < 0) return res.status(404).json({ error: 'Track not found' });
+
+        if (body?.action === 'cleanup-previous') {
+            const track = items[idx];
+            const pending = track.previousAudioCleanup || track.previousAudio;
+            if (!pending?.blobUrl) return res.status(200).json({ ok: true, cleaned: false });
+
+            // Unreference first. A failed Blob delete now leaves an explicit,
+            // retryable cleanup record instead of a Music record pointing at a
+            // file that may already be gone.
+            if (!track.previousAudioCleanup) {
+                items[idx] = {
+                    ...track,
+                    previousAudio: null,
+                    previousAudioCleanup: pending,
+                    updatedAt: new Date().toISOString(),
+                };
+                await writeMusicRecords(items);
+            }
+
+            await deleteMusicBlob(pending.blobUrl);
+
+            const latest = await readMusicRecords();
+            const latestIdx = latest.findIndex(x => x.id === id);
+            if (latestIdx >= 0 &&
+                latest[latestIdx].previousAudioCleanup?.blobUrl === pending.blobUrl) {
+                latest[latestIdx] = {
+                    ...latest[latestIdx],
+                    previousAudioCleanup: null,
+                    updatedAt: new Date().toISOString(),
+                };
+                await writeMusicRecords(latest);
+            }
+            return res.status(200).json({ ok: true, cleaned: true });
+        }
+
+        if (body?.action === 'restore-previous') {
+            const current = items[idx];
+            const previousAudio = current.previousAudio;
+            if (!previousAudio?.blobUrl || !previousAudio?.blobPathname) {
+                return res.status(400).json({ error: 'No previous Blob is available for rollback' });
+            }
+            items[idx] = {
+                ...current,
+                audioFile: true,
+                fileSize: previousAudio.fileSize ?? null,
+                duration: previousAudio.duration ?? null,
+                bitrate: previousAudio.bitrate ?? null,
+                uploadedAt: previousAudio.uploadedAt ?? null,
+                blobPathname: previousAudio.blobPathname,
+                blobUrl: previousAudio.blobUrl,
+                blobVersion: previousAudio.blobVersion ?? null,
+                previousAudio: null,
+                updatedAt: new Date().toISOString(),
+            };
+            await writeMusicRecords(items);
+            return res.status(200).json({ ok: true, restored: true, track: items[idx] });
+        }
+
+        const blobUrl = String(body?.blobUrl || '');
+        const blobPathname = String(body?.blobPathname || '');
+        if (!blobUrl || !blobPathname) {
+            return res.status(400).json({ error: 'blobUrl and blobPathname are required' });
+        }
+
+        const info = await inspectMusicBlob(blobUrl, blobPathname, id);
+        if (!info.size || info.size > MUSIC_BLOB_MAX_BYTES) {
+            return res.status(400).json({ error: 'Music Blob size is invalid' });
+        }
+
+        const previous = items[idx];
+        const updated = {
+            ...previous,
+            audioFile: true,
+            fileSize: info.size,
+            duration: body.duration !== undefined ? sanitizeNum(body.duration, 86400) : (previous.duration ?? null),
+            bitrate: body.bitrate !== undefined ? sanitizeNum(body.bitrate, 10000) : (previous.bitrate ?? null),
+            uploadedAt: body.uploadedAt !== undefined ? sanitizeIso(body.uploadedAt) : new Date().toISOString(),
+            blobPathname: info.pathname,
+            blobUrl: info.url,
+            blobVersion: info.pathname.split('/').pop().replace(/\.mp3$/, ''),
+            previousAudio: previous.blobUrl ? {
+                blobPathname: previous.blobPathname || null,
+                blobUrl: previous.blobUrl,
+                blobVersion: previous.blobVersion || null,
+                fileSize: previous.fileSize ?? null,
+                duration: previous.duration ?? null,
+                bitrate: previous.bitrate ?? null,
+                uploadedAt: previous.uploadedAt ?? null,
+            } : null,
+            previousAudioCleanup: previous.previousAudioCleanup ?? null,
+            updatedAt: new Date().toISOString(),
+        };
+
+        items[idx] = updated;
+        try {
+            await writeMusicRecords(items);
+        } catch (writeError) {
+            // The newly uploaded version is not referenced yet. Remove it rather
+            // than leaving an inaccessible public orphan; never touch the old
+            // version during this rollback path.
+            if (info.url && info.url !== previous.blobUrl) {
+                await deleteMusicBlob(info.url).catch(cleanupError =>
+                    console.error('[music-file] unattached Blob cleanup error:', cleanupError)
+                );
+            }
+            throw writeError;
+        }
+
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(200).json({
+            ok: true,
+            track: updated,
+            previousBlobPendingCleanup: !!previous.blobUrl,
+        });
     } catch (e) {
-        console.error('[music-file] write error:', e);
-        return res.status(500).json({ error: 'Failed to save file' });
+        return musicStorageErrorResponse(res, e, 'music-file/attach');
     }
-
-    items[idx] = { ...items[idx], audioFile: true, updatedAt: new Date().toISOString() };
-    await writeJsonArray(MUSIC_FILE, items);
-
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ ok: true });
 }
 
 async function musicFileDelete(req, res) {
     if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { id } = req.query;
-    const items  = await readJsonArray(MUSIC_FILE);
-    const idx    = items.findIndex(x => x.id === id);
-    if (idx < 0) return res.status(404).json({ error: 'Track not found' });
+    try {
+        const { id } = req.query;
+        const items  = await readMusicRecords();
+        const idx    = items.findIndex(x => x.id === id);
+        if (idx < 0) return res.status(404).json({ error: 'Track not found' });
 
-    await deleteMusicFile(id).catch(e => console.error('[music-file] delete error:', e));
+        const previous = items[idx];
+        const deletion = previous.audioDeletion || {
+            current: previous.blobUrl ? {
+                blobUrl: previous.blobUrl,
+                blobPathname: previous.blobPathname || null,
+            } : null,
+            previous: previous.previousAudio || null,
+            older: previous.previousAudioCleanup || null,
+        };
+        const removed = previous.audioDeletion ? previous : {
+            ...previous,
+            audioFile: false,
+            fileSize: null,
+            duration: null,
+            bitrate: null,
+            uploadedAt: null,
+            blobPathname: null,
+            blobUrl: null,
+            blobVersion: null,
+            previousAudio: null,
+            previousAudioCleanup: null,
+            audioDeletion: deletion,
+            updatedAt: new Date().toISOString(),
+        };
 
-    items[idx] = { ...items[idx], audioFile: false, updatedAt: new Date().toISOString() };
-    await writeJsonArray(MUSIC_FILE, items);
+        // Turn off public playback first. If a Blob delete fails, this durable,
+        // retryable tombstone stays in the metadata; it never restores a URL
+        // that may have been deleted already.
+        items[idx] = removed;
+        await writeMusicRecords(items);
 
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ ok: true });
+        if (deletion.current?.blobUrl) await deleteMusicBlob(deletion.current.blobUrl);
+        if (deletion.previous?.blobUrl) await deleteMusicBlob(deletion.previous.blobUrl);
+        if (deletion.older?.blobUrl) await deleteMusicBlob(deletion.older.blobUrl);
+
+        const latest = await readMusicRecords();
+        const latestIdx = latest.findIndex(x => x.id === id);
+        if (latestIdx >= 0 && latest[latestIdx].audioDeletion) {
+            latest[latestIdx] = {
+                ...latest[latestIdx],
+                audioDeletion: null,
+                updatedAt: new Date().toISOString(),
+            };
+            await writeMusicRecords(latest);
+        }
+
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(200).json({ ok: true });
+    } catch (e) {
+        return musicStorageErrorResponse(res, e, 'music-file/delete');
+    }
 }
 
 // ── Messages ──────────────────────────────────────────────────────────────────

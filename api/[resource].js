@@ -15,6 +15,11 @@
 import { randomUUID } from 'crypto';
 import { COOKIE_NAME, verifyToken, parseCookies, extractToken, isRevoked } from './_auth.js';
 import { readJsonArray, writeJsonArray } from './_storage.js';
+import {
+    readMusicRecords,
+    writeMusicRecords,
+    musicStorageErrorResponse,
+} from './_music_storage.js';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -189,8 +194,6 @@ async function liveCreate(req, res) {
 
 // ── Music ─────────────────────────────────────────────────────────────────────
 
-const MUSIC_FILE = 'data/music.json';
-
 const MUSIC_VALID_STATUSES = ['published', 'draft', 'scheduled'];
 const MUSIC_VALID_TYPES    = ['single', 'ep', 'album'];
 
@@ -208,15 +211,17 @@ function autoPromoteMusic(items) {
 }
 
 async function musicList(req, res) {
-    let items = await readJsonArray(MUSIC_FILE);
-    if (autoPromoteMusic(items)) {
-        await writeJsonArray(MUSIC_FILE, items).catch(e =>
-            console.error('[music] auto-promote error:', e)
-        );
+    try {
+        let items = await readMusicRecords();
+        if (autoPromoteMusic(items)) {
+            await writeMusicRecords(items);
+        }
+        if (!isAuthed(req)) items = items.filter(t => t.status === 'published');
+        items.sort((a, b) => (b.releaseDate || '').localeCompare(a.releaseDate || ''));
+        return res.status(200).json(items);
+    } catch (e) {
+        return musicStorageErrorResponse(res, e, 'music/list');
     }
-    if (!isAuthed(req)) items = items.filter(t => t.status === 'published');
-    items.sort((a, b) => (b.releaseDate || '').localeCompare(a.releaseDate || ''));
-    return res.status(200).json(items);
 }
 
 async function musicCreate(req, res) {
@@ -263,12 +268,11 @@ async function musicCreate(req, res) {
     };
 
     try {
-        const items = await readJsonArray(MUSIC_FILE);
+        const items = await readMusicRecords();
         items.unshift(track);
-        await writeJsonArray(MUSIC_FILE, items);
+        await writeMusicRecords(items);
     } catch (e) {
-        console.error('[music] create error:', e);
-        return res.status(500).json({ error: 'Failed to save' });
+        return musicStorageErrorResponse(res, e, 'music/create');
     }
     return res.status(201).json(track);
 }

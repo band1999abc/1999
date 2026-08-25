@@ -19,7 +19,7 @@
         jacketSrc:     null,     // base64 dataUrl of pending jacket upload
         jacketToDelete: false,   // flag: delete existing jacket on next save
         audioMeta:     null,     // { duration, fileSize, bitrate, uploadedAt } from MP3 pick
-        audioFileObj:  null,     // File object pending upload to /api/music-file/:id
+        audioFileObj:  null,     // File object pending direct Blob upload
         saving:        false,
         analytics:     {},       // { [trackTitle]: { total, listeners } }
     };
@@ -69,6 +69,7 @@
     var mp3UpEl      = document.getElementById('mc-mp3-uploaded');
     var fileStatusEl = document.getElementById('mc-file-status');
     var fileDelBtn   = document.getElementById('mc-file-delete');
+    var fileCleanupBtn = document.getElementById('mc-file-cleanup');
 
     // Preview overlay
     var previewOverlay = document.getElementById('mc-preview-overlay');
@@ -132,13 +133,22 @@
         var t = S.editingId ? S.tracks.find(function (x) { return x.id === S.editingId; }) : null;
         var hasServer  = !!(t && t.audioFile);
         var hasPending = !!S.audioFileObj;
+        var hasPrevious = !!(t && (
+            (t.previousAudio && t.previousAudio.blobUrl) ||
+            (t.previousAudioCleanup && t.previousAudioCleanup.blobUrl)
+        ));
 
         if (fileDelBtn) fileDelBtn.classList.toggle('mc-hidden', !hasServer && !hasPending);
+        if (fileCleanupBtn) fileCleanupBtn.classList.toggle('mc-hidden', !hasPrevious);
 
         if (!fileStatusEl) return;
         if (hasPending) {
             fileStatusEl.textContent = '⏳ アップロード待ち — 保存すると配信されます';
             fileStatusEl.className = 'mc-file-status mc-file-status--pending';
+            fileStatusEl.classList.remove('mc-hidden');
+        } else if (hasPrevious) {
+            fileStatusEl.textContent = '✓ 新しい音源を保存しました。公開ページで再生確認後に旧バージョンを削除できます。';
+            fileStatusEl.className = 'mc-file-status mc-file-status--ok';
             fileStatusEl.classList.remove('mc-hidden');
         } else if (hasServer) {
             fileStatusEl.textContent = '✓ ファイルあり（ページ内で直接再生できます）';
@@ -155,28 +165,38 @@
         if (saveBtn) saveBtn.textContent = 'アップロード中…';
 
         var file = S.audioFileObj;
-        return authFetch('/api/music-file/' + musicId, {
-            method:  'POST',
-            headers: { 'Content-Type': file.type || 'audio/mpeg' },
-            body:    file,
+        if (!window.MusicBlobUpload || !window.MusicBlobUpload.uploadMusicBlob) {
+            return Promise.reject(new Error('音源アップロード機能を読み込めませんでした'));
+        }
+
+        return window.MusicBlobUpload.uploadMusicBlob(file, musicId, function (progress) {
+            if (!saveBtn) return;
+            saveBtn.textContent = 'アップロード中… ' + Math.round(progress.percentage || 0) + '%';
+        })
+        .then(function (blob) {
+            return authFetch('/api/music-file/' + musicId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    blobUrl:      blob.url,
+                    blobPathname: blob.pathname,
+                    duration:     S.audioMeta ? S.audioMeta.duration   : null,
+                    bitrate:      S.audioMeta ? S.audioMeta.bitrate    : null,
+                    uploadedAt:   S.audioMeta ? S.audioMeta.uploadedAt : new Date().toISOString(),
+                }),
+            });
         })
         .then(function (r) {
-            if (r.status === 413) throw new Error('ファイルが大きすぎます（目安：3MB 以下）');
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
+            return r.json().then(function (body) {
+                if (!r.ok || !body.ok) throw new Error(body.error || '音源の紐付けに失敗しました');
+                return body;
+            });
         })
         .then(function (resp) {
-            if (resp.ok) {
-                S.audioFileObj = null;
-                var idx = S.tracks.findIndex(function (x) { return x.id === musicId; });
-                if (idx >= 0) S.tracks[idx] = Object.assign({}, S.tracks[idx], { audioFile: true });
-                renderAudioFileUI();
-            } else {
-                alert('ファイルのアップロードに失敗しました: ' + (resp.error || '不明なエラー'));
-            }
-        })
-        .catch(function (err) {
-            alert('ファイルのアップロードに失敗しました: ' + err.message);
+            S.audioFileObj = null;
+            var idx = S.tracks.findIndex(function (x) { return x.id === musicId; });
+            if (idx >= 0 && resp.track) S.tracks[idx] = resp.track;
+            renderAudioFileUI();
         });
     }
 
@@ -521,9 +541,8 @@
             if (!file) return;
             mp3FileEl.value = '';
 
-            // Warn early if the file exceeds Vercel's body limit (~4MB raw)
-            if (file.size > 4 * 1024 * 1024) {
-                alert('ファイルが大きすぎます（' + (file.size / 1024 / 1024).toFixed(1) + ' MB）。\n4MB 以下の MP3 を選択してください。');
+            if (file.size > 64 * 1024 * 1024) {
+                alert('ファイルが大きすぎます（最大 64MB）。');
                 return;
             }
 
@@ -637,6 +656,29 @@
         });
     }
 
+    if (fileCleanupBtn) {
+        fileCleanupBtn.addEventListener('click', function () {
+            if (!S.editingId) return;
+            openConfirm('公開ページで新しい音源を再生確認しましたか？\n旧バージョンのMP3を完全に削除します。', function () {
+                authFetch('/api/music-file/' + S.editingId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'cleanup-previous' }),
+                })
+                .then(function (r) { return r.json().then(function (body) {
+                    if (!r.ok || !body.ok) throw new Error(body.error || '削除に失敗しました');
+                    return body;
+                }); })
+                .then(function () {
+                    var idx = S.tracks.findIndex(function (x) { return x.id === S.editingId; });
+                    if (idx >= 0) S.tracks[idx] = Object.assign({}, S.tracks[idx], { previousAudio: null });
+                    renderAudioFileUI();
+                })
+                .catch(function (err) { alert('旧バージョンの削除に失敗しました: ' + err.message); });
+            });
+        });
+    }
+
     // Pub-mode radio → show/hide schedule date picker
     document.querySelectorAll('input[name="mc-pub-mode"]').forEach(function (radio) {
         radio.addEventListener('change', function () { toggleSchedWrap(radio.value); });
@@ -675,10 +717,13 @@
             audioUrl:       audioUrlEl ? audioUrlEl.value.trim()  : '',
             lyrics:         lyricsEl   ? lyricsEl.value           : '',
             productionNote: noteEl     ? noteEl.value             : '',
-            duration:       S.audioMeta ? S.audioMeta.duration   : undefined,
-            fileSize:       S.audioMeta ? S.audioMeta.fileSize    : undefined,
-            bitrate:        S.audioMeta ? S.audioMeta.bitrate     : undefined,
-            uploadedAt:     S.audioMeta ? S.audioMeta.uploadedAt  : undefined,
+            // A pending file is committed only after Blob upload + server-side
+            // verification succeeds. This keeps the prior audio metadata intact
+            // if upload fails.
+            duration:       S.audioFileObj ? undefined : (S.audioMeta ? S.audioMeta.duration   : undefined),
+            fileSize:       S.audioFileObj ? undefined : (S.audioMeta ? S.audioMeta.fileSize    : undefined),
+            bitrate:        S.audioFileObj ? undefined : (S.audioMeta ? S.audioMeta.bitrate     : undefined),
+            uploadedAt:     S.audioFileObj ? undefined : (S.audioMeta ? S.audioMeta.uploadedAt  : undefined),
         };
 
         var isNew = !S.editingId;
