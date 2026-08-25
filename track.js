@@ -12,7 +12,7 @@
  *   track.lyrics    → あれば Lyrics セクション
  *
  * Analytics:
- *   再生開始・外部リンククリック時に music_play イベントを手動発火。
+ *   ユーザー操作で再生が実際に開始されたときだけ music_play を発火。
  *   page_view は analytics.js が自動送信。
  */
 (function () {
@@ -215,9 +215,11 @@
         });
 
         // ── Play / Pause button ───────────────────────────────────────────────
+        var userPlayRequested = false;
         btn.addEventListener('click', function () {
             if (audio.paused || audio.ended) {
-                audio.play().catch(function () {});
+                userPlayRequested = true;
+                audio.play().catch(function () { userPlayRequested = false; });
             } else {
                 audio.pause();
             }
@@ -247,7 +249,7 @@
             curEl.textContent = 'エラー';
         });
 
-        return { el: wrap, audio: audio };
+        return { el: wrap, audio: audio, get userPlayRequested() { return userPlayRequested; } };
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -274,7 +276,7 @@
             // Analytics: 初回再生時のみ発火
             var analyticsTracked = false;
             cp.audio.addEventListener('play', function () {
-                if (!analyticsTracked) {
+                if (cp.userPlayRequested && !analyticsTracked) {
                     analyticsTracked = true;
                     if (window.AH && window.AH.track) {
                         window.AH.track('music_play', {
@@ -296,15 +298,6 @@
             btn.target      = '_blank';
             btn.rel         = 'noopener noreferrer';
             btn.textContent = hasFile ? '▶ 外部リンク' : '▶ 聴く';
-
-            btn.addEventListener('click', function () {
-                if (window.AH && window.AH.track) {
-                    window.AH.track('music_play', {
-                        track:  track.title || '',
-                        source: 'external',
-                    });
-                }
-            });
 
             audioEl.appendChild(btn);
         }

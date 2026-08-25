@@ -22,6 +22,7 @@
     const publishBtn    = document.getElementById('la-publish');
     const deleteBtn     = document.getElementById('la-delete');
     const newBtn        = document.getElementById('la-new');
+    const paginationEl  = document.getElementById('la-pagination');
 
     // Flyer elements
     const flyerGridEl   = document.getElementById('la-flyer-grid');
@@ -32,6 +33,8 @@
     // ── State ─────────────────────────────────────────────────────────────────
     let allLives   = [];   // sorted by sort_order
     let editingId  = null;
+    let currentPage = 1;
+    const PAGE_SIZE = 10;
 
     /**
      * Flyer items for the currently-editing live.
@@ -232,7 +235,10 @@
     // ── Render list ───────────────────────────────────────────────────────────
     function renderList() {
         const n = allLives.length;
+        const pageCount = Math.max(1, Math.ceil(n / PAGE_SIZE));
+        currentPage = Math.min(currentPage, pageCount);
         countEl.textContent = n === 0 ? '' : `${n} 件`;
+        renderPagination(pageCount);
 
         if (n === 0) {
             listEl.innerHTML = '<p class="la-empty">まだライブがありません</p>';
@@ -240,7 +246,9 @@
         }
 
         listEl.innerHTML = '';
-        allLives.forEach((live, i) => {
+        const start = (currentPage - 1) * PAGE_SIZE;
+        allLives.slice(start, start + PAGE_SIZE).forEach((live, pageIndex) => {
+            const i = start + pageIndex;
             const row = document.createElement('div');
             row.className = 'la-item' + (live.id === editingId ? ' is-active' : '');
 
@@ -294,6 +302,33 @@
             row.addEventListener('click', () => selectLive(live.id));
             listEl.appendChild(row);
         });
+    }
+
+    function renderPagination(pageCount) {
+        if (!paginationEl || pageCount <= 1) {
+            if (paginationEl) paginationEl.innerHTML = '';
+            return;
+        }
+        paginationEl.innerHTML = '';
+        for (let i = 1; i <= pageCount; i++) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'admin-page-btn' + (i === currentPage ? ' is-active' : '');
+            btn.textContent = i;
+            btn.setAttribute('aria-label', `${i}ページ目`);
+            btn.setAttribute('aria-current', i === currentPage ? 'page' : 'false');
+            btn.addEventListener('click', () => { currentPage = i; renderList(); });
+            paginationEl.appendChild(btn);
+        }
+        if (currentPage < pageCount) {
+            const next = document.createElement('button');
+            next.type = 'button';
+            next.className = 'admin-page-btn admin-page-next';
+            next.textContent = '→';
+            next.setAttribute('aria-label', '次のページ');
+            next.addEventListener('click', () => { currentPage++; renderList(); });
+            paginationEl.appendChild(next);
+        }
     }
 
     // ── Reorder (move item up or down) ────────────────────────────────────────

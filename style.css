@@ -61,6 +61,12 @@ body[data-page="track"] {
     padding-bottom: 100px;
 }
 
+/* The hibiware lyric page has a slightly lower whale balance than the
+   generic lyric layout, while keeping its original size and animation. */
+.whale-hibiware {
+    top: clamp(12px, 3vh, 28px);
+}
+
 /* ==============================
    Card
 ============================== */

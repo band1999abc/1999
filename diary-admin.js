@@ -1,5 +1,5 @@
 /**
- * diary-admin.js  v2
+ * diary-admin.js  v3
  * Client-side logic for /afterhours/diary (admin diary management).
  * Supports scheduled publishing (status: 'scheduled', scheduledAt: 'YYYY-MM-DDTHH:MM').
  */
@@ -22,10 +22,13 @@
     const publishBtn   = document.getElementById('da-publish');
     const deleteBtn    = document.getElementById('da-delete');
     const newBtn       = document.getElementById('da-new');
+    const paginationEl  = document.getElementById('da-pagination');
 
     // ── State ─────────────────────────────────────────────────────────────────
     let allPosts  = [];    // cached full list (all statuses)
     let editingId = null;  // null = creating new
+    let currentPage = 1;
+    const PAGE_SIZE = 10;
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -105,14 +108,19 @@
 
     function renderList() {
         const n = allPosts.length;
+        const pageCount = Math.max(1, Math.ceil(n / PAGE_SIZE));
+        currentPage = Math.min(currentPage, pageCount);
         countEl.textContent = n === 0 ? '' : `${n} 件`;
+        renderPagination(pageCount);
 
         if (n === 0) {
             listEl.innerHTML = '<p class="da-empty">まだ投稿がありません</p>';
             return;
         }
 
-        listEl.innerHTML = allPosts.map(p => {
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const visiblePosts = allPosts.slice(start, start + PAGE_SIZE);
+        listEl.innerHTML = visiblePosts.map(p => {
             const active    = p.id === editingId ? ' is-active' : '';
             const dotClass  = p.status === 'published'  ? ' is-published'
                             : p.status === 'scheduled'  ? ' is-scheduled'
@@ -133,7 +141,7 @@
 
         // Fill via textContent (XSS-safe)
         listEl.querySelectorAll('.da-item').forEach((el, i) => {
-            const p = allPosts[i];
+            const p = visiblePosts[i];
             // Show scheduled datetime in date column if scheduled
             el.querySelector('.da-item-date').textContent =
                 p.status === 'scheduled' && p.scheduledAt
@@ -151,6 +159,33 @@
             }
             el.addEventListener('click', () => selectPost(el.dataset.id));
         });
+    }
+
+    function renderPagination(pageCount) {
+        if (!paginationEl || pageCount <= 1) {
+            if (paginationEl) paginationEl.innerHTML = '';
+            return;
+        }
+        paginationEl.innerHTML = '';
+        for (let i = 1; i <= pageCount; i++) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'admin-page-btn' + (i === currentPage ? ' is-active' : '');
+            btn.textContent = i;
+            btn.setAttribute('aria-label', `${i}ページ目`);
+            btn.setAttribute('aria-current', i === currentPage ? 'page' : 'false');
+            btn.addEventListener('click', () => { currentPage = i; renderList(); });
+            paginationEl.appendChild(btn);
+        }
+        if (currentPage < pageCount) {
+            const next = document.createElement('button');
+            next.type = 'button';
+            next.className = 'admin-page-btn admin-page-next';
+            next.textContent = '→';
+            next.setAttribute('aria-label', '次のページ');
+            next.addEventListener('click', () => { currentPage++; renderList(); });
+            paginationEl.appendChild(next);
+        }
     }
 
     // ── Select / clear editor ─────────────────────────────────────────────────
@@ -269,6 +304,7 @@
             } else {
                 allPosts = [saved, ...allPosts];
                 editingId = saved.id;
+                currentPage = 1;
             }
 
             // Reflect saved values back to form
@@ -301,6 +337,7 @@
             const res = await authFetch(`/api/diary/${editingId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             allPosts = allPosts.filter(p => p.id !== editingId);
+            currentPage = Math.min(currentPage, Math.max(1, Math.ceil(allPosts.length / PAGE_SIZE)));
             clearEditor();
         } catch (e) {
             console.error('[diary-admin] deletePost:', e);

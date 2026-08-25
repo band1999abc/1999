@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-07-09a — analytics cleanup: Country/Browser/QR Device 削除, Release→Music 統合, admin.css v15
+ * bump: 2026-08-25a — Music再生条件、Diary/Live pagination、ひび割れ表示、Node 24対応
  */
 
 import { readFileSync } from 'fs';
