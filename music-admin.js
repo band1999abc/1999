@@ -193,6 +193,10 @@
                     // Temporary upload failure diagnostic; remove after the failing stage is confirmed.
                     var diagnosticStage = r.headers && r.headers.get('X-Music-Diagnostic-Stage');
                     if (diagnosticStage) error.musicDiagnosticStage = diagnosticStage;
+                    var explicitTokenHead = r.headers && r.headers.get('X-Music-Diagnostic-Explicit-Token-Head');
+                    if (explicitTokenHead === 'success' || explicitTokenHead === 'failed') {
+                        error.musicExplicitTokenHead = explicitTokenHead;
+                    }
                     throw error;
                 }
                 return body;
@@ -775,6 +779,9 @@
                 var message = '保存に失敗しました: ' + e.message;
                 if (e && e.musicDiagnosticStage) {
                     message += '\n\n診断段階: ' + e.musicDiagnosticStage;
+                }
+                if (e && (e.musicExplicitTokenHead === 'success' || e.musicExplicitTokenHead === 'failed')) {
+                    message += '\nExplicit-Token-Head: ' + e.musicExplicitTokenHead;
                 }
                 alert(message);
            });
