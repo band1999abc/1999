@@ -189,11 +189,22 @@ export async function putMusicBlob(pathname, body, contentType = 'audio/mpeg') {
 
 export async function inspectMusicBlob(url, expectedPathname, musicId) {
     requireMusicBlob();
-    const pathname = assertBlobPathForMusicId(expectedPathname, musicId);
-    const info = await head(url);
-    if (info.pathname !== pathname) throw new Error('Music Blob pathname mismatch');
-    if (info.contentType !== 'audio/mpeg') throw new Error('Music Blob content type mismatch');
-    return info;
+    let diagnosticStage = 'inspect-blob';
+    try {
+        const pathname = assertBlobPathForMusicId(expectedPathname, musicId);
+        diagnosticStage = 'inspect-head';
+        const info = await head(url);
+        diagnosticStage = 'inspect-pathname';
+        if (info.pathname !== pathname) throw new Error('Music Blob pathname mismatch');
+        diagnosticStage = 'inspect-content-type';
+        if (info.contentType !== 'audio/mpeg') throw new Error('Music Blob content type mismatch');
+        return info;
+    } catch (error) {
+        if (error && typeof error === 'object') {
+            error.musicDiagnosticStage = diagnosticStage;
+        }
+        throw error;
+    }
 }
 
 export async function deleteMusicBlob(url) {
