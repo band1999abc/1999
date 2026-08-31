@@ -774,7 +774,7 @@
                 if (saveBtn) { saveBtn.textContent = '保存'; saveBtn.disabled = false; }
                 var message = '保存に失敗しました: ' + e.message;
                 if (e && e.musicDiagnosticStage) {
-                    message += '\n\n診断段階: : ' + e.musicDiagnosticStage;
+                    message += '\n\n診断段階: ' + e.musicDiagnosticStage;
                 }
                 alert(message);
            });
