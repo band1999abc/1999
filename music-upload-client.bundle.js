@@ -6518,6 +6518,9 @@ ${newlined}
   async function uploadMusicBlob(file, musicId, onProgress) {
     if (!(file instanceof File)) throw new Error("MP3\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044");
     if (!musicId) throw new Error("Music ID \u304C\u3042\u308A\u307E\u305B\u3093");
+    alert(
+      "name: " + file.name + "\ntype: " + file.type + "\nsize: " + file.size
+    );
     if (file.type && file.type !== "audio/mpeg" && !/\.mp3$/i.test(file.name || "")) {
       throw new Error("MP3 \u30D5\u30A1\u30A4\u30EB\u306E\u307F\u30A2\u30C3\u30D7\u30ED\u30FC\u30C9\u3067\u304D\u307E\u3059");
     }
