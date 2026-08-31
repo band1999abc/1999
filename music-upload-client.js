@@ -15,7 +15,7 @@ function blobPathFor(musicId) {
 export async function uploadMusicBlob(file, musicId, onProgress) {
     if (!(file instanceof File)) throw new Error('MP3ファイルを選択してください');
     if (!musicId) throw new Error('Music ID がありません');
-    if (file.type && file.type !== 'audio/mpeg') {
+    if (file.type && file.type !== 'audio/mpeg' && !/\.mp3$/i.test(file.name || '')) {
         throw new Error('MP3 ファイルのみアップロードできます');
     }
 
