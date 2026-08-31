@@ -193,7 +193,25 @@ export async function inspectMusicBlob(url, expectedPathname, musicId) {
     try {
         const pathname = assertBlobPathForMusicId(expectedPathname, musicId);
         diagnosticStage = 'inspect-head';
-        const info = await head(url);
+        let info;
+        try {
+            info = await head(url);
+        } catch (originalError) {
+            let explicitTokenHead = 'failed';
+            try {
+                await head(url, { token: process.env.BLOB_READ_WRITE_TOKEN });
+                explicitTokenHead = 'success';
+            } catch {
+                // The original head error remains the operation's error.
+            }
+            if (originalError && typeof originalError === 'object') {
+                Object.defineProperty(originalError, 'musicExplicitTokenHead', {
+                    value: explicitTokenHead,
+                    configurable: true,
+                });
+            }
+            throw originalError;
+        }
         diagnosticStage = 'inspect-pathname';
         if (info.pathname !== pathname) throw new Error('Music Blob pathname mismatch');
         diagnosticStage = 'inspect-content-type';
