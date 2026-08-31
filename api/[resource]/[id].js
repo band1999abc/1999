@@ -808,6 +808,13 @@ async function musicFilePost(req, res) {
                 'X-Music-Diagnostic-Stage',
                 e?.musicDiagnosticStage || diagnosticStage
             );
+            if (e?.musicExplicitTokenHead === 'success' ||
+                e?.musicExplicitTokenHead === 'failed') {
+                res.setHeader(
+                    'X-Music-Diagnostic-Explicit-Token-Head',
+                    e.musicExplicitTokenHead
+                );
+            }
         }
         return musicStorageErrorResponse(res, e, 'music-file/attach');
     }
