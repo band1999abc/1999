@@ -188,7 +188,13 @@
         })
         .then(function (r) {
             return r.json().then(function (body) {
-                if (!r.ok || !body.ok) throw new Error(body.error || '音源の紐付けに失敗しました');
+                if (!r.ok || !body.ok) {
+                    var error = new Error(body.error || '音源の紐付けに失敗しました');
+                    // Temporary upload failure diagnostic; remove after the failing stage is confirmed.
+                    var diagnosticStage = r.headers && r.headers.get('X-Music-Diagnostic-Stage');
+                    if (diagnosticStage) error.musicDiagnosticStage = diagnosticStage;
+                    throw error;
+                }
                 return body;
             });
         })
@@ -766,7 +772,11 @@
            .catch(function (e) {
                 S.saving = false;
                 if (saveBtn) { saveBtn.textContent = '保存'; saveBtn.disabled = false; }
-                alert('保存に失敗しました: ' + e.message);
+                var message = '保存に失敗しました: ' + e.message;
+                if (e && e.musicDiagnosticStage) {
+                    message += '\n\n診断段階: : ' + e.musicDiagnosticStage;
+                }
+                alert(message);
            });
     }
 
