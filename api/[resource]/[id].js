@@ -804,7 +804,10 @@ async function musicFilePost(req, res) {
     } catch (e) {
         if (e?.name !== 'MusicStorageConfigError' &&
             e?.name !== 'MusicStorageConflictError') {
-            res.setHeader('X-Music-Diagnostic-Stage', diagnosticStage);
+            res.setHeader(
+                'X-Music-Diagnostic-Stage',
+                e?.musicDiagnosticStage || diagnosticStage
+            );
         }
         return musicStorageErrorResponse(res, e, 'music-file/attach');
     }
