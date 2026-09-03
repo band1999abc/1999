@@ -181,6 +181,7 @@ export async function putMusicBlob(pathname, body, contentType = 'audio/mpeg') {
     }
     return put(pathname, body, {
         access: 'public',
+        storeId: process.env.MUSIC_PUBLIC_BLOB_STORE_ID,
         addRandomSuffix: false,
         allowOverwrite: false,
         contentType: 'audio/mpeg',
@@ -195,11 +196,15 @@ export async function inspectMusicBlob(url, expectedPathname, musicId) {
         diagnosticStage = 'inspect-head';
         let info;
         try {
-            info = await head(url);
+            info = await head(url, {
+                storeId: process.env.MUSIC_PUBLIC_BLOB_STORE_ID,
+            });
         } catch (originalError) {
             let explicitTokenHead = 'failed';
             try {
-                await head(url, { token: process.env.BLOB_READ_WRITE_TOKEN });
+                await head(url, {
+                    token: process.env.MUSIC_PUBLIC_BLOB_READ_WRITE_TOKEN,
+                });
                 explicitTokenHead = 'success';
             } catch {
                 // The original head error remains the operation's error.
@@ -228,7 +233,9 @@ export async function inspectMusicBlob(url, expectedPathname, musicId) {
 export async function deleteMusicBlob(url) {
     requireMusicBlob();
     if (!url) return;
-    await del(url);
+    await del(url, {
+        storeId: process.env.MUSIC_PUBLIC_BLOB_STORE_ID,
+    });
 }
 
 export function makeMusicBlobPath(musicId, version = Date.now()) {
