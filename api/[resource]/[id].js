@@ -672,15 +672,12 @@ async function musicFileGet(req, res) {
 async function musicFilePost(req, res) {
     if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-    let diagnosticStage = 'unknown';
-
     try {
         const { id } = req.query;
         let body;
         try { body = await readBodyLimited(req, 64 * 1024); }
         catch { return res.status(413).json({ error: 'Music Blob metadata is too large' }); }
 
-        diagnosticStage = 'read-records';
         const items = await readMusicRecords();
         const idx   = items.findIndex(x => x.id === id);
         if (idx < 0) return res.status(404).json({ error: 'Track not found' });
@@ -748,13 +745,11 @@ async function musicFilePost(req, res) {
             return res.status(400).json({ error: 'blobUrl and blobPathname are required' });
         }
 
-        diagnosticStage = 'inspect-blob';
         const info = await inspectMusicBlob(blobUrl, blobPathname, id);
         if (!info.size || info.size > MUSIC_BLOB_MAX_BYTES) {
             return res.status(400).json({ error: 'Music Blob size is invalid' });
         }
 
-        diagnosticStage = 'unknown';
         const previous = items[idx];
         const updated = {
             ...previous,
@@ -781,7 +776,6 @@ async function musicFilePost(req, res) {
 
         items[idx] = updated;
         try {
-            diagnosticStage = 'write-records';
             await writeMusicRecords(items);
         } catch (writeError) {
             // The newly uploaded version is not referenced yet. Remove it rather
@@ -802,20 +796,6 @@ async function musicFilePost(req, res) {
             previousBlobPendingCleanup: !!previous.blobUrl,
         });
     } catch (e) {
-        if (e?.name !== 'MusicStorageConfigError' &&
-            e?.name !== 'MusicStorageConflictError') {
-            res.setHeader(
-                'X-Music-Diagnostic-Stage',
-                e?.musicDiagnosticStage || diagnosticStage
-            );
-            if (e?.musicExplicitTokenHead === 'success' ||
-                e?.musicExplicitTokenHead === 'failed') {
-                res.setHeader(
-                    'X-Music-Diagnostic-Explicit-Token-Head',
-                    e.musicExplicitTokenHead
-                );
-            }
-        }
         return musicStorageErrorResponse(res, e, 'music-file/attach');
     }
 }
