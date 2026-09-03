@@ -59,6 +59,7 @@ export default async function handler(req, res) {
 
     try {
         const result = await handleUpload({
+            token: process.env.MUSIC_PUBLIC_BLOB_READ_WRITE_TOKEN,
             request: req,
             body,
             onBeforeGenerateToken: async (pathname, clientPayload) => {
