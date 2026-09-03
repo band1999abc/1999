@@ -190,44 +190,13 @@ export async function putMusicBlob(pathname, body, contentType = 'audio/mpeg') {
 
 export async function inspectMusicBlob(url, expectedPathname, musicId) {
     requireMusicBlob();
-    let diagnosticStage = 'inspect-blob';
-    try {
-        const pathname = assertBlobPathForMusicId(expectedPathname, musicId);
-        diagnosticStage = 'inspect-head';
-        let info;
-        try {
-            info = await head(url, {
-                storeId: process.env.MUSIC_PUBLIC_BLOB_STORE_ID,
-            });
-        } catch (originalError) {
-            let explicitTokenHead = 'failed';
-            try {
-                await head(url, {
-                    token: process.env.MUSIC_PUBLIC_BLOB_READ_WRITE_TOKEN,
-                });
-                explicitTokenHead = 'success';
-            } catch {
-                // The original head error remains the operation's error.
-            }
-            if (originalError && typeof originalError === 'object') {
-                Object.defineProperty(originalError, 'musicExplicitTokenHead', {
-                    value: explicitTokenHead,
-                    configurable: true,
-                });
-            }
-            throw originalError;
-        }
-        diagnosticStage = 'inspect-pathname';
-        if (info.pathname !== pathname) throw new Error('Music Blob pathname mismatch');
-        diagnosticStage = 'inspect-content-type';
-        if (info.contentType !== 'audio/mpeg') throw new Error('Music Blob content type mismatch');
-        return info;
-    } catch (error) {
-        if (error && typeof error === 'object') {
-            error.musicDiagnosticStage = diagnosticStage;
-        }
-        throw error;
-    }
+    const pathname = assertBlobPathForMusicId(expectedPathname, musicId);
+    const info = await head(url, {
+        storeId: process.env.MUSIC_PUBLIC_BLOB_STORE_ID,
+    });
+    if (info.pathname !== pathname) throw new Error('Music Blob pathname mismatch');
+    if (info.contentType !== 'audio/mpeg') throw new Error('Music Blob content type mismatch');
+    return info;
 }
 
 export async function deleteMusicBlob(url) {
