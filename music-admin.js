@@ -188,17 +188,7 @@
         })
         .then(function (r) {
             return r.json().then(function (body) {
-                if (!r.ok || !body.ok) {
-                    var error = new Error(body.error || '音源の紐付けに失敗しました');
-                    // Temporary upload failure diagnostic; remove after the failing stage is confirmed.
-                    var diagnosticStage = r.headers && r.headers.get('X-Music-Diagnostic-Stage');
-                    if (diagnosticStage) error.musicDiagnosticStage = diagnosticStage;
-                    var explicitTokenHead = r.headers && r.headers.get('X-Music-Diagnostic-Explicit-Token-Head');
-                    if (explicitTokenHead === 'success' || explicitTokenHead === 'failed') {
-                        error.musicExplicitTokenHead = explicitTokenHead;
-                    }
-                    throw error;
-                }
+                if (!r.ok || !body.ok) throw new Error(body.error || '音源の紐付けに失敗しました');
                 return body;
             });
         })
@@ -776,14 +766,7 @@
            .catch(function (e) {
                 S.saving = false;
                 if (saveBtn) { saveBtn.textContent = '保存'; saveBtn.disabled = false; }
-                var message = '保存に失敗しました: ' + e.message;
-                if (e && e.musicDiagnosticStage) {
-                    message += '\n\n診断段階: ' + e.musicDiagnosticStage;
-                }
-                if (e && (e.musicExplicitTokenHead === 'success' || e.musicExplicitTokenHead === 'failed')) {
-                    message += '\nExplicit-Token-Head: ' + e.musicExplicitTokenHead;
-                }
-                alert(message);
+                alert('保存に失敗しました: ' + e.message);
            });
     }
 
