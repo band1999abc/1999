@@ -310,7 +310,7 @@
     }
 
     // ── API フェッチ ─────────────────────────────────────────────────────────
-    fetch('/api/music/' + encodeURIComponent(id), { credentials: 'omit' })
+    fetch('/api/music/' + encodeURIComponent(id), { credentials: 'same-origin' })
         .then(function (r) {
             if (r.status === 404) throw { notFound: true };
             if (!r.ok) throw new Error('HTTP ' + r.status);
