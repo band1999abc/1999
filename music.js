@@ -68,7 +68,7 @@
 
     // ── API フェッチ ─────────────────────────────────────────────────────────
     // credentials: 'omit' — admin セッションクッキーを送信しない（公開 API 呼び出し）
-    fetch('/api/music', { credentials: 'omit' })
+    fetch('/api/music', { credentials: 'same-origin' })
         .then(function (r) {
             if (!r.ok) throw new Error('API error ' + r.status);
             return r.json();
