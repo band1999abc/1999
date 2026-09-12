@@ -15,6 +15,7 @@
     let targetY   = 0;   // where the whale should end up
     let currentY  = 0;   // where the whale is right now (lerped)
     let rafId     = null;
+    let layoutRaf = null;
 
     function cacheCardTop() {
         let el = card, top = 0;
@@ -61,11 +62,38 @@
         }
     }
 
-    cacheCardTop();
-    window.addEventListener('resize', function () {
+    function syncPosition() {
         cacheCardTop();
-        onScroll();
-    }, { passive: true });
+        targetY = getTargetY();
+        currentY = targetY;
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+        whale.style.transform = 'translate3d(0,' + currentY + 'px,0)';
+    }
+
+    function scheduleLayoutRefresh() {
+        if (layoutRaf !== null) return;
+        layoutRaf = requestAnimationFrame(function () {
+            layoutRaf = null;
+            cacheCardTop();
+            onScroll();
+        });
+    }
+
+    cacheCardTop();
+    window.addEventListener('resize', scheduleLayoutRefresh, { passive: true });
+    window.addEventListener('orientationchange', scheduleLayoutRefresh, { passive: true });
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', scheduleLayoutRefresh, { passive: true });
+    }
+
+    if ('ResizeObserver' in window) {
+        const cardObserver = new ResizeObserver(scheduleLayoutRefresh);
+        cardObserver.observe(card);
+    }
 
     window.addEventListener('scroll', onScroll, { passive: true });
 
@@ -73,4 +101,13 @@
     targetY  = getTargetY();
     currentY = targetY;
     whale.style.transform = 'translate3d(0,' + currentY + 'px,0)';
+
+    if (isHibiware) {
+        // Reconcile browser-restored scroll and the final Android viewport.
+        window.addEventListener('load', syncPosition, { once: true });
+        window.addEventListener('pageshow', syncPosition);
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(syncPosition);
+        }
+    }
 }());
