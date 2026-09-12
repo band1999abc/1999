@@ -8,6 +8,7 @@
     const whale = document.querySelector('.whale-bg');
     if (!card || !whale) return;
 
+    const isHibiware = document.body.dataset.page === 'hibiware';
     const LERP_FACTOR = 0.10; // 0.0–1.0: lower = more inertia, higher = snappier
 
     let cardTop0  = 0;   // card distance from document top (cached)
@@ -39,8 +40,22 @@
         }
     }
 
+    function getTargetY() {
+        if (isHibiware) return window.scrollY;
+        return Math.max(0, window.scrollY - cardTop0);
+    }
+
     function onScroll() {
-        targetY = Math.max(0, window.scrollY - cardTop0);
+        targetY = getTargetY();
+        if (isHibiware && window.scrollY === 0) {
+            currentY = 0;
+            if (rafId !== null) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+            whale.style.transform = 'translate3d(0,0,0)';
+            return;
+        }
         if (rafId === null) {
             rafId = requestAnimationFrame(tick);
         }
@@ -55,7 +70,7 @@
     window.addEventListener('scroll', onScroll, { passive: true });
 
     // Set initial state without animation
-    targetY  = Math.max(0, window.scrollY - cardTop0);
+    targetY  = getTargetY();
     currentY = targetY;
     whale.style.transform = 'translate3d(0,' + currentY + 'px,0)';
 }());

@@ -63,8 +63,8 @@ body[data-page="track"] {
 
 /* The hibiware lyric page has a slightly lower whale balance than the
    generic lyric layout, while keeping its original size and animation. */
-.whale-hibiware {
-    top: clamp(12px, 3vh, 28px);
+.whale-bg.whale-hibiware {
+    top: clamp(72px, 12vw, 108px);
 }
 
 /* ==============================
