@@ -224,7 +224,9 @@
     /* ── Apply weather to DOM ───────────────────────────────────── */
     function applyWeather(condition, temp, clouds, phrases) {
         const validClouds = typeof clouds === 'number' && isFinite(clouds) && clouds >= 0 && clouds <= 100;
-        const cloudInfo = condition === 'Clouds' && validClouds ? cloudDisplay(clouds) : null;
+        const cloudInfo = (condition === 'Clear' || condition === 'Clouds') && validClouds
+            ? cloudDisplay(clouds)
+            : null;
         const info = cloudInfo || CONDITIONS[condition];
         if (!info) { dispatchWeatherReady(null, null); return; }
 
