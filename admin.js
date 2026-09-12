@@ -108,7 +108,7 @@
 
     /* ── Gated pages (dashboard + sub-pages) ─────────────────────── */
 
-    if (page === 'afterhours' || page === 'afterhours-diary' || page === 'afterhours-live' || page === 'afterhours-analytics' || page === 'afterhours-music' || page === 'afterhours-messages' || page === 'afterhours-weather-phrases') {
+    if (page === 'afterhours' || page === 'afterhours-diary' || page === 'afterhours-live' || page === 'afterhours-analytics' || page === 'afterhours-music' || page === 'afterhours-messages' || page === 'afterhours-weather-phrases' || page === 'afterhours-members') {
 
         // Always call the server — honours both Bearer token AND cookie fallback
         (async function gate() {
