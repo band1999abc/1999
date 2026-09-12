@@ -9,6 +9,76 @@
     const hour  = now.getHours();
     const month = now.getMonth(); // 0-indexed
 
+    // ── Viewport-aware outer spacing ─────────────────────────────
+    // Keep the preferred page padding when content is tall. Only reduce it
+    // when the card itself fits in the visible viewport but the outer padding
+    // would create an otherwise unnecessary document scrollbar.
+    const pageCard = document.querySelector('.card');
+    const hasDedicatedPageSpacing = ['music', 'hibiware', 'track']
+        .indexOf(document.body.dataset.page) >= 0;
+    let spacingRaf = null;
+
+    function visibleViewportHeight() {
+        if (window.visualViewport) return window.visualViewport.height;
+        return Math.min(window.innerHeight, document.documentElement.clientHeight);
+    }
+
+    function updateOuterSpacing() {
+        spacingRaf = null;
+        if (!pageCard || hasDedicatedPageSpacing) return;
+
+        const viewportHeight = visibleViewportHeight();
+        const cardHeight = pageCard.getBoundingClientRect().height;
+
+        document.body.style.removeProperty('padding-top');
+        document.body.style.removeProperty('padding-bottom');
+
+        if (cardHeight > viewportHeight) return;
+
+        const preferred = Math.min(40, Math.max(20, viewportHeight * 0.05));
+        const available = Math.max(0, viewportHeight - cardHeight);
+        let top;
+        let bottom;
+
+        if (available >= preferred * 2) {
+            top = preferred;
+            bottom = preferred;
+        } else if (available >= 16) {
+            top = available / 2;
+            bottom = available / 2;
+        } else {
+            // Preserve room for the card's existing 8px upward float.
+            top = Math.min(8, available);
+            bottom = available - top;
+        }
+
+        document.body.style.paddingTop = top.toFixed(2) + 'px';
+        document.body.style.paddingBottom = bottom.toFixed(2) + 'px';
+    }
+
+    function scheduleOuterSpacingUpdate() {
+        if (spacingRaf !== null) return;
+        spacingRaf = requestAnimationFrame(updateOuterSpacing);
+    }
+
+    if (pageCard && !hasDedicatedPageSpacing) {
+        updateOuterSpacing();
+        window.addEventListener('resize', scheduleOuterSpacingUpdate, { passive: true });
+        window.addEventListener('orientationchange', scheduleOuterSpacingUpdate, { passive: true });
+        window.addEventListener('load', scheduleOuterSpacingUpdate, { once: true });
+        window.addEventListener('pageshow', scheduleOuterSpacingUpdate);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', scheduleOuterSpacingUpdate, { passive: true });
+        }
+        if ('ResizeObserver' in window) {
+            const spacingObserver = new ResizeObserver(scheduleOuterSpacingUpdate);
+            spacingObserver.observe(pageCard);
+        }
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(scheduleOuterSpacingUpdate);
+        }
+    }
+
     // ── Night mode ────────────────────────────────────────────────
     const debugNight = new URLSearchParams(window.location.search).get('night');
     const isNight = debugNight === '1' || hour >= 18 || hour < 6;

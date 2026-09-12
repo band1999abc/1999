@@ -4011,7 +4011,11 @@ body.night .mc-badge--sched { background: rgba(50,100,170,.25); color: #7aadef; 
     justify-content: center;
     left: 0;
     overflow-y: auto;
-    padding: 24px 16px;
+    padding:
+        calc(24px + env(safe-area-inset-top))
+        calc(16px + env(safe-area-inset-right))
+        calc(24px + env(safe-area-inset-bottom))
+        calc(16px + env(safe-area-inset-left));
     position: fixed;
     right: 0;
     top: 0;
@@ -4100,6 +4104,13 @@ body.night .mc-badge--sched { background: rgba(50,100,170,.25); color: #7aadef; 
     display: none;
     justify-content: center;
     left: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding:
+        calc(16px + env(safe-area-inset-top))
+        calc(16px + env(safe-area-inset-right))
+        calc(16px + env(safe-area-inset-bottom))
+        calc(16px + env(safe-area-inset-left));
     position: fixed;
     right: 0;
     top: 0;
@@ -4109,7 +4120,11 @@ body.night .mc-badge--sched { background: rgba(50,100,170,.25); color: #7aadef; 
 .mc-confirm-inner {
     background: var(--card-bg);
     border-radius: 18px;
+    box-sizing: border-box;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     max-width: 340px;
+    overflow-y: auto;
     padding: 28px 24px;
     width: 90%;
 }

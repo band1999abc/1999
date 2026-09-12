@@ -41,10 +41,12 @@ body {
         sans-serif;
 
     min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 40px 20px;
+    padding: clamp(20px, 5dvh, 40px) 20px;
 }
 
 /* ── music / hibiware / track page-specific padding ── */
@@ -266,6 +268,24 @@ footer {
     align-items: center;
     gap: 18px;
     line-height: 1;
+    min-width: 0;
+}
+
+.song-left:has(.song-jacket) {
+    transition: transform var(--transition-fast) ease;
+}
+
+.song-item:hover .song-left:has(.song-jacket) {
+    transform: translateY(-3px);
+}
+
+.song-jacket {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border: 1px solid rgba(140, 120, 90, .22);
+    border-radius: 6px;
+    flex-shrink: 0;
 }
 
 .play-icon {
@@ -296,6 +316,10 @@ footer {
     transform: translateY(-3px);
 }
 
+.song-item:hover .song-left:has(.song-jacket) .song-name {
+    transform: none;
+}
+
 .song-year {
     margin-left: auto;
     font-size: 18px;
@@ -314,6 +338,27 @@ footer {
 .play-button-wrap {
     text-align: center;
     margin-top: 60px;
+}
+
+.track-jacket-wrap {
+    display: flex;
+    justify-content: center;
+    margin: -16px 0 32px;
+}
+
+.track-jacket-wrap[hidden] {
+    display: none;
+}
+
+.track-jacket {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: min(100%, 320px);
+    max-height: 320px;
+    object-fit: contain;
+    border: 1px solid rgba(140, 120, 90, .22);
+    border-radius: 8px;
 }
 
 /* ── Custom Audio Player ─────────────────────────────────────────── */
@@ -807,6 +852,20 @@ body.weather-foggy::before {
     .song-name {
         font-size: 20px;
     }
+
+    .song-left {
+        gap: 12px;
+    }
+
+    .song-jacket {
+        width: 42px;
+        height: 42px;
+    }
+
+    .track-jacket {
+        max-width: min(100%, 280px);
+        max-height: 280px;
+    }
 }
 
 /* ==============================
@@ -1012,7 +1071,7 @@ body.night .back-home     { color: #8a9ab2; }
     border-bottom: 1px solid var(--border);
 }
 
-/* Public Live pagination */
+/* Public Diary / Live pagination */
 .public-pagination {
     display: flex;
     flex-wrap: wrap;
@@ -1155,7 +1214,15 @@ body.night .public-pagination-button.is-current {
     align-items: center;
     justify-content: center;
     cursor: zoom-out;
-    padding: 20px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding:
+        calc(20px + env(safe-area-inset-top))
+        calc(20px + env(safe-area-inset-right))
+        calc(20px + env(safe-area-inset-bottom))
+        calc(20px + env(safe-area-inset-left));
     animation: flyer-modal-in 0.2s ease;
 }
 
@@ -1166,6 +1233,7 @@ body.night .public-pagination-button.is-current {
 .live-flyer-modal-img {
     max-width: min(92vw, 680px);
     max-height: 86vh;
+    max-height: calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     border-radius: 8px;
     box-shadow: 0 24px 64px rgba(0,0,0,.6);
     cursor: default;

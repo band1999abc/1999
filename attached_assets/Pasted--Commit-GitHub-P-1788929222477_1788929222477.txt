@@ -1,0 +1,204 @@
+実機で再確認した結果、②と⑥はまだ解決していません。
+
+ここからは推測による追加修正を止めてください。
+
+まず【原因調査のみ】を行ってください。
+調査段階ではコード変更・Commit・GitHub Push・Production Deploymentを一切行わないでください。
+
+━━━━━━━━━━━━━━━━━━
+【② ひび割れのクジラ】
+━━━━━━━━━━━━━━━━━━
+
+Android実機で現在も以下の症状があります。
+
+1. 「ひび割れ」ページを開く
+2. クジラが本来の位置ではなく上部に寄っている
+3. そのまま下方向へスクロールしても、クジラは正しい位置にならない
+4. 一度ページ最上部まで戻る
+5. その後スクロールすると、クジラが正しい位置に戻る
+
+前回はscrollY基準への変更を行いましたが、この症状は解消しませんでした。
+
+したがって、今回さらにtopの数値を変更するだけの修正は禁止です。
+
+【必ず調査すること】
+
+クジラについて、
+
+- クジラ自身のoffsetTop / getBoundingClientRect()
+- 親要素のgetBoundingClientRect()
+- cardのgetBoundingClientRect()
+- document.documentElement.scrollTop
+- window.scrollY
+- window.innerHeight
+- visualViewport.height
+- visualViewport.offsetTop
+- visualViewport.pageTop
+- document.documentElement.clientHeight
+- document.body.scrollHeight
+- document.documentElement.scrollHeight
+- position
+- top
+- transform
+- containing block
+- overflow
+- 初期化時の実行順序
+
+を確認してください。
+
+特に、
+
+「ページを開いた直後」
+「最初に40px程度スクロールした直後」
+「最上部へ戻った直後」
+「その後40px程度スクロールした直後」
+
+で、可能な範囲で値を比較してください。
+
+目的は、
+「なぜ最上部へ一度戻った後だけ正しい位置になるのか」
+を特定することです。
+
+また、whale.jsがページスクロールによって意図せず再計算されているのか、
+逆に初回表示時には必要な再計算が行われていないのかを確認してください。
+
+ResizeObserverやvisualViewport関連の処理が、
+スクロールによって間接的にレイアウトを更新していないかも確認してください。
+
+【重要】
+
+現状の実装を正しいと仮定しないでください。
+
+「scrollYを使っているから正しい」
+「requestAnimationFrameを使っているから正しい」
+という前提ではなく、
+実際にどの値が間違っているのかを特定してください。
+
+━━━━━━━━━━━━━━━━━━
+【⑥ 不要なスクロール】
+━━━━━━━━━━━━━━━━━━
+
+こちらも実機ではまだ不要なスクロールが発生しています。
+
+今回の目的は、
+
+「スクロールを禁止する」
+
+ことではありません。
+
+目的は、
+
+「コンテンツがviewport内に収まる場合は不要なスクロールを発生させず、
+コンテンツがviewportを超えた場合は自然にスクロールできる」
+
+ことです。
+
+【必ず調査すること】
+
+まず、実際に不要なスクロールが発生するページを特定してください。
+
+対象候補：
+- Home
+- Members
+- Contact
+- Music
+- Track
+- Diary
+- Live
+- After Hours
+
+各ページについて、
+
+- document.documentElement.scrollHeight
+- document.body.scrollHeight
+- window.innerHeight
+- visualViewport.height
+- document.documentElement.clientHeight
+- bodyのmargin/padding
+- mainの高さ
+- cardの高さ
+- footerの高さ
+- gap
+- transform
+- position
+- min-height
+- height
+- overflow
+
+を調べてください。
+
+特に、
+「viewportより何px大きいのか」
+を測定してください。
+
+例えば、
+
+viewport = 800px
+scrollHeight = 837px
+
+なら37px余計に発生している、
+というように具体的に特定してください。
+
+そして、その37pxがどの要素によって生じているのかを調べてください。
+
+【重要】
+
+以下は禁止です。
+
+- bodyにoverflow:hiddenを追加するだけ
+- htmlにoverflow:hiddenを追加するだけ
+- 全ページにoverflow-x:hiddenを追加するだけ
+- height:100vhで無理やり固定する
+- height:100dvhで無理やり固定する
+- コンテンツをclipしてスクロールを隠す
+- 現象を確認せずmargin/paddingを適当に減らす
+
+将来Diary / Live / Musicなどのコンテンツが増えた場合に、
+自動的にページが伸びてスクロールできる必要があります。
+
+【重要な考え方】
+
+短いページでは、
+
+コンテンツ + 必要な余白 <= viewport
+
+ならスクロールなし。
+
+コンテンツ + 必要な余白 > viewport
+
+なら自然にスクロール。
+
+という状態を作ることが目的です。
+
+━━━━━━━━━━━━━━━━━━
+【②と⑥の関連性】
+━━━━━━━━━━━━━━━━━━
+
+クジラの高さ・位置計算・カードサイズ・viewport再計算が
+ページ全体のscrollHeightに影響していないかも確認してください。
+
+②のクジラ処理によって⑥の不要スクロールが発生している可能性、
+またはその逆も確認してください。
+
+━━━━━━━━━━━━━━━━━━
+【今回の最重要条件】
+━━━━━━━━━━━━━━━━━━
+
+今回は「修正した結果」ではなく、
+「実機で観測した事実」と「原因」を報告してください。
+
+以下を必ず報告してください。
+
+1. クジラが初回表示時に間違った位置になる具体的な原因
+2. 最上部へ戻った後に正しくなる具体的な原因
+3. 現在のwhale.jsのどの処理が関係しているか
+4. 不要スクロールが発生するページ
+5. 各ページで何px余計にスクロールできるか
+6. その余計な高さを作っている具体的な要素
+7. ②と⑥に共通する原因があるか
+8. 最小限で安全な修正方法
+
+原因が特定できるまではコードを変更しないでください。
+
+GitHub Push、Commit、Production Deployment、Productionデータ変更、
+環境変数変更も禁止です。

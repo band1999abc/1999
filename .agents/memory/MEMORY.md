@@ -1,3 +1,7 @@
 - [Upstash KV storage](upstash-storage.md) — Vercel uses Upstash REST API for Live/Diary persistence; filesystem is fallback for local dev
 - [Music CMS architecture](music-cms.md) — Music admin page pattern, schema, API endpoints, storage, and auth gate rule; public music.html is now dynamic via music.js + track.html
 - [Vercel template bundle bump](vercel-template-bump.md) — must update bump comment in api/afterhours-pages.js whenever templates/** changes
+- [Public Live ordering](public-live-ordering.md) — newest-created upcoming Live is promoted first; all remaining upcoming entries retain manual sort_order
+- [Viewport layout behavior](viewport-layout-behavior.md) — hibiware parallax has no card-offset dead zone; outer spacing contracts only when an entire card fits
+- [Service Worker asset versions](service-worker-asset-versions.md) — cache-first static assets need a new query version when contents change, or existing clients keep the old body
+- [iPad Safari jacket decoding](ipad-safari-jacket-decoding.md) — use FileReader Data URLs, not Blob URLs, before Image/Canvas processing for selected jacket photos

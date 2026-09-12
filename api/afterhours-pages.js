@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-08-26a — Music専用Blobアップロード管理画面
+ * bump: 2026-09-12a — ジャケット画像のブラウザ圧縮
  */
 
 import { readFileSync } from 'fs';

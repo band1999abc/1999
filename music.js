@@ -27,6 +27,10 @@
     function buildTrackItem(t) {
         var year = t.releaseDate ? String(t.releaseDate).slice(0, 4) : '';
         var href = 'track.html?id=' + encodeURIComponent(t.id);
+        var jacket = t.jacket === true
+            ? '<img class="song-jacket" src="/api/music-jacket/' + encodeURIComponent(t.id)
+                + '" alt="" loading="lazy" decoding="async">'
+            : '';
 
         return '<div class="song-item">'
             + '<a href="' + href + '" class="song-link">'
@@ -36,6 +40,7 @@
             +         '<polygon points="0,0 10,6 0,12"/>'
             +       '</svg>'
             +     '</span>'
+            +     jacket
             +     '<span class="song-name">' + esc(t.title) + '</span>'
             +   '</div>'
             +   (year ? '<span class="song-year">' + esc(year) + '</span>' : '')

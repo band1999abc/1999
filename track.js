@@ -19,6 +19,8 @@
     'use strict';
 
     var titleEl      = document.getElementById('track-title');
+    var jacketWrapEl = document.getElementById('track-jacket-wrap');
+    var jacketEl     = document.getElementById('track-jacket');
     var statusEl     = document.getElementById('track-status');
     var audioEl      = document.getElementById('track-audio');
     var lyricsWrapEl = document.getElementById('track-lyrics-wrap');
@@ -256,6 +258,16 @@
     function render(track) {
         document.title = (track.title || '1999') + ' | 1999';
         if (titleEl) titleEl.textContent = track.title || '';
+
+        if (track.jacket === true && jacketWrapEl && jacketEl) {
+            jacketEl.alt = '「' + (track.title || '') + '」のジャケット画像';
+            jacketEl.onerror = function () {
+                jacketWrapEl.hidden = true;
+                jacketEl.removeAttribute('src');
+            };
+            jacketEl.src = '/api/music-jacket/' + encodeURIComponent(id);
+            jacketWrapEl.hidden = false;
+        }
 
         var rawUrl    = (track.audioUrl || '').trim();
         var isSafeUrl = rawUrl && /^https?:\/\//i.test(rawUrl);

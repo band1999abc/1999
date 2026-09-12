@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@200&display=swap">
-    <link rel="stylesheet" href="style.css?v=35">
+    <link rel="stylesheet" href="style.css?v=36">
 </head>
 <body data-page="track">
 
@@ -24,6 +24,10 @@
 
     <!-- track.js が動的に書き込む -->
     <h1 id="track-title"></h1>
+
+    <div id="track-jacket-wrap" class="track-jacket-wrap" hidden>
+        <img id="track-jacket" class="track-jacket" src="" alt="" decoding="async">
+    </div>
 
     <p id="track-status" class="sub"></p>
 
@@ -46,9 +50,9 @@
 
 </div>
 
-<script src="whale.js"></script>
-<script src="script.js?v=3"></script>
-<script src="track.js?v=5"></script>
+<script src="whale.js?v=2"></script>
+<script src="script.js?v=4"></script>
+<script src="track.js?v=6"></script>
 <script src="analytics.js" defer></script>
 
 </body>

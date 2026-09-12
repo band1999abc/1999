@@ -18,6 +18,7 @@
         editingId:     null,     // null = creating new
         jacketSrc:     null,     // base64 dataUrl of pending jacket upload
         jacketToDelete: false,   // flag: delete existing jacket on next save
+        jacketProcessing: false, // true while resizing/compressing a selected image
         audioMeta:     null,     // { duration, fileSize, bitrate, uploadedAt } from MP3 pick
         audioFileObj:  null,     // File object pending direct Blob upload
         saving:        false,
@@ -125,6 +126,88 @@
         var d = new Date(iso);
         return d.getFullYear() + '/' + pad2(d.getMonth() + 1) + '/' + pad2(d.getDate())
              + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+
+    // ── Jacket image processing ────────────────────────────────────────────────
+
+    var JACKET_MAX_DIMENSION = 1600;
+    var JACKET_MAX_DATA_URL_BYTES = 2 * 1024 * 1024;
+
+    function loadJacketImage(file) {
+        return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var img = new Image();
+                img.onload = function () {
+                    resolve(img);
+                };
+                img.onerror = function () {
+                    reject(new Error('画像を読み込めませんでした。別の画像を選択してください。'));
+                };
+                img.src = reader.result;
+            };
+            reader.onerror = function () {
+                reject(new Error('画像ファイルを読み込めませんでした。別の画像を選択してください。'));
+            };
+            reader.onabort = function () {
+                reject(new Error('画像ファイルの読み込みが中断されました。もう一度選択してください。'));
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function processJacketImage(file) {
+        if (!file.type || !file.type.startsWith('image/')) {
+            return Promise.reject(new Error('画像ファイルを選択してください。'));
+        }
+
+        return loadJacketImage(file).then(function (img) {
+            var sourceWidth = img.naturalWidth || img.width;
+            var sourceHeight = img.naturalHeight || img.height;
+            if (!sourceWidth || !sourceHeight) {
+                throw new Error('画像のサイズを確認できませんでした。');
+            }
+
+            var initialScale = Math.min(
+                1,
+                JACKET_MAX_DIMENSION / Math.max(sourceWidth, sourceHeight)
+            );
+            var width = Math.max(1, Math.round(sourceWidth * initialScale));
+            var height = Math.max(1, Math.round(sourceHeight * initialScale));
+            var qualities = [0.88, 0.80, 0.72, 0.64, 0.56, 0.48];
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('このブラウザでは画像を処理できません。');
+
+            // Try lower JPEG quality first, then reduce dimensions if necessary.
+            for (var resizeAttempt = 0; resizeAttempt < 5; resizeAttempt++) {
+                canvas.width = width;
+                canvas.height = height;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                for (var i = 0; i < qualities.length; i++) {
+                    var dataUrl = canvas.toDataURL('image/jpeg', qualities[i]);
+                    // Data URLs contain ASCII only, so string length equals byte size.
+                    if (dataUrl.length <= JACKET_MAX_DATA_URL_BYTES) {
+                        return dataUrl;
+                    }
+                }
+
+                width = Math.max(1, Math.round(width * 0.8));
+                height = Math.max(1, Math.round(height * 0.8));
+            }
+
+            throw new Error('画像を2MB以下に圧縮できませんでした。別の画像を選択してください。');
+        });
+    }
+
+    function setJacketProcessing(processing) {
+        S.jacketProcessing = processing;
+        if (!jacketAddBtn) return;
+        jacketAddBtn.disabled = processing;
+        jacketAddBtn.textContent = processing ? '画像処理中…' : '＋ 画像を選択';
     }
 
     // ── Audio file upload UI ───────────────────────────────────────────────────
@@ -477,6 +560,7 @@
         S.editingId     = id || null;
         S.jacketSrc     = null;
         S.jacketToDelete = false;
+        setJacketProcessing(false);
         showView('editor');
 
         var t = id ? S.tracks.find(function (x) { return x.id === id; }) : null;
@@ -610,14 +694,24 @@
         jacketFileEl.addEventListener('change', function () {
             var file = jacketFileEl.files[0];
             if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                S.jacketSrc      = e.target.result;
+            setJacketProcessing(true);
+
+            processJacketImage(file)
+            .then(function (dataUrl) {
+                if (dataUrl.length > JACKET_MAX_DATA_URL_BYTES) {
+                    throw new Error('画像が大きすぎます。2MB以下の画像を選択してください。');
+                }
+                S.jacketSrc      = dataUrl;
                 S.jacketToDelete = false;
                 renderJacketUI(S.editingId ? S.tracks.find(function (x) { return x.id === S.editingId; }) : null);
-            };
-            reader.readAsDataURL(file);
-            jacketFileEl.value = '';
+            })
+            .catch(function (err) {
+                alert(err && err.message ? err.message : '画像の処理に失敗しました。');
+            })
+            .finally(function () {
+                jacketFileEl.value = '';
+                setJacketProcessing(false);
+            });
         });
     }
 
@@ -690,6 +784,10 @@
 
     function doSave() {
         if (S.saving) return;
+        if (S.jacketProcessing) {
+            alert('画像を処理しています。完了してから保存してください。');
+            return;
+        }
         var title = titleEl ? titleEl.value.trim() : '';
         if (!title) {
             alert('タイトルを入力してください');
@@ -787,7 +885,20 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ dataUrl: S.jacketSrc }),
             })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                return r.json().catch(function () { return {}; }).then(function (body) {
+                    if (!r.ok || !body.ok) {
+                        if (r.status === 413) {
+                            throw new Error('ジャケット画像が大きすぎるため投稿できませんでした。');
+                        }
+                        throw new Error(
+                            body.error ||
+                            'ジャケット画像の投稿に失敗しました（HTTP ' + r.status + '）。'
+                        );
+                    }
+                    return body;
+                });
+            })
             .then(function () {
                 S.jacketSrc = null;
                 var idx = S.tracks.findIndex(function (x) { return x.id === musicId; });

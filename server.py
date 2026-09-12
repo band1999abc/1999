@@ -1548,6 +1548,19 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         if idx < 0:
             self._write_json(404, {'error': 'Not found'})
             return
+        current_images = self._normalize_flyer(lives[idx])
+        for slot_id in current_images:
+            try:
+                self._delete_flyer_slot(item_id, slot_id)
+            except OSError as e:
+                print('[live] delete flyer slot %s/%s error: %s' % (item_id, slot_id, e))
+        # Also clean up legacy file just in case
+        for base in [_DATA_DIR, '/tmp']:
+            p = os.path.join(base, 'flyers', item_id + '.b64')
+            try:
+                os.remove(p)
+            except OSError:
+                pass
         lives.pop(idx)
         _save_lives(lives)
         self._write_json(200, {'ok': True})

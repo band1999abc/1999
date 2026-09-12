@@ -269,6 +269,15 @@ async function liveDelete(req, res) {
     const idx    = lives.findIndex(l => l.id === id);
     if (idx < 0)  return res.status(404).json({ error: 'Not found' });
 
+    const currentImages = normalizeImages(lives[idx]);
+
+    try {
+        await deleteAllFlyerSlots(id, currentImages);
+    } catch (e) {
+        console.error('[live] delete flyer cleanup error:', e);
+        // Non-fatal: proceed with live deletion even if flyer cleanup fails
+    }
+
     try {
         lives.splice(idx, 1);
         await writeJsonArray(LIVES_FILE, lives);
