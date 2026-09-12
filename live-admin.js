@@ -31,7 +31,7 @@
     const flyerFileEl   = document.getElementById('la-flyer-file');
 
     // ── State ─────────────────────────────────────────────────────────────────
-    let allLives   = [];   // sorted by sort_order
+    let allLives   = [];   // upcoming by sort_order, followed by past by date
     let editingId  = null;
     let currentPage = 1;
     const PAGE_SIZE = 10;
@@ -68,9 +68,27 @@
         if (el) el.checked = true;
     }
 
-    // Normalize sort_order to 0, 1, 2, ... after load or reorder
-    function normalize(lives) {
-        return lives.map((l, i) => ({ ...l, sort_order: i }));
+    function isUpcoming(live) {
+        return String(live.date || '') >= todayIso();
+    }
+
+    function compareManualOrder(a, b) {
+        const so = (a.sort_order != null ? a.sort_order : 9999) -
+                   (b.sort_order != null ? b.sort_order : 9999);
+        if (so !== 0) return so;
+        const byDate = String(a.date || '').localeCompare(String(b.date || ''));
+        if (byDate !== 0) return byDate;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+    }
+
+    function orderLives(lives) {
+        const upcoming = lives.filter(isUpcoming).sort(compareManualOrder);
+        const past = lives.filter(live => !isUpcoming(live)).sort((a, b) => {
+            const byDate = String(b.date || '').localeCompare(String(a.date || ''));
+            if (byDate !== 0) return byDate;
+            return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        return upcoming.concat(past);
     }
 
     function flyerUrl(liveId, slotId) {
@@ -285,7 +303,8 @@
             upBtn.className = 'la-order-btn';
             upBtn.type = 'button';
             upBtn.textContent = '↑';
-            upBtn.disabled = i === 0;
+            upBtn.disabled = !isUpcoming(live) || i === 0 ||
+                isUpcoming(allLives[i - 1]) !== isUpcoming(live);
             upBtn.addEventListener('click', (e) => { e.stopPropagation(); moveItem(i, -1); });
             btns.appendChild(upBtn);
 
@@ -293,7 +312,8 @@
             downBtn.className = 'la-order-btn';
             downBtn.type = 'button';
             downBtn.textContent = '↓';
-            downBtn.disabled = i === allLives.length - 1;
+            downBtn.disabled = !isUpcoming(live) || i === allLives.length - 1 ||
+                isUpcoming(allLives[i + 1]) !== isUpcoming(live);
             downBtn.addEventListener('click', (e) => { e.stopPropagation(); moveItem(i, 1); });
             btns.appendChild(downBtn);
 
@@ -335,29 +355,40 @@
     async function moveItem(idx, dir) {
         const target = idx + dir;
         if (target < 0 || target >= allLives.length) return;
+        if (!isUpcoming(allLives[idx])) return;
+        if (isUpcoming(allLives[idx]) !== isUpcoming(allLives[target])) return;
 
         // Snapshot for rollback
         const snapshot = allLives.map(l => ({ ...l }));
 
-        // Swap in local array and reassign sort_order
-        [allLives[idx], allLives[target]] = [allLives[target], allLives[idx]];
-        allLives = normalize(allLives);
+        // Swap only the two persisted order values; do not renumber other lives.
+        const current = {
+            ...allLives[idx],
+            sort_order: allLives[target].sort_order
+        };
+        const adjacent = {
+            ...allLives[target],
+            sort_order: allLives[idx].sort_order
+        };
+        allLives = orderLives(allLives.map(live => {
+            if (live.id === current.id) return current;
+            if (live.id === adjacent.id) return adjacent;
+            return live;
+        }));
         renderList();
 
         // Persist both swapped items
-        const a = allLives[idx];
-        const b = allLives[target];
         try {
             const [ra, rb] = await Promise.all([
-                authFetch(`/api/live/${a.id}`, {
+                authFetch(`/api/live/${current.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sort_order: a.sort_order })
+                    body: JSON.stringify({ sort_order: current.sort_order })
                 }),
-                authFetch(`/api/live/${b.id}`, {
+                authFetch(`/api/live/${adjacent.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sort_order: b.sort_order })
+                    body: JSON.stringify({ sort_order: adjacent.sort_order })
                 })
             ]);
             if (!ra.ok || !rb.ok) {
@@ -433,13 +464,7 @@
             const res = await authFetch('/api/live');
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
-            // Sort by sort_order then date
-            data.sort((a, b) => {
-                const so = (a.sort_order != null ? a.sort_order : 9999) -
-                           (b.sort_order != null ? b.sort_order : 9999);
-                return so !== 0 ? so : (a.date || '').localeCompare(b.date || '');
-            });
-            allLives = data;
+            allLives = orderLives(data);
             renderList();
         } catch (e) {
             console.error('[live-admin] loadLives:', e);
@@ -462,9 +487,12 @@
         const ticket = ticketEl.value.trim();
         const status = forcedStatus || statusRadioValue();
 
-        const nextOrder = allLives.length > 0
-            ? Math.max(...allLives.map(l => l.sort_order != null ? l.sort_order : 0)) + 1
-            : 0;
+        const orders = allLives.map(l => l.sort_order != null ? l.sort_order : 0);
+        const nextOrder = allLives.length === 0
+            ? 0
+            : date >= todayIso()
+                ? Math.min(...orders) - 1
+                : Math.max(...orders) + 1;
 
         const payload = { date, venue, open, start, ticket, status };
         if (!editingId) payload.sort_order = nextOrder;
@@ -490,6 +518,7 @@
             } else {
                 allLives = [...allLives, saved];
                 editingId = saved.id;  // set before flyer sync
+                currentPage = 1;
             }
             headingEl.textContent = '編集';
             deleteBtn.classList.remove('la-hidden');
@@ -526,12 +555,7 @@
             // Update allLives with refreshed state
             allLives = allLives.map(l => l.id === saved.id ? saved : l);
 
-            // Re-sort
-            allLives.sort((a, b) => {
-                const so = (a.sort_order != null ? a.sort_order : 9999) -
-                           (b.sort_order != null ? b.sort_order : 9999);
-                return so !== 0 ? so : (a.date || '').localeCompare(b.date || '');
-            });
+            allLives = orderLives(allLives);
 
             // Reflect saved metadata values in form
             dateEl.value   = saved.date   || '';

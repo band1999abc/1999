@@ -1461,9 +1461,15 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._write_json(400, {'error': 'Invalid date format; expected YYYY-MM-DD'})
             return
         lives = _load_lives()
-        # Default sort_order: one higher than current max
-        max_order = max((l.get('sort_order', 0) for l in lives), default=-1)
-        raw_order = body.get('sort_order', max_order + 1)
+        live_date = _valid_date(raw_date)
+        orders = [l.get('sort_order', 0) for l in lives]
+        if not orders:
+            default_order = 0
+        elif live_date >= _today_iso():
+            default_order = min(orders) - 1
+        else:
+            default_order = max(orders) + 1
+        raw_order = body.get('sort_order', default_order)
         try:
             sort_order = int(raw_order)
         except (TypeError, ValueError):
@@ -1471,7 +1477,7 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             return
         live = {
             'id':         str(_uuid_mod.uuid4()),
-            'date':       _valid_date(raw_date),
+            'date':       live_date,
             'venue':      str(body.get('venue',  '')).strip(),
             'open':       _valid_time(str(body.get('open',  '')).strip()),
             'start':      _valid_time(str(body.get('start', '')).strip()),

@@ -167,17 +167,24 @@ async function liveCreate(req, res) {
         return res.status(400).json({ error: 'sort_order must be an integer' });
 
     const lives    = await readJsonArray(LIVES_FILE);
-    const maxOrder = lives.reduce((m, l) => Math.max(m, l.sort_order ?? 0), -1);
     const now      = new Date().toISOString();
+    const today    = nowJST().slice(0, 10);
+    const liveDate = (date && DATE_RE.test(String(date))) ? String(date) : now.slice(0, 10);
+    const orders   = lives.map(l => l.sort_order ?? 0);
+    const defaultOrder = lives.length === 0
+        ? 0
+        : liveDate >= today
+            ? Math.min(...orders) - 1
+            : Math.max(...orders) + 1;
     const live = {
         id:         randomUUID(),
-        date:       (date && DATE_RE.test(String(date))) ? String(date) : now.slice(0, 10),
+        date:       liveDate,
         venue:      String(venue).trim(),
         open:       validTime(open),
         start:      validTime(start),
         ticket:     String(ticket).trim(),
         status:     ['published', 'draft'].includes(status) ? status : 'draft',
-        sort_order: sort_order !== undefined ? Number(sort_order) : maxOrder + 1,
+        sort_order: sort_order !== undefined ? Number(sort_order) : defaultOrder,
         createdAt:  now,
         updatedAt:  now,
     };

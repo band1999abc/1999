@@ -1012,6 +1012,61 @@ body.night .back-home     { color: #8a9ab2; }
     border-bottom: 1px solid var(--border);
 }
 
+/* Public Live pagination */
+.public-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 30px auto 4px;
+    max-width: 100%;
+}
+
+.public-pagination[hidden] {
+    display: none;
+}
+
+.public-pagination-button {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 9px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition:
+        color var(--transition-fast) ease,
+        border-color var(--transition-fast) ease,
+        background var(--transition-fast) ease;
+}
+
+.public-pagination-button:hover,
+.public-pagination-button:focus-visible {
+    color: var(--text-dark);
+    border-color: var(--text-muted);
+    outline: none;
+}
+
+.public-pagination-button.is-current {
+    color: var(--card-bg);
+    border-color: var(--text-dark);
+    background: var(--text-dark);
+    cursor: default;
+}
+
+.public-pagination-next {
+    font-size: 16px;
+}
+
+body.night .public-pagination-button.is-current {
+    color: var(--bg);
+    background: var(--text-dark);
+}
+
 /* Flyer click-to-open */
 .live-entry.has-flyer {
     cursor: pointer;
