@@ -349,6 +349,11 @@ _MSG_VALID_SEASONS = {'spring', 'rainy', 'summer', 'autumn', 'winter'}
 _MSG_VALID_WEATHER = {'clear', 'cloudy', 'rain', 'snow', 'thunder', 'foggy'}
 _MSG_VALID_SPECIAL = {'rare', 'live_today', 'live_tomorrow', 'new_release', 'anniversary'}
 
+_WEATHER_PHRASES_FILE = os.path.join(_DATA_DIR, 'weather_phrases.json')
+_WEATHER_CATEGORIES = (
+    'sunny', 'partly_cloudy', 'mostly_cloudy', 'cloudy', 'rainy', 'snowy', 'foggy'
+)
+
 def _load_messages():
     for path in [_MESSAGES_FILE, '/tmp/messages.json']:
         if os.path.exists(path):
@@ -382,6 +387,45 @@ def _clean_msg_conditions(raw):
         'weather':   _filt(raw.get('weather'),   _MSG_VALID_WEATHER),
         'special':   _filt(raw.get('special'),   _MSG_VALID_SPECIAL),
     }
+
+def _load_weather_phrases():
+    for path in [_WEATHER_PHRASES_FILE, '/tmp/weather_phrases.json']:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as fh:
+                    data = json.load(fh)
+                return data if isinstance(data, list) else []
+            except (OSError, json.JSONDecodeError):
+                pass
+    return []
+
+def _save_weather_phrases(items):
+    for path in [_WEATHER_PHRASES_FILE, '/tmp/weather_phrases.json']:
+        try:
+            tmp = path + '.tmp'
+            with open(tmp, 'w', encoding='utf-8') as fh:
+                json.dump(items, fh, ensure_ascii=False, indent=2)
+            os.replace(tmp, path)
+            return
+        except OSError:
+            pass
+    raise OSError('Could not save weather_phrases.json')
+
+def _sort_weather_phrases(items):
+    category_rank = {category: i for i, category in enumerate(_WEATHER_CATEGORIES)}
+    def _sort_order(item):
+        try:
+            return int(item.get('sort_order', 0))
+        except (TypeError, ValueError):
+            return 0
+    return sorted(
+        items,
+        key=lambda item: (
+            category_rank.get(item.get('category'), len(_WEATHER_CATEGORIES)),
+            _sort_order(item),
+            item.get('id', ''),
+        ),
+    )
 
 
 # ── Milestone helpers (used by _handle_milestones_read) ──────────────────────
@@ -963,7 +1007,15 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split('?')[0].rstrip('/')
-        if self.path.startswith('/api/weather'):
+        if path == '/api/weather-phrases':
+            self._handle_weather_phrases_list()
+        elif path.startswith('/api/weather-phrases/'):
+            phrase_id = path[len('/api/weather-phrases/'):]
+            if phrase_id and '/' not in phrase_id:
+                self._handle_weather_phrase_get(phrase_id)
+            else:
+                self.send_error(404)
+        elif self.path.startswith('/api/weather'):
             self._handle_weather()
         elif path == '/api/auth':
             self._handle_auth_get()
@@ -981,6 +1033,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_afterhours_diary()
         elif path == '/afterhours/live':
             self._serve_template('afterhours-live.html')
+        elif path == '/afterhours/weather-phrases':
+            self._serve_template('afterhours-weather-phrases.html')
         elif path == '/afterhours/login':
             self._serve_template('login.html')
         elif path == '/afterhours':
@@ -1068,6 +1122,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404)
         elif path == '/api/messages':
             self._handle_message_create()
+        elif path == '/api/weather-phrases':
+            self._handle_weather_phrase_create()
         elif path == '/api/music':
             self._handle_music_create()
         elif path.startswith('/api/music-jacket/'):
@@ -1112,6 +1168,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             if mid and '/' not in mid:
                 self._handle_message_update(mid)
                 return
+        elif path.startswith('/api/weather-phrases/'):
+            phrase_id = path[len('/api/weather-phrases/'):]
+            if phrase_id and '/' not in phrase_id:
+                self._handle_weather_phrase_update(phrase_id)
+                return
         self.send_error(404)
 
     def do_DELETE(self):
@@ -1153,6 +1214,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             mid = path[len('/api/messages/'):]
             if mid and '/' not in mid:
                 self._handle_message_delete(mid)
+                return
+        elif path.startswith('/api/weather-phrases/'):
+            phrase_id = path[len('/api/weather-phrases/'):]
+            if phrase_id and '/' not in phrase_id:
+                self._handle_weather_phrase_delete(phrase_id)
                 return
         self.send_error(404)
 
@@ -2237,6 +2303,144 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         _save_messages(items)
         self._write_json(200, {'ok': True})
 
+    # ── Weather phrases ────────────────────────────────────────────────────────
+
+    def _handle_weather_phrases_list(self):
+        items = _load_weather_phrases()
+        if not self._is_authed():
+            items = [item for item in items if item.get('enabled') is not False]
+        self._write_json(200, _sort_weather_phrases(items))
+
+    def _handle_weather_phrase_get(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        items = _load_weather_phrases()
+        item = next((item for item in items if item.get('id') == item_id), None)
+        if not item:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        self._write_json(200, item)
+
+    def _handle_weather_phrase_create(self):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        category = str(body.get('category', '')).strip()
+        text = str(body.get('text', '')).strip()
+        if category not in _WEATHER_CATEGORIES:
+            self._write_json(400, {'error': 'Invalid category'})
+            return
+        if not text:
+            self._write_json(400, {'error': 'text is required'})
+            return
+        if 'enabled' in body and not isinstance(body['enabled'], bool):
+            self._write_json(400, {'error': 'enabled must be a boolean'})
+            return
+        if 'sort_order' in body:
+            try:
+                sort_order = int(body['sort_order'])
+                if isinstance(body['sort_order'], bool) or float(body['sort_order']) != sort_order:
+                    raise ValueError
+            except (TypeError, ValueError):
+                self._write_json(400, {'error': 'sort_order must be an integer'})
+                return
+        else:
+            sort_order = max(
+                [int(item.get('sort_order', -1)) for item in _load_weather_phrases()
+                 if item.get('category') == category] or [-1]
+            ) + 1
+        now = time.strftime('%Y-%m-%dT%H:%M:%S')
+        phrase = {
+            'id': str(_uuid_mod.uuid4()),
+            'category': category,
+            'text': text,
+            'enabled': body.get('enabled', True),
+            'sort_order': sort_order,
+            'createdAt': now,
+            'updatedAt': now,
+        }
+        items = _load_weather_phrases()
+        items.append(phrase)
+        try:
+            _save_weather_phrases(items)
+        except OSError:
+            self._write_json(500, {'error': 'Failed to save'})
+            return
+        self._write_json(201, phrase)
+
+    def _handle_weather_phrase_update(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        body = self._read_json_body()
+        if body is None:
+            return
+        items = _load_weather_phrases()
+        idx = next((i for i, item in enumerate(items) if item.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        previous = items[idx]
+        category = (str(body.get('category', '')).strip()
+                    if 'category' in body else previous.get('category', ''))
+        text = (str(body.get('text', '')).strip()
+                if 'text' in body else previous.get('text', ''))
+        if category not in _WEATHER_CATEGORIES:
+            self._write_json(400, {'error': 'Invalid category'})
+            return
+        if not text:
+            self._write_json(400, {'error': 'text cannot be empty'})
+            return
+        if 'enabled' in body and not isinstance(body['enabled'], bool):
+            self._write_json(400, {'error': 'enabled must be a boolean'})
+            return
+        if 'sort_order' in body:
+            try:
+                sort_order = int(body['sort_order'])
+                if isinstance(body['sort_order'], bool) or float(body['sort_order']) != sort_order:
+                    raise ValueError
+            except (TypeError, ValueError):
+                self._write_json(400, {'error': 'sort_order must be an integer'})
+                return
+        else:
+            sort_order = previous.get('sort_order', 0)
+        updated = dict(previous)
+        updated.update({
+            'category': category,
+            'text': text,
+            'enabled': body.get('enabled', previous.get('enabled') is not False),
+            'sort_order': sort_order,
+            'updatedAt': time.strftime('%Y-%m-%dT%H:%M:%S'),
+        })
+        items[idx] = updated
+        try:
+            _save_weather_phrases(items)
+        except OSError:
+            self._write_json(500, {'error': 'Failed to save'})
+            return
+        self._write_json(200, updated)
+
+    def _handle_weather_phrase_delete(self, item_id):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        items = _load_weather_phrases()
+        idx = next((i for i, item in enumerate(items) if item.get('id') == item_id), -1)
+        if idx < 0:
+            self._write_json(404, {'error': 'Not found'})
+            return
+        items.pop(idx)
+        try:
+            _save_weather_phrases(items)
+        except OSError:
+            self._write_json(500, {'error': 'Failed to save'})
+            return
+        self._write_json(200, {'ok': True})
+
     def _normalize_flyer(self, live):
         """Normalise live['flyer'] → list of slot IDs."""
         f = live.get('flyer')
@@ -2512,7 +2716,7 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                     raise ValueError('out of bounds')
                 print('[weather/coords] explicit lat=%s lon=%s' % (lat, lon))
             except (TypeError, ValueError):
-                self._write_json(400, {'condition': None})
+                self._write_json(400, {'condition': None, 'clouds': None, 'temp': None})
                 return
         else:
             forwarded = self.headers.get('X-Forwarded-For', '')
@@ -2551,10 +2755,12 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
             if not geo_ok:
                 print('[weather/geo]   both services failed')
-                self._write_json(200, {'condition': None})
+                self._write_json(200, {'condition': None, 'clouds': None, 'temp': None})
                 return
 
         condition = None
+        clouds_all = None
+        temp_c = None
         if api_key:
             t_owm = time.monotonic()
             try:
@@ -2562,22 +2768,17 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 url = 'https://api.openweathermap.org/data/2.5/weather?' + qs
                 with urllib.request.urlopen(url, timeout=5) as resp:
                     data = json.loads(resp.read())
-                raw_condition = data['weather'][0]['main']
+                condition = data['weather'][0]['main']
                 _clouds = data.get('clouds')
                 clouds_all = _clouds.get('all') if isinstance(_clouds, dict) else None
                 clouds_all = clouds_all if isinstance(clouds_all, (int, float)) else None
-                # Treat as Clear when cloud cover is 80 % or below
-                if raw_condition == 'Clouds' and clouds_all is not None and clouds_all <= 80:
-                    condition = 'Clear'
-                else:
-                    condition = raw_condition
                 temp_c = data.get('main', {}).get('temp')  # °C (units=metric)
-                print('[weather/owm]   %dms  condition=%s (raw=%s clouds=%s%%) temp=%.1f' % (int((time.monotonic()-t_owm)*1000), condition, raw_condition, clouds_all, temp_c if temp_c is not None else 0))
+                print('[weather/owm]   %dms  condition=%s clouds=%s%% temp=%.1f' % (int((time.monotonic()-t_owm)*1000), condition, clouds_all, temp_c if temp_c is not None else 0))
             except Exception as e:
                 print('[weather/owm]   %dms  error: %s' % (int((time.monotonic()-t_owm)*1000), e))
 
         print('[weather/total] %dms' % int((time.monotonic()-t_total)*1000))
-        self._write_json(200, {'condition': condition, 'temp': temp_c})
+        self._write_json(200, {'condition': condition, 'clouds': clouds_all, 'temp': temp_c})
 
     # -- GET /api/insights -- rule-based insights (admin only) ------------------
 

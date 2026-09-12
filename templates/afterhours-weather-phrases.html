@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Phrases — After Hours | 1999</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/style.css?v=35">
+    <link rel="stylesheet" href="/admin.css?v=16">
+</head>
+<body data-page="afterhours-weather-phrases" class="auth-hidden">
+
+<div class="card">
+    <img src="/whale_transparent.png" class="whale-bg" alt="" aria-hidden="true" decoding="async">
+
+    <div class="wp-page-header">
+        <button class="admin-btn wp-back-btn" id="wp-back-dash" type="button">← Back</button>
+        <h1>1999</h1>
+        <div class="sub">Weather Phrases</div>
+        <p class="wp-intro">Homeの天気表示に使う英語フレーズをカテゴリごとに管理します。</p>
+    </div>
+
+    <div class="wp-toolbar">
+        <span class="wp-count" id="wp-count"></span>
+        <button class="admin-btn wp-add-btn" id="wp-add-btn" type="button">＋ 新しいフレーズ</button>
+    </div>
+    <div id="wp-list" class="wp-list">
+        <p class="wp-empty">読み込み中…</p>
+    </div>
+
+    <section id="wp-editor" class="wp-editor da-hidden" aria-labelledby="wp-editor-heading">
+        <div class="wp-editor-header">
+            <button class="wp-back-btn" id="wp-editor-back" type="button">← 一覧</button>
+            <h2 id="wp-editor-heading">新しいフレーズ</h2>
+        </div>
+        <form id="wp-form" class="wp-form" novalidate>
+            <label class="admin-label" for="wp-category">カテゴリ</label>
+            <select class="admin-input wp-select" id="wp-category" required>
+                <option value="sunny">Sunny — 晴れ</option>
+                <option value="partly_cloudy">Partly Cloudy — 晴れ時々曇り</option>
+                <option value="mostly_cloudy">Mostly Cloudy — 曇り寄り</option>
+                <option value="cloudy">Cloudy — 曇り</option>
+                <option value="rainy">Rainy — 雨</option>
+                <option value="snowy">Snowy — 雪</option>
+                <option value="foggy">Foggy — 霧・霞</option>
+            </select>
+
+            <label class="admin-label" for="wp-text">フレーズ（英語）</label>
+            <textarea class="admin-input wp-textarea" id="wp-text" rows="3" maxlength="500"
+                placeholder="例：Outside, it’s sunny." required></textarea>
+
+            <div class="wp-fields-row">
+                <div class="wp-field">
+                    <label class="admin-label" for="wp-sort-order">並び順</label>
+                    <input class="admin-input" id="wp-sort-order" type="number" step="1" min="0" required>
+                </div>
+                <label class="wp-toggle">
+                    <input type="checkbox" id="wp-enabled" checked>
+                    <span id="wp-enabled-label">有効</span>
+                </label>
+            </div>
+
+            <div class="wp-form-btns">
+                <button type="submit" class="admin-btn" id="wp-save-btn">保存</button>
+                <button type="button" class="admin-btn wp-delete-btn da-hidden" id="wp-delete-btn">削除</button>
+            </div>
+        </form>
+    </section>
+
+    <div class="admin-footer">
+        <a href="/afterhours" class="back-home">← After Hours</a>
+        <button class="admin-signout" id="signout-btn">Sign out</button>
+    </div>
+</div>
+
+<script src="/whale.js?v=2"></script>
+<script src="/script.js?v=4"></script>
+<script src="/admin.js?v=4"></script>
+<script src="/weather-phrases-admin.js?v=1"></script>
+
+</body>
+</html>

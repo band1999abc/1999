@@ -9,22 +9,31 @@
 
     /* ── Condition map ──────────────────────────────────────────── */
     const CONDITIONS = {
-        Clear:        { text: "Outside, it\u2019s sunny.",   cls: 'weather-sunny'  },
-        Clouds:       { text: "Outside, it\u2019s cloudy.",  cls: 'weather-cloudy' },
-        Rain:         { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
-        Drizzle:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
-        Thunderstorm: { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
-        Squall:       { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
-        Snow:         { text: "Outside, it\u2019s snowing.", cls: 'weather-snow'   },
-        Mist:         { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
-        Fog:          { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
-        Haze:         { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
-        Smoke:        { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
-        Dust:         { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
-        Sand:         { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
-        Ash:          { text: "Outside, it\u2019s foggy.",   cls: 'weather-foggy'  },
-        Tornado:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain'   },
+        Clear:        { text: "Outside, it\u2019s sunny.",   cls: 'weather-sunny', category: 'sunny' },
+        Clouds:       { text: "Outside, it\u2019s cloudy.",  cls: 'weather-cloudy', category: 'cloudy' },
+        Rain:         { text: "Outside, it\u2019s raining.", cls: 'weather-rain', category: 'rainy' },
+        Drizzle:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain', category: 'rainy' },
+        Thunderstorm: { text: "Outside, it\u2019s raining.", cls: 'weather-rain', category: 'rainy' },
+        Squall:       { text: "Outside, it\u2019s raining.", cls: 'weather-rain', category: 'rainy' },
+        Snow:         { text: "Outside, it\u2019s snowing.", cls: 'weather-snow', category: 'snowy' },
+        Mist:         { text: "There\u2019s fog outside.",   cls: 'weather-foggy', category: 'foggy' },
+        Fog:          { text: "There\u2019s fog outside.",   cls: 'weather-foggy', category: 'foggy' },
+        Haze:         { text: "There\u2019s fog outside.",   cls: 'weather-foggy', category: 'foggy' },
+        Smoke:        { text: "There\u2019s fog outside.",   cls: 'weather-foggy', category: 'foggy' },
+        Dust:         { text: "There\u2019s fog outside.",   cls: 'weather-foggy', category: 'foggy' },
+        Sand:         { text: "There\u2019s fog outside.",   cls: 'weather-foggy', category: 'foggy' },
+        Ash:          { text: "There\u2019s fog outside.",   cls: 'weather-foggy', category: 'foggy' },
+        Tornado:      { text: "Outside, it\u2019s raining.", cls: 'weather-rain', category: 'rainy' },
     };
+    const WEATHER_CATEGORIES = [
+        'sunny',
+        'partly_cloudy',
+        'mostly_cloudy',
+        'cloudy',
+        'rainy',
+        'snowy',
+        'foggy',
+    ];
 
     /* ── Cached DOM reference ───────────────────────────────────── */
     const weatherTextEl = document.getElementById('weather-text');
@@ -59,6 +68,73 @@
         window.dispatchEvent(new CustomEvent('weatherReady', {
             detail: { condition: condition, temp: temp },
         }));
+    }
+
+    function readWeatherPhrases(payload) {
+        let records = [];
+        if (Array.isArray(payload)) {
+            records = payload;
+        } else if (payload && Array.isArray(payload.phrases)) {
+            records = payload.phrases;
+        } else if (payload && Array.isArray(payload.data)) {
+            records = payload.data;
+        } else if (payload && payload.data && Array.isArray(payload.data.phrases)) {
+            records = payload.data.phrases;
+        }
+
+        const phrases = {};
+        WEATHER_CATEGORIES.forEach(function (category) {
+            phrases[category] = [];
+        });
+
+        records.forEach(function (phrase) {
+            if (!phrase || WEATHER_CATEGORIES.indexOf(phrase.category) < 0) return;
+            const enabled = phrase.enabled === true || phrase.enabled === 1 || phrase.enabled === 'true';
+            if (!enabled || typeof phrase.text !== 'string' || !phrase.text.trim()) return;
+            phrases[phrase.category].push(phrase.text.trim());
+        });
+        return phrases;
+    }
+
+    function fetchWeatherPhrases() {
+        return fetch('/api/weather-phrases')
+            .then(function (r) {
+                if (!r.ok) throw new Error('weather phrases request failed');
+                return r.json();
+            })
+            .then(readWeatherPhrases)
+            .catch(function () {
+                // Phrase management is optional for the public page.
+                return {};
+            });
+    }
+
+    function phraseFor(category, phrases) {
+        const choices = phrases && Array.isArray(phrases[category]) ? phrases[category] : null;
+        if (!choices || !choices.length) return null;
+        const storageKey = 'weatherPhrase:' + category;
+        try {
+            const selected = sessionStorage.getItem(storageKey);
+            if (selected && choices.indexOf(selected) >= 0) return selected;
+            const next = choices[Math.floor(Math.random() * choices.length)];
+            sessionStorage.setItem(storageKey, next);
+            return next;
+        } catch {
+            return choices[Math.floor(Math.random() * choices.length)];
+        }
+    }
+
+    function cloudDisplay(clouds) {
+        if (clouds <= 30) {
+            return { text: "Outside, it\u2019s sunny.", cls: 'weather-sunny', condition: 'Clear', category: 'sunny' };
+        }
+        if (clouds <= 60) {
+            return { text: "Outside, it\u2019s partly cloudy.", cls: 'weather-sunny', condition: 'Clear', category: 'partly_cloudy' };
+        }
+        if (clouds <= 80) {
+            return { text: "Outside, it\u2019s mostly cloudy.", cls: 'weather-cloudy', condition: 'Clouds', category: 'mostly_cloudy' };
+        }
+        return { text: "Outside, it\u2019s cloudy.", cls: 'weather-cloudy', condition: 'Clouds', category: 'cloudy' };
     }
 
     /* ── Shared canvas particle engine ──────────────────────────── */
@@ -146,13 +222,15 @@
     }
 
     /* ── Apply weather to DOM ───────────────────────────────────── */
-    function applyWeather(condition, temp) {
-        const info = CONDITIONS[condition];
+    function applyWeather(condition, temp, clouds, phrases) {
+        const validClouds = typeof clouds === 'number' && isFinite(clouds) && clouds >= 0 && clouds <= 100;
+        const cloudInfo = condition === 'Clouds' && validClouds ? cloudDisplay(clouds) : null;
+        const info = cloudInfo || CONDITIONS[condition];
         if (!info) { dispatchWeatherReady(null, null); return; }
 
         document.body.classList.add(info.cls);
-        setWeatherText(info.text);
-        dispatchWeatherReady(condition, temp);
+        setWeatherText(phraseFor(info.category, phrases) || info.text);
+        dispatchWeatherReady(cloudInfo ? cloudInfo.condition : condition, temp);
 
         if (info.cls === 'weather-rain') startParticles('rain');
         if (info.cls === 'weather-snow') startParticles('snow');
@@ -166,20 +244,38 @@
         _initialized = true;
 
         // Dev override: ?weather=Clear|Clouds|Rain|Snow|Mist
+        // Clouds can include a display-test value: ?weather=Clouds&clouds=50
         const debugParam = new URLSearchParams(window.location.search).get('weather');
-        if (debugParam) { applyWeather(debugParam, null); return; }
+        if (debugParam) {
+            const debugCloudsRaw = new URLSearchParams(window.location.search).get('clouds');
+            const debugClouds = debugCloudsRaw !== null && debugCloudsRaw.trim() !== ''
+                ? Number(debugCloudsRaw)
+                : null;
+            fetchWeatherPhrases().then(function (phrases) {
+                applyWeather(debugParam, null, debugClouds, phrases);
+            });
+            return;
+        }
 
         // Show gentle loading text while API resolves
         setWeatherText('Checking today\u2019s sky\u2026');
 
         const t0 = performance.now();
-        fetch('/api/weather')
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
+        const weatherRequest = fetch('/api/weather')
+            .then(function (r) { return r.json(); });
+        Promise.all([weatherRequest, fetchWeatherPhrases()])
+            .then(function (results) {
+                const data = results[0];
+                const phrases = results[1];
                 const ms = Math.round(performance.now() - t0);
                 console.log('[weather] fetch: ' + ms + 'ms  condition: ' + (data && data.condition));
                 if (data && data.condition) {
-                    applyWeather(data.condition, data.temp != null ? data.temp : null);
+                    applyWeather(
+                        data.condition,
+                        data.temp != null ? data.temp : null,
+                        data.clouds != null ? data.clouds : null,
+                        phrases
+                    );
                 } else {
                     if (weatherTextEl) weatherTextEl.classList.remove('visible');
                     dispatchWeatherReady(null, null);

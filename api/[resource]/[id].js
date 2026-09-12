@@ -943,6 +943,79 @@ async function messageDelete(req, res) {
     return res.status(200).json({ ok: true });
 }
 
+// ── Weather phrases ────────────────────────────────────────────────────────────
+
+const WEATHER_PHRASES_FILE_ID = 'data/weather_phrases.json';
+const WEATHER_CATEGORIES_ID   = [
+    'sunny', 'partly_cloudy', 'mostly_cloudy', 'cloudy', 'rainy', 'snowy', 'foggy',
+];
+
+async function weatherPhraseGet(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const items = await readJsonArray(WEATHER_PHRASES_FILE_ID);
+    const item = items.find(phrase => phrase.id === req.query.id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    return res.status(200).json(item);
+}
+
+async function weatherPhrasePut(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const items = await readJsonArray(WEATHER_PHRASES_FILE_ID);
+    const idx = items.findIndex(phrase => phrase.id === req.query.id);
+    if (idx < 0) return res.status(404).json({ error: 'Not found' });
+
+    const body = await readBody(req);
+    const previous = items[idx];
+    const category = body.category !== undefined
+        ? String(body.category || '').trim()
+        : previous.category;
+    const text = body.text !== undefined
+        ? String(body.text || '').trim()
+        : previous.text;
+    if (!WEATHER_CATEGORIES_ID.includes(category))
+        return res.status(400).json({ error: 'Invalid category' });
+    if (!text) return res.status(400).json({ error: 'text cannot be empty' });
+    if (body.enabled !== undefined && typeof body.enabled !== 'boolean')
+        return res.status(400).json({ error: 'enabled must be a boolean' });
+    if (body.sort_order !== undefined &&
+        (body.sort_order === null || String(body.sort_order).trim() === '' ||
+         !Number.isInteger(Number(body.sort_order)) || !Number.isFinite(Number(body.sort_order))))
+        return res.status(400).json({ error: 'sort_order must be an integer' });
+
+    const updated = {
+        ...previous,
+        category,
+        text,
+        enabled: body.enabled !== undefined ? body.enabled : previous.enabled !== false,
+        sort_order: body.sort_order !== undefined ? Number(body.sort_order) : previous.sort_order,
+        updatedAt: new Date().toISOString(),
+    };
+    items[idx] = updated;
+    try {
+        await writeJsonArray(WEATHER_PHRASES_FILE_ID, items);
+    } catch (e) {
+        console.error('[weather-phrases] update error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(200).json(updated);
+}
+
+async function weatherPhraseDelete(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const items = await readJsonArray(WEATHER_PHRASES_FILE_ID);
+    const idx = items.findIndex(phrase => phrase.id === req.query.id);
+    if (idx < 0) return res.status(404).json({ error: 'Not found' });
+    items.splice(idx, 1);
+    try {
+        await writeJsonArray(WEATHER_PHRASES_FILE_ID, items);
+    } catch (e) {
+        console.error('[weather-phrases] delete error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(200).json({ ok: true });
+}
+
 // ── Resource router ───────────────────────────────────────────────────────────
 //
 // Add new resources here. Each entry is a map of HTTP method → handler.
@@ -956,6 +1029,9 @@ const HANDLERS = {
     'music-jacket': { GET: musicJacketGet, POST: musicJacketPost, DELETE: musicJacketDelete                    },
     'music-file':   { GET: musicFileGet,   POST: musicFilePost,   DELETE: musicFileDelete                       },
     messages:     { GET: messageGet,     PUT: messagePut,     DELETE: messageDelete                            },
+    'weather-phrases': {
+        GET: weatherPhraseGet, PUT: weatherPhrasePut, DELETE: weatherPhraseDelete,
+    },
 };
 
 export default async function handler(req, res) {

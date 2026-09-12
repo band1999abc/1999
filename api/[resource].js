@@ -337,6 +337,69 @@ async function messagesCreate(req, res) {
     return res.status(201).json(msg);
 }
 
+// ── Weather phrases ────────────────────────────────────────────────────────────
+
+const WEATHER_PHRASES_FILE = 'data/weather_phrases.json';
+const WEATHER_CATEGORIES   = [
+    'sunny', 'partly_cloudy', 'mostly_cloudy', 'cloudy', 'rainy', 'snowy', 'foggy',
+];
+
+function weatherPhraseSort(items) {
+    const rank = new Map(WEATHER_CATEGORIES.map((category, i) => [category, i]));
+    return items.sort((a, b) =>
+        (rank.get(a.category) ?? WEATHER_CATEGORIES.length) -
+            (rank.get(b.category) ?? WEATHER_CATEGORIES.length) ||
+        Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0) ||
+        String(a.id).localeCompare(String(b.id))
+    );
+}
+
+async function weatherPhrasesList(req, res) {
+    let items = await readJsonArray(WEATHER_PHRASES_FILE);
+    if (!isAuthed(req)) items = items.filter(item => item.enabled !== false);
+    return res.status(200).json(weatherPhraseSort(items));
+}
+
+async function weatherPhrasesCreate(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+    const body = await readBody(req);
+    const category = String(body.category || '').trim();
+    const text = String(body.text || '').trim();
+    if (!WEATHER_CATEGORIES.includes(category))
+        return res.status(400).json({ error: 'Invalid category' });
+    if (!text) return res.status(400).json({ error: 'text is required' });
+    if (body.enabled !== undefined && typeof body.enabled !== 'boolean')
+        return res.status(400).json({ error: 'enabled must be a boolean' });
+    if (body.sort_order !== undefined &&
+        (body.sort_order === null || String(body.sort_order).trim() === '' ||
+         !Number.isInteger(Number(body.sort_order)) || !Number.isFinite(Number(body.sort_order))))
+        return res.status(400).json({ error: 'sort_order must be an integer' });
+
+    const items = await readJsonArray(WEATHER_PHRASES_FILE);
+    const categoryItems = items.filter(item => item.category === category);
+    const now = new Date().toISOString();
+    const phrase = {
+        id: randomUUID(),
+        category,
+        text,
+        enabled: body.enabled !== false,
+        sort_order: body.sort_order !== undefined
+            ? Number(body.sort_order)
+            : categoryItems.reduce((max, item) => Math.max(max, Number(item.sort_order) || 0), -1) + 1,
+        createdAt: now,
+        updatedAt: now,
+    };
+    try {
+        items.push(phrase);
+        await writeJsonArray(WEATHER_PHRASES_FILE, items);
+    } catch (e) {
+        console.error('[weather-phrases] create error:', e);
+        return res.status(500).json({ error: 'Failed to save' });
+    }
+    return res.status(201).json(phrase);
+}
+
 // ── Resource router ───────────────────────────────────────────────────────────
 //
 // Add new resources here. Each entry is a { GET?, POST? } map of method handlers.
@@ -347,6 +410,7 @@ const HANDLERS = {
     live:     { GET: liveList,     POST: liveCreate     },
     music:    { GET: musicList,    POST: musicCreate    },
     messages: { GET: messagesList, POST: messagesCreate },
+    'weather-phrases': { GET: weatherPhrasesList, POST: weatherPhrasesCreate },
 };
 
 export default async function handler(req, res) {

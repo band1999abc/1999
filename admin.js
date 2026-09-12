@@ -14,6 +14,7 @@
  *   "login"            → /afterhours/login
  *   "afterhours"       → /afterhours  (dashboard)
  *   "afterhours-diary" → /afterhours/diary
+ *   "afterhours-weather-phrases" → /afterhours/weather-phrases
  */
 (function () {
     'use strict';
@@ -106,7 +107,7 @@
 
     /* ── Gated pages (dashboard + sub-pages) ─────────────────────── */
 
-    if (page === 'afterhours' || page === 'afterhours-diary' || page === 'afterhours-live' || page === 'afterhours-analytics' || page === 'afterhours-music' || page === 'afterhours-messages') {
+    if (page === 'afterhours' || page === 'afterhours-diary' || page === 'afterhours-live' || page === 'afterhours-analytics' || page === 'afterhours-music' || page === 'afterhours-messages' || page === 'afterhours-weather-phrases') {
 
         // Always call the server — honours both Bearer token AND cookie fallback
         (async function gate() {
