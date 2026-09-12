@@ -30,6 +30,12 @@ import {
     deleteMusicBlob,
     musicStorageErrorResponse,
 } from '../_music_storage.js';
+import {
+    readMembersMainPhoto,
+    writeMembersMainPhoto,
+    deleteMembersMainPhoto,
+    membersStorageErrorResponse,
+} from '../_members_storage.js';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -657,6 +663,53 @@ async function musicJacketDelete(req, res) {
     return res.status(200).json({ ok: true });
 }
 
+// ── Members main photo ────────────────────────────────────────────────────────
+
+const MEMBERS_PHOTO_MAX_BYTES = 4 * 1024 * 1024;
+
+async function membersPhotoGet(req, res) {
+    if (req.query.id !== 'main') return res.status(404).send('Not found');
+    try {
+        const dataUrl = await readMembersMainPhoto();
+        if (!dataUrl) return res.status(404).send('Not found');
+        return serveDataUrl(res, dataUrl);
+    } catch (e) {
+        return membersStorageErrorResponse(res, e, 'member-photo/get');
+    }
+}
+
+async function membersPhotoPost(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+    if (req.query.id !== 'main') return res.status(404).json({ error: 'Not found' });
+    try {
+        let body;
+        try { body = await readBodyLimited(req, MEMBERS_PHOTO_MAX_BYTES); }
+        catch { return res.status(413).json({ error: 'Image too large' }); }
+        const { dataUrl } = body;
+        if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/') ||
+            !dataUrl.includes(';base64,')) {
+            return res.status(400).json({ error: 'Invalid image dataUrl' });
+        }
+        await writeMembersMainPhoto(dataUrl);
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(200).json({ ok: true });
+    } catch (e) {
+        return membersStorageErrorResponse(res, e, 'member-photo/create');
+    }
+}
+
+async function membersPhotoDelete(req, res) {
+    if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
+    if (req.query.id !== 'main') return res.status(404).json({ error: 'Not found' });
+    try {
+        await deleteMembersMainPhoto();
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(200).json({ ok: true });
+    } catch (e) {
+        return membersStorageErrorResponse(res, e, 'member-photo/delete');
+    }
+}
+
 // ── Music file (hosted MP3) ───────────────────────────────────────────────────
 
 const MUSIC_BLOB_MAX_BYTES = 64 * 1024 * 1024;
@@ -1027,6 +1080,7 @@ const HANDLERS = {
     flyer:        { GET: flyerGet,       POST: flyerPost,     PUT: flyerPut,  DELETE: flyerDelete              },
     music:        { GET: musicGet,       PUT: musicPut,       DELETE: musicDelete                              },
     'music-jacket': { GET: musicJacketGet, POST: musicJacketPost, DELETE: musicJacketDelete                    },
+    'member-photo': { GET: membersPhotoGet, POST: membersPhotoPost, DELETE: membersPhotoDelete                },
     'music-file':   { GET: musicFileGet,   POST: musicFilePost,   DELETE: musicFileDelete                       },
     messages:     { GET: messageGet,     PUT: messagePut,     DELETE: messageDelete                            },
     'weather-phrases': {

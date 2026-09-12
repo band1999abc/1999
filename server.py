@@ -302,6 +302,31 @@ def _delete_music_jacket(music_id):
             pass
 
 
+def _members_main_photo_path():
+    return os.path.join(_DATA_DIR, 'members_main_photo.b64')
+
+
+def _read_members_main_photo():
+    try:
+        with open(_members_main_photo_path(), 'r', encoding='utf-8') as fh:
+            return fh.read().strip() or None
+    except OSError:
+        return None
+
+
+def _write_members_main_photo(data_url):
+    os.makedirs(_DATA_DIR, exist_ok=True)
+    with open(_members_main_photo_path(), 'w', encoding='utf-8') as fh:
+        fh.write(data_url)
+
+
+def _delete_members_main_photo():
+    try:
+        os.remove(_members_main_photo_path())
+    except FileNotFoundError:
+        pass
+
+
 # ── Music audio file helpers ─────────────────────────────────────────────────
 
 def _read_music_file(music_id):
@@ -1035,6 +1060,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             self._serve_template('afterhours-live.html')
         elif path == '/afterhours/weather-phrases':
             self._serve_template('afterhours-weather-phrases.html')
+        elif path == '/afterhours/members':
+            self._serve_template('afterhours-members.html')
         elif path == '/afterhours/login':
             self._serve_template('login.html')
         elif path == '/afterhours':
@@ -1086,6 +1113,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_music_jacket_get(mid)
             else:
                 self.send_error(404)
+        elif path == '/api/member-photo/main':
+            self._handle_members_photo_get()
         elif path.startswith('/api/music-file/'):
             mid = path[len('/api/music-file/'):]
             if mid and '/' not in mid:
@@ -1132,6 +1161,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_music_jacket_post(mid)
             else:
                 self.send_error(404)
+        elif path == '/api/member-photo/main':
+            self._handle_members_photo_post()
         elif path.startswith('/api/music-file/'):
             mid = path[len('/api/music-file/'):]
             if mid and '/' not in mid:
@@ -1205,6 +1236,9 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
             if mid and '/' not in mid:
                 self._handle_music_jacket_delete(mid)
                 return
+        elif path == '/api/member-photo/main':
+            self._handle_members_photo_delete()
+            return
         elif path.startswith('/api/music-file/'):
             mid = path[len('/api/music-file/'):]
             if mid and '/' not in mid:
@@ -2078,6 +2112,51 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         items[idx] = dict(items[idx], jacket=False,
                           updatedAt=time.strftime('%Y-%m-%dT%H:%M:%S'))
         _save_music(items)
+        self._write_json(200, {'ok': True})
+
+    def _handle_members_photo_get(self):
+        import base64 as _b64
+        data_url = _read_members_main_photo()
+        if not data_url:
+            self.send_error(404)
+            return
+        try:
+            header, encoded = data_url.split(';base64,', 1)
+            image = _b64.b64decode(encoded)
+            self.send_response(200)
+            self.send_header('Content-Type', header[len('data:'):])
+            self.send_header('Content-Length', str(len(image)))
+            self.send_header('Cache-Control', 'no-store')
+            http.server.BaseHTTPRequestHandler.end_headers(self)
+            self.wfile.write(image)
+        except Exception:
+            self.send_error(500)
+
+    def _handle_members_photo_post(self):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        length = int(self.headers.get('Content-Length', 0))
+        if length > 4 * 1024 * 1024:
+            self._write_json(413, {'error': 'Image too large'})
+            return
+        try:
+            body = json.loads(self.rfile.read(length))
+            data_url = body.get('dataUrl', '')
+        except Exception:
+            self._write_json(400, {'error': 'Bad request'})
+            return
+        if not isinstance(data_url, str) or not data_url.startswith('data:image/') or ';base64,' not in data_url:
+            self._write_json(400, {'error': 'Invalid image dataUrl'})
+            return
+        _write_members_main_photo(data_url)
+        self._write_json(200, {'ok': True})
+
+    def _handle_members_photo_delete(self):
+        if not self._is_authed():
+            self._write_json(401, {'error': 'Unauthorized'})
+            return
+        _delete_members_main_photo()
         self._write_json(200, {'ok': True})
 
     # ── GET /api/music-file/<id> ───────────────────────────────────────────────

@@ -19,6 +19,7 @@
     { "source": "/afterhours/music",       "destination": "/api/afterhours-pages?page=music"      },
     { "source": "/afterhours/messages",    "destination": "/api/afterhours-pages?page=messages"   },
     { "source": "/afterhours/weather-phrases", "destination": "/api/afterhours-pages?page=weatherphrases" },
+    { "source": "/afterhours/members",     "destination": "/api/afterhours-pages?page=members"     },
     { "source": "/afterhours/login",       "destination": "/api/afterhours-pages?page=login"      },
     { "source": "/afterhours",             "destination": "/api/afterhours-pages?page=home"       }
   ],

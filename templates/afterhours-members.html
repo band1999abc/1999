@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Members — After Hours | 1999</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/style.css?v=38">
+    <link rel="stylesheet" href="/admin.css?v=17">
+</head>
+<body data-page="afterhours-members" class="auth-hidden">
+<div class="card">
+    <img src="/whale_transparent.png" class="whale-bg" alt="" aria-hidden="true" decoding="async">
+    <h1>1999</h1>
+    <div class="sub">Members</div>
+
+    <section class="mphoto-section">
+        <div class="admin-label">メインアー写</div>
+        <div id="mphoto-preview-wrap" class="mphoto-preview-wrap mphoto-hidden">
+            <img id="mphoto-preview" class="mphoto-preview" alt="現在のメインアー写">
+        </div>
+        <div id="mphoto-empty" class="mphoto-empty">画像なし</div>
+        <input id="mphoto-file" type="file" accept="image/*" class="mphoto-hidden">
+        <div class="mphoto-actions">
+            <button id="mphoto-select" type="button" class="admin-btn">画像を選択</button>
+            <button id="mphoto-delete" type="button" class="admin-btn mphoto-delete mphoto-hidden">削除</button>
+        </div>
+        <p class="mphoto-hint">画像を選択後、「保存」を押すと公開Membersページへ反映されます。</p>
+        <button id="mphoto-save" type="button" class="admin-btn" disabled>保存</button>
+        <p id="mphoto-status" class="mphoto-status" role="status"></p>
+    </section>
+
+    <div class="admin-footer">
+        <a href="/afterhours" class="back-home">← After Hours</a>
+        <button class="admin-signout" id="signout-btn">Sign out</button>
+    </div>
+</div>
+<script src="/whale.js?v=2"></script>
+<script src="/script.js?v=4"></script>
+<script src="/admin.js?v=5"></script>
+<script src="/members-admin.js?v=1"></script>
+</body>
+</html>

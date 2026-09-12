@@ -4446,3 +4446,24 @@ body.night .mm-check:has(input:checked) {
     .wp-item-actions { width: 100%; }
     .wp-action-btn { flex: 1; }
 }
+
+/* Members main photo admin */
+.mphoto-section { margin-top: 28px; }
+.mphoto-hidden { display: none !important; }
+.mphoto-preview-wrap { margin: 10px 0 14px; }
+.mphoto-preview {
+    border-radius: 8px; display: block; height: auto; max-height: 55vh;
+    object-fit: contain; width: 100%;
+}
+.mphoto-empty {
+    border: 1px dashed var(--border); color: var(--text-muted); font-size: 12px;
+    margin: 10px 0 14px; padding: 32px 12px; text-align: center;
+}
+.mphoto-actions { display: flex; gap: 8px; }
+.mphoto-actions .admin-btn { margin-top: 0; }
+.mphoto-delete { color: #b07060; }
+.mphoto-delete:hover { background: #b07060; border-color: #b07060; color: #fff; }
+.mphoto-hint {
+    color: var(--text-muted); font-size: 10px; line-height: 1.7; margin: 12px 0;
+}
+.mphoto-status { color: var(--text-muted); font-size: 11px; min-height: 1.5em; }

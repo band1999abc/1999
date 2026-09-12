@@ -15,6 +15,7 @@
  *   "afterhours"       → /afterhours  (dashboard)
  *   "afterhours-diary" → /afterhours/diary
  *   "afterhours-weather-phrases" → /afterhours/weather-phrases
+ *   "afterhours-members" → /afterhours/members
  */
 (function () {
     'use strict';

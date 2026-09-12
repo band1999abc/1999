@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-09-12b — Weather Phrases admin page
+ * bump: 2026-09-13a — Members main photo admin page
  */
 
 import { readFileSync } from 'fs';
@@ -28,6 +28,7 @@ const TEMPLATES = {
     music:      'afterhours-music.html',
     messages:   'afterhours-messages.html',
     weatherphrases: 'afterhours-weather-phrases.html',
+    members:    'afterhours-members.html',
     login:      'login.html',
     analytics:  'afterhours-analytics.html',
     milestones: 'afterhours-milestones.html',

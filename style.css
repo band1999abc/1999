@@ -1315,3 +1315,18 @@ body.night .live-archive-label                      { border-bottom-color: var(-
 body.night .live-entry.has-flyer:hover              { background: rgba(255,255,255,.04); }
 body.night .live-flyer-indicator                    { color: rgba(255,255,255,.38); border-color: rgba(255,255,255,.20); }
 body.night .live-entry.has-flyer:hover .live-flyer-indicator { color: rgba(255,255,255,.70); border-color: rgba(255,255,255,.42); }
+
+/* Members main artist photo */
+.members-main-photo-wrap {
+    margin: 28px 0 32px;
+    width: 100%;
+}
+
+.members-main-photo {
+    border-radius: 8px;
+    display: block;
+    height: auto;
+    max-height: 70vh;
+    object-fit: contain;
+    width: 100%;
+}
