@@ -137,6 +137,15 @@ h1 {
     letter-spacing: 0.06em;
 }
 
+/* Keep short track names on one line without clipping longer names. */
+body[data-page="track"] #track-title {
+    max-width: 100%;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    text-wrap: balance;
+}
+
 p {
     line-height: 2;
     margin-bottom: 18px;
@@ -888,6 +897,14 @@ body.weather-foggy::before {
     }
 }
 
+@media (max-width: 600px) {
+    body[data-page="track"] #track-title {
+        font-size: clamp(28px, 9.6vw, 56px);
+        letter-spacing: clamp(0.01em, 0.8vw, 0.06em);
+        word-break: normal;
+    }
+}
+
 /* ==============================
    Night mode  (18:00 – 05:59)
    Applied to <body> by script.js
@@ -1315,18 +1332,3 @@ body.night .live-archive-label                      { border-bottom-color: var(-
 body.night .live-entry.has-flyer:hover              { background: rgba(255,255,255,.04); }
 body.night .live-flyer-indicator                    { color: rgba(255,255,255,.38); border-color: rgba(255,255,255,.20); }
 body.night .live-entry.has-flyer:hover .live-flyer-indicator { color: rgba(255,255,255,.70); border-color: rgba(255,255,255,.42); }
-
-/* Members main artist photo */
-.members-main-photo-wrap {
-    margin: 28px 0 32px;
-    width: 100%;
-}
-
-.members-main-photo {
-    border-radius: 8px;
-    display: block;
-    height: auto;
-    max-height: 70vh;
-    object-fit: contain;
-    width: 100%;
-}
