@@ -137,6 +137,21 @@ h1 {
     letter-spacing: 0.06em;
 }
 
+/* Preserve the complete artist photo; let its own aspect ratio set the height. */
+.members-main-photo-wrap {
+    width: 100%;
+    margin: 28px 0 32px;
+}
+
+.members-main-photo {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
 /* Keep short track names on one line without clipping longer names. */
 body[data-page="track"] #track-title {
     max-width: 100%;
