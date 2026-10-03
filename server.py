@@ -44,6 +44,8 @@ import uuid as _uuid_mod
 _ROOT      = os.path.dirname(os.path.abspath(__file__))
 _TEMPLATES = os.path.join(_ROOT, 'templates')
 _DATA_DIR  = os.path.join(_ROOT, 'data')
+with open(os.path.join(_ROOT, 'public-assets.json'), encoding='utf-8') as _f:
+    _PUBLIC_STATIC_FILES = frozenset(json.load(_f)['staticFiles'])
 
 # ── Auth helpers ──────────────────────────────────────────────────────────────
 
@@ -1012,6 +1014,20 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
     # ── Routing ───────────────────────────────────────────────────────────────
 
+    def send_head(self):
+        """Static GET/HEAD: serve only explicitly listed public root files."""
+        filepath = os.path.realpath(self.translate_path(self.path))
+        relative = os.path.relpath(filepath, _ROOT).replace(os.sep, '/')
+        if relative != '.' and relative not in _PUBLIC_STATIC_FILES:
+            self.send_error(404)
+            return None
+        return super().send_head()
+
+    def list_directory(self, path):
+        """Never expose directory contents, even if an index file is missing."""
+        self.send_error(404)
+        return None
+
     def send_error(self, code, message=None, explain=None):
         """404 は custom 404.html を返す。それ以外はデフォルト動作。"""
         if code == 404:
@@ -1024,7 +1040,8 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-Length', str(len(body)))
                 self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
                 self.end_headers()
-                self.wfile.write(body)
+                if self.command != 'HEAD':
+                    self.wfile.write(body)
                 return
             except FileNotFoundError:
                 pass
