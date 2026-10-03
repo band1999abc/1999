@@ -1,0 +1,46 @@
+/* Only Music and Contact load this file; shared styles and Home are unchanged. */
+body[data-page="music"] .song-link {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    column-gap: 12px;
+}
+
+body[data-page="music"] .song-name {
+    min-width: 0;
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body[data-page="music"] .song-year {
+    white-space: nowrap;
+}
+
+.contact-link[href^="mailto:"] {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 340px) {
+    body[data-page="music"] .song-link {
+        column-gap: 8px;
+    }
+
+    body[data-page="music"] .song-left {
+        gap: 6px;
+    }
+
+    body[data-page="music"] .song-name {
+        font-size: 18px;
+    }
+
+    body[data-page="music"] .play-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    body[data-page="music"] .song-jacket {
+        width: 34px;
+        height: 34px;
+    }
+}
