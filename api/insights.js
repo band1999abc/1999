@@ -371,7 +371,9 @@ export default async function handler(req, res) {
     const token   = (req.headers.authorization || '').replace(/^Bearer\s+/i, '')
                   || cookies[COOKIE_NAME] || '';
     if (!token || !verifyToken(token))  return res.status(401).json({ error: 'Unauthorized' });
-    if (await isRevoked(token))         return res.status(401).json({ error: 'Unauthorized' });
+    const revoked = await isRevoked(token);
+    if (revoked === null) return res.status(503).json({ error: 'Session verification unavailable' });
+    if (revoked !== false) return res.status(401).json({ error: 'Unauthorized' });
     if (req.method !== 'GET')           return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {

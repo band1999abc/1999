@@ -12,7 +12,7 @@
 
 import { timingSafeEqual } from 'crypto';
 import {
-    COOKIE_NAME, makeToken, verifyToken, parseCookies, cookieHeader,
+    makeToken, verifyToken, cookieHeader,
     extractToken, denylistToken, isRevoked,
 } from './_auth.js';
 
@@ -46,17 +46,8 @@ function getMemberComment(name) {
 
 /** Returns member name (str) if authenticated, null otherwise. */
 function getAuthedMember(req) {
-    // 1. Bearer token (sessionStorage path — works in iframes)
-    const auth = req.headers['authorization'] || '';
-    if (auth.startsWith('Bearer ')) {
-        const result = verifyToken(auth.slice(7));
-        if (result !== null) return result;
-    }
-    // 2. Cookie fallback
-    const cookies = parseCookies(req.headers.cookie);
-    const result = verifyToken(cookies[COOKIE_NAME] || '');
-    if (result !== null) return result;
-    return null;
+    // Signature and revocation must check the SAME credential.
+    return verifyToken(extractToken(req));
 }
 
 export default async function handler(req, res) {
@@ -68,7 +59,9 @@ export default async function handler(req, res) {
         if (member === null) return res.status(401).json({ ok: false });
         // Also reject if the token was explicitly revoked via logout
         const token = extractToken(req);
-        if (token && await isRevoked(token)) return res.status(401).json({ ok: false });
+        const revoked = await isRevoked(token);
+        if (revoked === null) return res.status(503).json({ ok: false, error: 'Session verification unavailable' });
+        if (revoked !== false) return res.status(401).json({ ok: false });
         const comment = getMemberComment(member);
         return res.status(200).json({ ok: true, member, comment });
     }

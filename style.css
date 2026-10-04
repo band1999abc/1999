@@ -892,6 +892,14 @@ body.weather-foggy::before {
     }
 }
 
+/* Only the smallest Members viewport needs a narrower heading. */
+@media (max-width: 359px) {
+    body[data-page="members"] h1 {
+        font-size: clamp(36px, 13vw, 46px);
+        letter-spacing: 0.1em;
+    }
+}
+
 /* ==============================
    Responsive — 480px
 ============================== */
@@ -930,7 +938,7 @@ body.night {
     --accent:     #c49a6c;
     --card-bg:    #1e2235;
     --text-dark:  #e2ddd5;
-    --text-muted: #7a8499;
+    --text-muted: #8a94a9;
     --border:     #2a2f45;
     --song-line:  rgba(200, 210, 230, .10);
     color: #e2ddd5;
@@ -1180,11 +1188,17 @@ body.night .public-pagination-button.is-current {
     border: 1px solid rgba(0,0,0,.18);
     border-radius: 3px;
     font-family: inherit;
-    pointer-events: none;
+    background: transparent;
+    cursor: pointer;
     transition:
         color        var(--transition-fast) ease,
         border-color var(--transition-fast) ease,
         transform    var(--transition-fast) ease;
+}
+
+.live-flyer-indicator:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
 }
 
 .live-entry.has-flyer:hover .live-flyer-indicator {
@@ -1345,5 +1359,5 @@ body.night .live-venue                              { color: var(--text-dark); }
 body.night .live-next-badge                         { color: #b09a7a; border-color: #b09a7a; }
 body.night .live-archive-label                      { border-bottom-color: var(--border); }
 body.night .live-entry.has-flyer:hover              { background: rgba(255,255,255,.04); }
-body.night .live-flyer-indicator                    { color: rgba(255,255,255,.38); border-color: rgba(255,255,255,.20); }
+body.night .live-flyer-indicator                    { color: var(--text-muted); border-color: rgba(255,255,255,.20); }
 body.night .live-entry.has-flyer:hover .live-flyer-indicator { color: rgba(255,255,255,.70); border-color: rgba(255,255,255,.42); }

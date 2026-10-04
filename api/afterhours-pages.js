@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-09-13a — Members main photo admin page
+ * bump: 2026-10-04a — Refresh admin auth gate asset version
  */
 
 import { readFileSync } from 'fs';

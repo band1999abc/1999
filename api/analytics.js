@@ -15,7 +15,7 @@
  */
 
 import { randomUUID }    from 'crypto';
-import { COOKIE_NAME, verifyToken, parseCookies, extractToken, isRevoked } from './_auth.js';
+import { verifyToken, extractToken, isRevoked } from './_auth.js';
 import { appendAnalyticsEvent, readAnalyticsDays, getFirstDate } from './_analytics_store.js';
 
 // ── Validation constants ──────────────────────────────────────────────────────
@@ -132,10 +132,7 @@ async function readBody(req) {
 }
 
 function isAuthed(req) {
-    const auth = req.headers['authorization'] || '';
-    if (auth.startsWith('Bearer ') && verifyToken(auth.slice(7)) !== null) return true;
-    const cookies = parseCookies(req.headers.cookie);
-    return verifyToken(cookies[COOKIE_NAME] || '') !== null;
+    return verifyToken(extractToken(req)) !== null;
 }
 
 /** Current date string in JST (UTC+9), e.g. '2026-07-08' */
@@ -229,7 +226,9 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
         const _tok = extractToken(req);
-        if (_tok && await isRevoked(_tok)) return res.status(401).json({ error: 'Unauthorized' });
+        const revoked = await isRevoked(_tok);
+        if (revoked === null) return res.status(503).json({ error: 'Session verification unavailable' });
+        if (revoked !== false) return res.status(401).json({ error: 'Unauthorized' });
 
         const today     = todayJST();
         const firstDate = await getFirstDate().catch(() => null);

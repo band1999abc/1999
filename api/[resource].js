@@ -419,7 +419,13 @@ export default async function handler(req, res) {
     // Resolve auth once — includes denylist check — so all sub-handlers can
     // call the synchronous isAuthed(req) without extra async work.
     const _tok   = extractToken(req);
-    req._authed  = verifyToken(_tok) !== null && !(await isRevoked(_tok));
+    const valid = verifyToken(_tok) !== null;
+    const revoked = valid ? await isRevoked(_tok) : true;
+    req._authed = valid && revoked === false;
+    // Anonymous public reads stay available even when session storage is down.
+    if (revoked === null && req.method !== 'GET' && req.method !== 'HEAD') {
+        return res.status(503).json({ error: 'Session verification unavailable' });
+    }
 
     const resource = req.query?.resource;
     const methods  = HANDLERS[resource];

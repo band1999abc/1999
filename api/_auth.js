@@ -77,7 +77,7 @@ function _hash(token) {
 async function _kvRest(path) {
     const base = (process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/$/, '');
     const tok  = process.env.UPSTASH_REDIS_REST_TOKEN;
-    if (!base || !tok) return null;
+    if (!base || !tok) throw new Error('Session storage is not configured');
     const res = await fetch(`${base}${path}`, {
         headers: { Authorization: `Bearer ${tok}` },
     });
@@ -102,16 +102,18 @@ export async function denylistToken(token) {
 }
 
 /**
- * Returns true if the token has been explicitly revoked via logout.
- * Fails open (returns false) on KV errors to avoid locking out valid sessions.
+ * true: revoked; false: confirmed not revoked; null: verification unavailable.
+ * Callers must authorize only when the result is strictly false.
  */
 export async function isRevoked(token) {
     if (!token) return false;
     try {
         const hash   = _hash(token);
         const result = await _kvRest(`/get/revoked:${hash}`);
-        return result === '1';
+        if (result === null) return false;
+        if (result === '1' || result === 1) return true;
+        return null;
     } catch {
-        return false;
+        return null;
     }
 }

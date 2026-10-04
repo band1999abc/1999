@@ -111,10 +111,27 @@
 
     // credentials:'omit' ensures admin cookies are never sent from the public
     // diary page, so the API always returns only published entries here.
-    fetch('/api/diary', { credentials: 'omit' })
-        .then(function (r) { return r.json(); })
+    function load() {
+        listEl.dataset.state = 'loading';
+        listEl.setAttribute('aria-live', 'polite');
+        listEl.setAttribute('aria-busy', 'true');
+        listEl.innerHTML = '<div class="diary-entry"><p>読み込み中…</p></div>';
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
+        fetch('/api/diary', { credentials: 'omit' })
+        .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
         .then(function (posts) {
-            allPosts = Array.isArray(posts) ? posts.slice() : [];
+            if (!Array.isArray(posts) || posts.some(function (p) {
+                return !p || typeof p !== 'object' || Array.isArray(p)
+                    || typeof p.id !== 'string' || !p.id
+                    || typeof p.date !== 'string' || typeof p.body !== 'string';
+            })) throw new Error('Invalid diary response');
+            allPosts = posts.slice();
+            currentPage = 1;
+            listEl.dataset.state = allPosts.length ? 'success' : 'empty';
             allPosts.sort(function (a, b) {
                 var byDate = String(b.date || '').localeCompare(String(a.date || ''));
                 if (byDate !== 0) return byDate;
@@ -123,7 +140,18 @@
             render();
         })
         .catch(function () {
+            allPosts = [];
+            listEl.dataset.state = 'error';
             listEl.innerHTML =
-                '<div class="diary-entry"><p style="color:var(--text-muted);font-size:14px;">読み込みに失敗しました。</p></div>';
-        });
+                '<div class="diary-entry" role="alert"><p>投稿を読み込めませんでした。しばらくしてから再試行してください。</p></div>';
+            var retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'public-pagination-button';
+            retry.textContent = '再試行';
+            retry.addEventListener('click', load);
+            listEl.appendChild(retry);
+        })
+        .finally(function () { listEl.setAttribute('aria-busy', 'false'); });
+    }
+    load();
 }());

@@ -4,15 +4,17 @@
  * 静的アセット: キャッシュ優先（高速化）
  */
 
-// Drop previously cached internal-file responses when the public-file guard ships.
-const CACHE = '1999-v32';
+// Drop old CSS/JS as well as any previously cached internal-file responses.
+const CACHE = '1999-v33';
 const STATIC_SHELL = [
-  '/style.css?v=39',
+  '/style.css?v=40',
   '/admin.css?v=14',
-  '/admin.js?v=3',
+  '/admin.js?v=7',
   '/script.js?v=4',
-  '/music.js?v=3',
-  '/track.js?v=6',
+  '/music.js?v=4',
+  '/diary.js?v=4',
+  '/live.js?v=6',
+  '/track.js?v=7',
   '/music-admin.js?v=8',
   '/music-upload-client.bundle.js?v=2',
   '/weather.js',

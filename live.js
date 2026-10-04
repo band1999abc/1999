@@ -11,6 +11,7 @@
     let currentPage = 1;
     let orderedLives = [];
     let nextLiveId = null;
+    let modalOpener = null;
 
     // ── Flyer helpers ─────────────────────────────────────────────────────────
 
@@ -93,6 +94,17 @@
             if (e.key === 'Escape')      closeModal();
             if (e.key === 'ArrowLeft')   navigate(-1);
             if (e.key === 'ArrowRight')  navigate(1);
+            if (e.key === 'Tab') {
+                const buttons = [closeBtn, prevBtn, nextBtn].filter(function (b) {
+                    return b.style.visibility !== 'hidden';
+                });
+                const index = buttons.indexOf(document.activeElement);
+                const next = e.shiftKey
+                    ? (index <= 0 ? buttons.length - 1 : index - 1)
+                    : (index + 1) % buttons.length;
+                e.preventDefault();
+                buttons[next].focus();
+            }
         });
 
         document.body.appendChild(modal);
@@ -114,18 +126,22 @@
 
     function openModal(urls, idx) {
         if (!modal) buildModal();
+        modalOpener = document.activeElement;
         currentUrls = urls;
         currentIdx  = idx;
         syncModal();
         modal.classList.add('is-open');
         document.body.style.overflow = 'hidden';
+        closeBtn.focus();
     }
 
     function closeModal() {
         if (!modal) return;
         modal.classList.remove('is-open');
         document.body.style.overflow = '';
+        if (modalOpener && modalOpener.isConnected) modalOpener.focus();
         setTimeout(function () {
+            if (modal.classList.contains('is-open')) return;
             modalImg.src = '';
             currentUrls  = [];
         }, 300);
@@ -278,9 +294,15 @@
         el.classList.add('has-flyer');
         el.addEventListener('click', function () { openModal(urls, 0); });
 
-        const ind = document.createElement('div');
+        const ind = document.createElement('button');
+        ind.type = 'button';
         ind.className = 'live-flyer-indicator';
         ind.textContent = 'FLYER';
+        ind.setAttribute('aria-label', (live.venue || 'Live') + 'のフライヤーを開く');
+        ind.addEventListener('click', function (e) {
+            e.stopPropagation();
+            openModal(urls, 0);
+        });
         el.appendChild(ind);
     }
 

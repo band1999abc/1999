@@ -218,10 +218,34 @@
 
         // ── Play / Pause button ───────────────────────────────────────────────
         var userPlayRequested = false;
+        var loadFailed = false;
+        var retryCount = 0;
         btn.addEventListener('click', function () {
-            if (audio.paused || audio.ended) {
+            // Failed media may still report paused=false; retry takes priority.
+            if (loadFailed || audio.error || audio.paused || audio.ended) {
+                if (loadFailed || audio.error) {
+                    loadFailed = false;
+                    curEl.textContent = '0:00';
+                    durEl.textContent = '—';
+                    progFill.style.width = '0%';
+                    thumb.style.left = '0%';
+                    bufFill.style.width = '0%';
+                    barOuter.setAttribute('aria-valuenow', '0');
+                    // Browsers can retain a failed media response for the same URL.
+                    // A retry must obtain a fresh response, not replay that failure.
+                    audio.src = src + (src.indexOf('?') < 0 ? '?' : '&') + 'retry=' + (++retryCount);
+                    audio.load();
+                }
                 userPlayRequested = true;
-                audio.play().catch(function () { userPlayRequested = false; });
+                audio.play().catch(function () {
+                    userPlayRequested = false;
+                    if (audio.error) {
+                        loadFailed = true;
+                        setIcon('play');
+                        btn.setAttribute('aria-label', '再試行');
+                        curEl.textContent = 'エラー';
+                    }
+                });
             } else {
                 audio.pause();
             }
@@ -247,7 +271,10 @@
         });
 
         audio.addEventListener('error', function () {
+            loadFailed = true;
+            userPlayRequested = false;
             setIcon('play');
+            btn.setAttribute('aria-label', '再試行');
             curEl.textContent = 'エラー';
         });
 
