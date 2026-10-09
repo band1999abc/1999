@@ -50,7 +50,7 @@ const server = createServer((req, res) => {
             : path === '/api/member-photo/main' ? { hasPhoto: false }
             : path === '/api/weather' ? { weather: 'Clear', temp: 20, city: 'Fixture' }
             : [];
-        res.writeHead(path === '/api/auth' ? 401 : 200, { 'Content-Type': 'application/json' });
+        res.writeHead(path === '/api/auth' ? (process.argv.includes('--auth-error') ? 503 : 401) : 200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(value ?? {})); return;
     }
     const admin = path.match(/^\/afterhours(?:\/([a-z-]+))?$/);
@@ -273,13 +273,13 @@ if (process.argv.includes('--serve')) {
             internal: !!(await caches.match('/server.py')),
             css: await (await caches.match('/style.css?v=40')).text(),
         }));
-        assert.deepEqual(cacheState.keys, ['1999-v33']);
+        assert.deepEqual(cacheState.keys, ['1999-v34']);
         assert.equal(cacheState.internal, false);
         assert.ok(cacheState.css.includes('--text-muted: #8a94a9'));
         await swPage.reload({ waitUntil: 'networkidle' });
         assert.equal(await swPage.locator('.song-link').count(), 2);
         await swContext.close();
-        console.log('PASS v32 removed, v33 active, new CSS loaded, internal cached response removed and reload');
+        console.log('PASS v32 removed, v34 active, new CSS loaded, internal cached response removed and reload');
         assert.deepEqual(errors, []);
         console.log('PASS no uncaught browser exceptions');
     } finally {

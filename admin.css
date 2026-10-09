@@ -6,6 +6,10 @@
 
 /* Auth gate — hides the page until JS verifies the session */
 body.auth-hidden { visibility: hidden; }
+/* Hide entire management roots even if a descendant overrides visibility. */
+body.auth-hidden > :not(#auth-status):not(script):not(style) {
+    display: none !important;
+}
 
 /* Tighten spacing between .sub and member-greeting on the dashboard */
 body[data-page="afterhours"] .sub {

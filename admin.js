@@ -30,6 +30,27 @@
     const gateReady = gated
         ? new Promise(resolve => { finishGate = resolve; })
         : Promise.resolve(true);
+    const originalInert = new Map();
+    let gateConfirmed = !gated;
+    let gateObserver;
+
+    function lockManagement() {
+        for (const child of document.body.children) {
+            if (child.id === 'auth-status' || child.tagName === 'SCRIPT' || child.tagName === 'STYLE') continue;
+            if (!originalInert.has(child)) originalInert.set(child, child.inert);
+            child.inert = true;
+        }
+    }
+
+    if (gated) {
+        document.body.classList.add('auth-hidden');
+        lockManagement();
+        // Also lock roots added by page scripts while authentication is pending.
+        gateObserver = new MutationObserver(function () {
+            if (!gateConfirmed) lockManagement();
+        });
+        gateObserver.observe(document.body, { childList: true });
+    }
 
     /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -129,6 +150,7 @@
             finishGate(false);
             // Keep the management UI hidden; reveal only a separate status panel.
             document.body.classList.add('auth-hidden');
+            lockManagement();
             const panel = document.createElement('div');
             panel.id = 'auth-status';
             panel.style.cssText = 'visibility:visible;position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;';
@@ -161,9 +183,12 @@
                 if (!res.ok) { showAuthError(); return; }
                 const data = await res.json();
                 if (!data || data.ok !== true) { showAuthError(); return; }
-                finishGate(true);
                 // Auth confirmed — reveal the page
+                gateConfirmed = true;
+                gateObserver.disconnect();
+                for (const [element, inert] of originalInert) element.inert = inert;
                 document.body.classList.remove('auth-hidden');
+                finishGate(true);
                 // Show personalized greeting on the dashboard
                 if (page === 'afterhours') {
                     try {

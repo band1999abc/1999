@@ -9,14 +9,17 @@ test('session verification fails closed without breaking public reads or normal 
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', String.raw`
         import assert from 'node:assert/strict';
         import { Readable } from 'node:stream';
-        import { createHmac } from 'node:crypto';
+        import { createHmac, createHash } from 'node:crypto';
         let mode = 'clear';
         const denied = new Set();
+        const revocationReads = [];
+        const hash = token => createHash('sha256').update(token).digest('hex').slice(0, 32);
         globalThis.fetch = async (input, options = {}) => {
             const url = new URL(input);
             assert.ok(url.hostname.endsWith('.invalid'), 'No real service may be contacted');
             const key = url.pathname.match(/revoked:([a-f0-9]+)/)?.[1];
             if (key) {
+                if (url.pathname.startsWith('/get/')) revocationReads.push(key);
                 if (mode === 'network') throw new Error('Simulated outage');
                 if (mode === 'http') return new Response('{}', { status: 503 });
                 if (mode === 'json') return new Response('invalid JSON');
@@ -62,6 +65,54 @@ test('session verification fails closed without breaking public reads or normal 
         const login = await run(auth, request('POST', '', { action: 'login', password: 'fixture-password' }));
         assert.equal(login.statusCode, 200);
         const token = login.data.token;
+        const bearer = makeToken('BearerFixture');
+        const cookie = makeToken('CookieFixture');
+        const wrongSignature = bearer.slice(0, -1) + (bearer.endsWith('0') ? '1' : '0');
+        const invalidBearers = new Set(['invalid', wrongSignature, bearer + 'suffix']);
+        for (const row of [
+            ['valid Bearer + valid Cookie', bearer, cookie, false, false, 'clear', 200, 'Bearer'],
+            ['invalid Bearer + valid Cookie', 'invalid', cookie, false, false, 'clear', 401, 'Bearer'],
+            ['bad signature Bearer + valid Cookie', wrongSignature, cookie, false, false, 'clear', 401, 'Bearer'],
+            ['noncanonical signature Bearer + valid Cookie', bearer + 'suffix', cookie, false, false, 'clear', 401, 'Bearer'],
+            ['revoked Bearer + valid Cookie', bearer, cookie, true, false, 'clear', 401, 'Bearer'],
+            ['valid Bearer + revoked Cookie', bearer, cookie, false, true, 'clear', 200, 'Bearer'],
+            ['valid Cookie only', '', cookie, false, false, 'clear', 200, 'Cookie'],
+            ['valid Bearer only', bearer, '', false, false, 'clear', 200, 'Bearer'],
+            ['storage network failure, Bearer + Cookie', bearer, cookie, false, false, 'network', 503, 'Bearer'],
+            ['storage network failure, Cookie only', '', cookie, false, false, 'network', 503, 'Cookie'],
+            ['lowercase valid Bearer + revoked Cookie', bearer, cookie, false, true, 'clear', 200, 'Bearer', 'bearer'],
+            ['lowercase revoked Bearer + valid Cookie', bearer, cookie, true, false, 'clear', 401, 'Bearer', 'bearer'],
+        ]) {
+            const [name, b, c, revokeB, revokeC, storage, expected, selected, scheme] = row;
+            mode = storage;
+            denied.clear();
+            if (revokeB) denied.add(hash(b));
+            if (revokeC) denied.add(hash(c));
+            const req = request('GET', b);
+            if (scheme) req.headers.authorization = scheme + ' ' + b;
+            if (c) req.headers.cookie = 'admin_session=' + c;
+            let selections = 0;
+            const authorization = req.headers.authorization;
+            Object.defineProperty(req.headers, 'authorization', {
+                get() { selections++; return authorization; },
+            });
+            const before = revocationReads.length;
+            const result = await run(auth, req);
+            assert.equal(selections, 1, 'Select credential exactly once: ' + name);
+            assert.equal(result.statusCode, expected, name);
+            assert.deepEqual(revocationReads.slice(before), invalidBearers.has(b) ? [] : [hash(b || c)], name);
+            if (expected === 200) {
+                assert.equal(result.data.member, selected + 'Fixture', name);
+            }
+            console.log('CASE ' + name + ' | selected=' + selected + ' | expected=' + expected + ' | actual=' + result.statusCode);
+        }
+        mode = 'clear';
+        denied.clear();
+        const emptyBearer = request('GET');
+        emptyBearer.headers.authorization = 'Bearer';
+        emptyBearer.headers.cookie = 'admin_session=' + cookie;
+        assert.equal((await run(auth, emptyBearer)).statusCode, 401);
+        console.log('CASE empty Bearer + valid Cookie | selected=Bearer | expected=401 | actual=401');
         assert.equal(verifyToken(token), 'Fixture');
         assert.equal(await isRevoked(token), false);
         assert.equal((await run(auth, request('GET', token))).statusCode, 200);
@@ -77,6 +128,7 @@ test('session verification fails closed without breaking public reads or normal 
         const payload = Buffer.from(JSON.stringify({ exp: Date.now() - 1, member: 'Fixture' })).toString('base64url');
         const expired = payload + '.' + createHmac('sha256', 'fixture-secret').update(payload).digest('hex');
         assert.equal((await run(auth, request('GET', expired))).statusCode, 401);
+        console.log('CASE expired Bearer | selected=Bearer | expected=401 | actual=401');
         console.log('PASS normal login, Bearer, cookie, invalid password/token and expiry');
         for (const failure of ['network', 'http', 'json', 'shape', 'missing']) {
             mode = failure;
@@ -113,6 +165,19 @@ test('session verification fails closed without breaking public reads or normal 
         assert.equal(await isRevoked(token), true);
         assert.equal((await run(auth, request('GET', token))).statusCode, 401);
         console.log('PASS normal logout revokes token and clears cookie');
+        assert.equal((await run(auth, request('GET', token + 'suffix'))).statusCode, 401);
+        const upperSig = token.slice(0, token.lastIndexOf('.') + 1) + token.slice(token.lastIndexOf('.') + 1).toUpperCase();
+        assert.equal((await run(auth, request('GET', upperSig))).statusCode, 401);
+        console.log('CASE changed encoding of logged-out Bearer | selected=Bearer | expected=401 | actual=401');
+        const cookieLogout = request('POST', '', { action: 'logout' });
+        cookieLogout.headers.cookie = 'admin_session=' + cookie;
+        const cookieLogoutResult = await run(auth, cookieLogout);
+        assert.equal(cookieLogoutResult.statusCode, 200);
+        assert.ok(cookieLogoutResult.headers['Set-Cookie'].includes('Max-Age=0'));
+        const afterCookieLogout = request('GET');
+        afterCookieLogout.headers.cookie = 'admin_session=' + cookie;
+        assert.equal((await run(auth, afterCookieLogout)).statusCode, 401);
+        console.log('CASE Cookie logout | selected=Cookie | expected=200 then 401 | actual=200 then 401');
     `], {
         cwd: fileURLToPath(new URL('../', import.meta.url)),
         env: {

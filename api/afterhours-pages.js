@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-10-04a — Refresh admin auth gate asset version
+ * bump: 2026-10-10a — Refresh fail-closed auth gate CSS and JS
  */
 
 import { readFileSync } from 'fs';

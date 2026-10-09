@@ -5,11 +5,11 @@
  */
 
 // Drop old CSS/JS as well as any previously cached internal-file responses.
-const CACHE = '1999-v33';
+const CACHE = '1999-v34';
 const STATIC_SHELL = [
   '/style.css?v=40',
-  '/admin.css?v=14',
-  '/admin.js?v=7',
+  '/admin.css?v=18',
+  '/admin.js?v=8',
   '/script.js?v=4',
   '/music.js?v=4',
   '/diary.js?v=4',

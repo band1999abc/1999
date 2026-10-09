@@ -6,8 +6,9 @@
  * POST { action: "logout" }           → clear session cookie → {ok: true}
  *
  * Auth is checked via:
- *   1. Authorization: Bearer <token>  header  (sessionStorage path)
- *   2. Cookie admin_session=<token>            (direct-tab fallback)
+ *   1. Authorization: Bearer <token> header, even if invalid or revoked.
+ *   2. Cookie admin_session only when no Bearer header is present.
+ * Signature, expiry and revocation always check this one selected credential.
  */
 
 import { timingSafeEqual } from 'crypto';
@@ -44,22 +45,16 @@ function getMemberComment(name) {
     return m ? (m.comment || '') : '';
 }
 
-/** Returns member name (str) if authenticated, null otherwise. */
-function getAuthedMember(req) {
-    // Signature and revocation must check the SAME credential.
-    return verifyToken(extractToken(req));
-}
-
 export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
+    const sessionToken = extractToken(req);
 
     /* ── GET — session check ──────────────────────────────────── */
     if (req.method === 'GET') {
-        const member = getAuthedMember(req);
+        const member = verifyToken(sessionToken);
         if (member === null) return res.status(401).json({ ok: false });
         // Also reject if the token was explicitly revoked via logout
-        const token = extractToken(req);
-        const revoked = await isRevoked(token);
+        const revoked = await isRevoked(sessionToken);
         if (revoked === null) return res.status(503).json({ ok: false, error: 'Session verification unavailable' });
         if (revoked !== false) return res.status(401).json({ ok: false });
         const comment = getMemberComment(member);
@@ -97,9 +92,8 @@ export default async function handler(req, res) {
 
     /* ── POST logout ──────────────────────────────────────────── */
     if (action === 'logout') {
-        const token = extractToken(req);
-        if (token && verifyToken(token) !== null) {
-            await denylistToken(token);
+        if (sessionToken && verifyToken(sessionToken) !== null) {
+            await denylistToken(sessionToken);
         }
         res.setHeader('Set-Cookie', cookieHeader(null));
         return res.status(200).json({ ok: true });

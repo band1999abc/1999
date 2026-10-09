@@ -43,6 +43,7 @@
     }
 
     function authFetch(url, opts) {
+        if (window._adminAuthFetch) return window._adminAuthFetch(url, opts);
         opts = opts || {};
         opts.headers = Object.assign({}, opts.headers || {});
         var token = sessionStorage.getItem('admin_token') || '';

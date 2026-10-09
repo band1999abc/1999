@@ -70,6 +70,7 @@
 
     // ── Auth fetch (mirrors admin.js — Bearer token from sessionStorage) ────────
     function authFetch(url, opts) {
+        if (window._adminAuthFetch) return window._adminAuthFetch(url, opts);
         var token = sessionStorage.getItem('admin_token') || '';
         opts = opts || {};
         opts.headers = Object.assign({}, opts.headers || {});

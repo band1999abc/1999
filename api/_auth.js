@@ -27,6 +27,9 @@ export function verifyToken(token) {
         if (dot < 1) return null;
         const payload  = token.slice(0, dot);
         const sig      = token.slice(dot + 1);
+        // Reject alternate/truncated hex encodings that would hash differently
+        // in the denylist while decoding to the same signature bytes.
+        if (!/^[a-f0-9]{64}$/.test(sig)) return null;
         const secret   = process.env.SESSION_SECRET || '';
         const expected = createHmac('sha256', secret).update(payload).digest('hex');
         const a = Buffer.from(sig,      'hex');
@@ -59,10 +62,10 @@ export function cookieHeader(token) {
 
 // ── Token helpers ─────────────────────────────────────────────────────────────
 
-/** Extract Bearer token from Authorization header, falling back to session cookie. */
+/** Bearer takes precedence even if invalid; Cookie is used only without Bearer. */
 export function extractToken(req) {
     const auth = req.headers['authorization'] || '';
-    if (auth.startsWith('Bearer ')) return auth.slice(7);
+    if (/^Bearer(?:[ \t]|$)/i.test(auth)) return auth.replace(/^Bearer[ \t]*/i, '');
     const cookies = parseCookies(req.headers.cookie || '');
     return cookies[COOKIE_NAME] || '';
 }
