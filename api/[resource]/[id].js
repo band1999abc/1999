@@ -315,7 +315,7 @@ function normalizeImages(live) {
     return [];
 }
 
-function serveDataUrl(res, dataUrl) {
+function serveDataUrl(res, dataUrl, publiclyVisible = false) {
     const sep    = ';base64,';
     const sepIdx = dataUrl.indexOf(sep);
     if (!dataUrl.startsWith('data:') || sepIdx < 0)
@@ -323,7 +323,7 @@ function serveDataUrl(res, dataUrl) {
     const mimeType = dataUrl.slice(5, sepIdx);
     const data     = Buffer.from(dataUrl.slice(sepIdx + sep.length), 'base64');
     res.setHeader('Content-Type', mimeType);
-    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Cache-Control', publiclyVisible ? 'public, max-age=86400' : 'private, no-store');
     return res.status(200).send(data);
 }
 
@@ -346,7 +346,7 @@ async function flyerGet(req, res) {
     const dataUrl = await readFlyerSlot(id, slotId);
     if (!dataUrl) return res.status(404).send('Not found');
 
-    return serveDataUrl(res, dataUrl);
+    return serveDataUrl(res, dataUrl, live.status === 'published');
 }
 
 async function flyerPost(req, res) {
@@ -605,7 +605,7 @@ async function musicJacketGet(req, res) {
         const dataUrl = await readMusicJacket(id);
         if (!dataUrl) return res.status(404).send('Not found');
 
-        return serveDataUrl(res, dataUrl);
+        return serveDataUrl(res, dataUrl, t.status === 'published');
     } catch (e) {
         return musicStorageErrorResponse(res, e, 'music-jacket/get');
     }
@@ -672,7 +672,7 @@ async function membersPhotoGet(req, res) {
     try {
         const dataUrl = await readMembersMainPhoto();
         if (!dataUrl) return res.status(404).send('Not found');
-        return serveDataUrl(res, dataUrl);
+        return serveDataUrl(res, dataUrl, true);
     } catch (e) {
         return membersStorageErrorResponse(res, e, 'member-photo/get');
     }
@@ -1097,7 +1097,8 @@ export default async function handler(req, res) {
     const valid = verifyToken(_tok) !== null;
     const revoked = valid ? await isRevoked(_tok) : true;
     req._authed = valid && revoked === false;
-    if (revoked === null && req.method !== 'GET' && req.method !== 'HEAD') {
+    const adminOnlyRead = ['messages', 'weather-phrases'].includes(req.query?.resource);
+    if (revoked === null && (adminOnlyRead || (req.method !== 'GET' && req.method !== 'HEAD'))) {
         return res.status(503).json({ error: 'Session verification unavailable' });
     }
 

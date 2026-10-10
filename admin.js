@@ -67,13 +67,14 @@
      */
     async function authFetch(url, opts, noRedirectOn401) {
         // Page scripts must not send management requests until the gate succeeds.
-        if (!noRedirectOn401 && !(await gateReady)) {
+        if (!noRedirectOn401 && (!(await gateReady) || !gateConfirmed || window._adminGateBootFailed)) {
             return new Response(JSON.stringify({ error: 'Session verification unavailable' }), {
                 status: 503, headers: { 'Content-Type': 'application/json' },
             });
         }
         const token = getToken();
         opts = opts || {};
+        opts.cache = 'no-store';
         opts.headers = Object.assign({}, opts.headers || {});
         if (token) opts.headers['Authorization'] = 'Bearer ' + token;
         const res = await fetch(url, opts);
@@ -146,24 +147,29 @@
 
     if (page === 'afterhours' || page === 'afterhours-diary' || page === 'afterhours-live' || page === 'afterhours-analytics' || page === 'afterhours-music' || page === 'afterhours-messages' || page === 'afterhours-weather-phrases' || page === 'afterhours-members' || page === 'afterhours-insights' || page === 'afterhours-milestones') {
 
-        function showAuthError() {
+        function showAuthError(messageText, buttonText, onRetry) {
             finishGate(false);
+            gateConfirmed = false;
             // Keep the management UI hidden; reveal only a separate status panel.
             document.body.classList.add('auth-hidden');
             lockManagement();
+            gateObserver.observe(document.body, { childList: true });
+            document.getElementById('auth-status')?.remove();
             const panel = document.createElement('div');
             panel.id = 'auth-status';
             panel.style.cssText = 'visibility:visible;position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;';
             const card = document.createElement('div');
             card.className = 'card';
+            card.style.animation = 'none';
+            card.style.transform = 'none';
             const message = document.createElement('p');
             message.setAttribute('role', 'alert');
-            message.textContent = '認証状態を確認できませんでした。しばらくしてから再試行してください。';
+            message.textContent = messageText || '認証状態を確認できませんでした。しばらくしてから再試行してください。';
             const retry = document.createElement('button');
             retry.type = 'button';
             retry.className = 'admin-btn';
-            retry.textContent = '再試行';
-            retry.addEventListener('click', function () { window.location.reload(); });
+            retry.textContent = buttonText || '再試行';
+            retry.addEventListener('click', onRetry || function () { window.location.reload(); });
             card.append(message, retry);
             panel.appendChild(card);
             document.body.appendChild(panel);
@@ -183,6 +189,7 @@
                 if (!res.ok) { showAuthError(); return; }
                 const data = await res.json();
                 if (!data || data.ok !== true) { showAuthError(); return; }
+                if (window._adminGateBootFailed) { finishGate(false); return; }
                 // Auth confirmed — reveal the page
                 gateConfirmed = true;
                 gateObserver.disconnect();
@@ -209,15 +216,34 @@
         if (signoutBtn) {
             signoutBtn.addEventListener('click', async function () {
                 this.disabled = true;
+                let confirmed = false;
                 try {
-                    await authFetch('/api/auth', {
+                    const pending = authFetch('/api/auth', {
                         method:  'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body:    JSON.stringify({ action: 'logout' })
-                    });
+                    }, true);
+                    // Capture the outgoing credential first, then stop local
+                    // management access while server revocation is pending.
+                    sessionStorage.removeItem(SESSION_KEY);
+                    gateConfirmed = false;
+                    document.body.classList.add('auth-hidden');
+                    lockManagement();
+                    const res = await pending;
+                    const data = await res.json();
+                    confirmed = res.ok && data.ok === true && data.revocationConfirmed === true;
+                } catch {
+                    // Local cleanup must still happen, but do not claim revocation.
                 } finally {
                     sessionStorage.removeItem(SESSION_KEY);
-                    window.location.href = '/';
+                    if (confirmed) {
+                        window.location.href = '/';
+                    } else {
+                        showAuthError(
+                            'この端末の保存トークンは削除しましたが、サーバー側の失効を確認できませんでした。以前のトークンが有効期限まで利用できる可能性があります。',
+                            '公開ページへ', function () { window.location.href = '/'; },
+                        );
+                    }
                 }
             });
         }
@@ -225,5 +251,6 @@
 
     // Expose authFetch for diary-admin.js (same document scope)
     window._adminAuthFetch = authFetch;
+    window._adminGateInitialized = true;
 
 }());

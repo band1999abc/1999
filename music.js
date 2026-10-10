@@ -29,7 +29,7 @@
         var href = 'track.html?id=' + encodeURIComponent(t.id);
         var jacket = t.jacket === true
             ? '<img class="song-jacket" src="/api/music-jacket/' + encodeURIComponent(t.id)
-                + '" alt="" loading="lazy" decoding="async">'
+                + '?media=v2" alt="" loading="lazy" decoding="async">'
             : '';
 
         return '<div class="song-item">'

@@ -133,7 +133,9 @@
         var loading = document.getElementById('ms-loading');
         var error   = document.getElementById('ms-error');
 
-        var fetchFn = window._adminAuthFetch || function (url, opts) { return fetch(url, opts || {}); };
+        var fetchFn = window._adminAuthFetch || function () {
+            return Promise.reject(new Error('認証スクリプトを読み込めませんでした。'));
+        };
 
         fetchFn('/api/milestones')
             .then(function (res) {

@@ -5,17 +5,18 @@
  */
 
 // Drop old CSS/JS as well as any previously cached internal-file responses.
-const CACHE = '1999-v34';
+const CACHE = '1999-v35';
 const STATIC_SHELL = [
   '/style.css?v=40',
   '/admin.css?v=18',
-  '/admin.js?v=8',
+  '/admin-bootstrap.js?v=1',
+  '/admin.js?v=9',
   '/script.js?v=4',
-  '/music.js?v=4',
+  '/music.js?v=5',
   '/diary.js?v=4',
-  '/live.js?v=6',
-  '/track.js?v=7',
-  '/music-admin.js?v=8',
+  '/live.js?v=7',
+  '/track.js?v=8',
+  '/music-admin.js?v=9',
   '/music-upload-client.bundle.js?v=2',
   '/weather.js',
   '/whale.js?v=2',

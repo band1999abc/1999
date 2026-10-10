@@ -92,11 +92,21 @@ export default async function handler(req, res) {
 
     /* ── POST logout ──────────────────────────────────────────── */
     if (action === 'logout') {
-        if (sessionToken && verifyToken(sessionToken) !== null) {
-            await denylistToken(sessionToken);
-        }
+        // Local cleanup is independent of confirmed server revocation.
         res.setHeader('Set-Cookie', cookieHeader(null));
-        return res.status(200).json({ ok: true });
+        // Also discard legacy public-cache private images in supporting browsers.
+        res.setHeader('Clear-Site-Data', '"cache"');
+        try {
+            if (sessionToken && verifyToken(sessionToken) !== null) {
+                await denylistToken(sessionToken);
+            }
+        } catch {
+            return res.status(503).json({
+                ok: false, cookieCleared: true, revocationConfirmed: false,
+                error: 'Session revocation unavailable',
+            });
+        }
+        return res.status(200).json({ ok: true, cookieCleared: true, revocationConfirmed: true });
     }
 
     return res.status(400).json({ error: 'Unknown action' });

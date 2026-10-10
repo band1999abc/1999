@@ -36,7 +36,10 @@ export function verifyToken(token) {
         const b = Buffer.from(expected, 'hex');
         if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
         const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
-        if (Date.now() >= data.exp) return null;
+        if (!data || typeof data !== 'object' || Array.isArray(data) ||
+            typeof data.exp !== 'number' || !Number.isFinite(data.exp) ||
+            !Number.isSafeInteger(data.exp) || Number.isNaN(new Date(data.exp).getTime()) ||
+            Date.now() >= data.exp) return null;
         return data.member ?? '';
     } catch {
         return null;
@@ -65,7 +68,9 @@ export function cookieHeader(token) {
 /** Bearer takes precedence even if invalid; Cookie is used only without Bearer. */
 export function extractToken(req) {
     const auth = req.headers['authorization'] || '';
-    if (/^Bearer(?:[ \t]|$)/i.test(auth)) return auth.replace(/^Bearer[ \t]*/i, '');
+    // Recognize malformed Unicode whitespace as a presented Bearer, but only
+    // strip legal HTTP whitespace: malformed credentials must fail, not fall back.
+    if (/^Bearer(?:\s|$)/i.test(auth)) return auth.replace(/^Bearer[ \t]*/i, '');
     const cookies = parseCookies(req.headers.cookie || '');
     return cookies[COOKIE_NAME] || '';
 }
@@ -85,7 +90,12 @@ async function _kvRest(path) {
         headers: { Authorization: `Bearer ${tok}` },
     });
     if (!res.ok) throw new Error(`Upstash ${res.status}: ${await res.text()}`);
-    return (await res.json()).result;
+    const body = await res.json();
+    if (!body || typeof body !== 'object' || Array.isArray(body) ||
+        Object.hasOwn(body, 'error') || !Object.hasOwn(body, 'result')) {
+        throw new Error('Invalid session storage response');
+    }
+    return body.result;
 }
 
 /**
@@ -96,12 +106,9 @@ async function _kvRest(path) {
  */
 export async function denylistToken(token) {
     if (!token) return;
-    try {
-        const hash = _hash(token);
-        await _kvRest(`/set/revoked:${hash}/1/EX/${MAX_AGE + 60}`);
-    } catch (e) {
-        console.error('[auth] denylist error:', e.message);
-    }
+    const hash = _hash(token);
+    const result = await _kvRest(`/set/revoked:${hash}/1/EX/${MAX_AGE + 60}`);
+    if (result !== 'OK') throw new Error('Session revocation was not acknowledged');
 }
 
 /**
@@ -114,7 +121,7 @@ export async function isRevoked(token) {
         const hash   = _hash(token);
         const result = await _kvRest(`/get/revoked:${hash}`);
         if (result === null) return false;
-        if (result === '1' || result === 1) return true;
+        if (result === '1') return true;
         return null;
     } catch {
         return null;

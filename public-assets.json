@@ -23,6 +23,7 @@
     "diary.js",
     "members-photo.js",
     "admin.js",
+    "admin-bootstrap.js",
     "music-admin.js",
     "music-upload-client.bundle.js",
     "live-admin.js",

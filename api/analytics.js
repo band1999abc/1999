@@ -131,10 +131,6 @@ async function readBody(req) {
     catch { return null; }
 }
 
-function isAuthed(req) {
-    return verifyToken(extractToken(req)) !== null;
-}
-
 /** Current date string in JST (UTC+9), e.g. '2026-07-08' */
 function todayJST() {
     return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
@@ -224,8 +220,8 @@ export default async function handler(req, res) {
 
     // ── GET /api/analytics — query events (admin only) ─────────────────────────
     if (req.method === 'GET') {
-        if (!isAuthed(req)) return res.status(401).json({ error: 'Unauthorized' });
         const _tok = extractToken(req);
+        if (verifyToken(_tok) === null) return res.status(401).json({ error: 'Unauthorized' });
         const revoked = await isRevoked(_tok);
         if (revoked === null) return res.status(503).json({ error: 'Session verification unavailable' });
         if (revoked !== false) return res.status(401).json({ error: 'Unauthorized' });

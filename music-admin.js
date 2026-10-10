@@ -88,11 +88,7 @@
 
     function authFetch(url, opts) {
         if (window._adminAuthFetch) return window._adminAuthFetch(url, opts);
-        var token = sessionStorage.getItem('admin_token') || '';
-        opts = opts || {};
-        opts.headers = Object.assign({}, opts.headers || {});
-        if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-        return fetch(url, opts);
+        return Promise.reject(new Error('認証スクリプトを読み込めませんでした。'));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -399,7 +395,7 @@
             var plays = an.total != null ? Number(an.total).toLocaleString('ja-JP') : '—';
             var lsn   = an.listeners != null ? Number(an.listeners).toLocaleString('ja-JP') : '—';
             var jSrc  = t.jacket
-                ? '/api/music-jacket/' + t.id + '?v=' + (t.updatedAt || '').slice(0, 16)
+                ? '/api/music-jacket/' + t.id + '?media=v2&v=' + (t.updatedAt || '').slice(0, 16)
                 : '';
             var isActive = t.id === S.editingId ? ' mc-card--active' : '';
 
@@ -608,7 +604,7 @@
                 jacketImgEl.style.display = 'block';
             } else if (hasExisting && !S.jacketToDelete) {
                 jacketImgEl.src = '/api/music-jacket/' + t.id
-                    + '?v=' + (t.updatedAt || '').slice(0, 16);
+                    + '?media=v2&v=' + (t.updatedAt || '').slice(0, 16);
                 jacketImgEl.style.display = 'block';
             } else {
                 jacketImgEl.src = '';
@@ -938,7 +934,7 @@
         var ten = titleEnEl  ? titleEnEl.value.trim() : '';
         var rd  = relDateEl  ? relDateEl.value        : '';
         var lyr = lyricsEl   ? lyricsEl.value         : '';
-        var jsr = S.jacketSrc || (t && t.jacket ? '/api/music-jacket/' + t.id : '');
+        var jsr = S.jacketSrc || (t && t.jacket ? '/api/music-jacket/' + t.id + '?media=v2' : '');
 
         var html = '<div class="mc-prev-card">'
             + (jsr

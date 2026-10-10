@@ -164,7 +164,9 @@
     function load() {
         var loading = document.getElementById('ins-loading');
         var error   = document.getElementById('ins-error');
-        var fetchFn = window._adminAuthFetch || function (u) { return fetch(u); };
+        var fetchFn = window._adminAuthFetch || function () {
+            return Promise.reject(new Error('認証スクリプトを読み込めませんでした。'));
+        };
 
         fetchFn('/api/insights')
             .then(function (res) {

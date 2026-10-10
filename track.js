@@ -292,7 +292,7 @@
                 jacketWrapEl.hidden = true;
                 jacketEl.removeAttribute('src');
             };
-            jacketEl.src = '/api/music-jacket/' + encodeURIComponent(id);
+            jacketEl.src = '/api/music-jacket/' + encodeURIComponent(id) + '?media=v2';
             jacketWrapEl.hidden = false;
         }
 

@@ -30,7 +30,7 @@
     }
 
     function flyerUrl(liveId, slotId) {
-        return '/api/flyer/' + liveId + '?s=' + encodeURIComponent(slotId);
+        return '/api/flyer/' + liveId + '?media=v2&s=' + encodeURIComponent(slotId);
     }
 
     // ── Flyer modal ───────────────────────────────────────────────────────────

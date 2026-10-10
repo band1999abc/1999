@@ -148,22 +148,22 @@ try {
     const swPage = await swContext.newPage();
     await swPage.goto(base + '/api/auth');
     await swPage.evaluate(async () => {
-        const stale = await caches.open('1999-v33');
-        await stale.put('/admin.js?v=8', new Response('STALE-AUTH'));
+        const stale = await caches.open('1999-v34');
+        await stale.put('/admin.js?v=9', new Response('STALE-AUTH'));
         await stale.put('/admin.css?v=18', new Response('STALE-CSS'));
     });
     await swPage.goto(base + '/music.html', { waitUntil: 'networkidle' });
     await swPage.waitForFunction(() => navigator.serviceWorker.controller);
     const cached = await swPage.evaluate(async () => ({
         keys: await caches.keys(),
-        js: await (await caches.match('/admin.js?v=8')).text(),
+        js: await (await caches.match('/admin.js?v=9')).text(),
         css: await (await caches.match('/admin.css?v=18')).text(),
     }));
-    assert.deepEqual(cached.keys, ['1999-v34']);
+    assert.deepEqual(cached.keys, ['1999-v35']);
     assert.ok(cached.js.includes('originalInert'));
     assert.ok(cached.css.includes('body.auth-hidden > :not(#auth-status)'));
     await swContext.close();
-    console.log('PASS auth cache migration v33 -> v34; fresh admin.js v8 and admin.css v18');
+    console.log('PASS auth cache migration v34 -> v35; fresh admin.js v9 and admin.css v18');
 } finally {
     await browser.close();
 }

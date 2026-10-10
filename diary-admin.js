@@ -230,11 +230,7 @@
 
     function authFetch(url, opts) {
         if (window._adminAuthFetch) return window._adminAuthFetch(url, opts);
-        const token = sessionStorage.getItem('admin_token') || '';
-        opts = opts || {};
-        opts.headers = Object.assign({}, opts.headers || {});
-        if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-        return fetch(url, opts);
+        return Promise.reject(new Error('認証スクリプトを読み込めませんでした。'));
     }
 
     // ── API calls ─────────────────────────────────────────────────────────────

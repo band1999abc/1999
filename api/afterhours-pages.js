@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-10-10a — Refresh fail-closed auth gate CSS and JS
+ * bump: 2026-10-11a — Guard missing auth scripts and refresh private-media references
  */
 
 import { readFileSync } from 'fs';
