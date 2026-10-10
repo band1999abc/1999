@@ -27,13 +27,19 @@ export function verifyToken(token) {
         if (dot < 1) return null;
         const payload  = token.slice(0, dot);
         const sig      = token.slice(dot + 1);
+        // Reject alternate/truncated hex encodings that would hash differently
+        // in the denylist while decoding to the same signature bytes.
+        if (!/^[a-f0-9]{64}$/.test(sig)) return null;
         const secret   = process.env.SESSION_SECRET || '';
         const expected = createHmac('sha256', secret).update(payload).digest('hex');
         const a = Buffer.from(sig,      'hex');
         const b = Buffer.from(expected, 'hex');
         if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
         const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
-        if (Date.now() >= data.exp) return null;
+        if (!data || typeof data !== 'object' || Array.isArray(data) ||
+            typeof data.exp !== 'number' || !Number.isFinite(data.exp) ||
+            !Number.isSafeInteger(data.exp) || Number.isNaN(new Date(data.exp).getTime()) ||
+            Date.now() >= data.exp) return null;
         return data.member ?? '';
     } catch {
         return null;
@@ -59,10 +65,12 @@ export function cookieHeader(token) {
 
 // ── Token helpers ─────────────────────────────────────────────────────────────
 
-/** Extract Bearer token from Authorization header, falling back to session cookie. */
+/** Bearer takes precedence even if invalid; Cookie is used only without Bearer. */
 export function extractToken(req) {
     const auth = req.headers['authorization'] || '';
-    if (auth.startsWith('Bearer ')) return auth.slice(7);
+    // Recognize malformed Unicode whitespace as a presented Bearer, but only
+    // strip legal HTTP whitespace: malformed credentials must fail, not fall back.
+    if (/^Bearer(?:\s|$)/i.test(auth)) return auth.replace(/^Bearer[ \t]*/i, '');
     const cookies = parseCookies(req.headers.cookie || '');
     return cookies[COOKIE_NAME] || '';
 }
@@ -77,12 +85,17 @@ function _hash(token) {
 async function _kvRest(path) {
     const base = (process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/$/, '');
     const tok  = process.env.UPSTASH_REDIS_REST_TOKEN;
-    if (!base || !tok) return null;
+    if (!base || !tok) throw new Error('Session storage is not configured');
     const res = await fetch(`${base}${path}`, {
         headers: { Authorization: `Bearer ${tok}` },
     });
     if (!res.ok) throw new Error(`Upstash ${res.status}: ${await res.text()}`);
-    return (await res.json()).result;
+    const body = await res.json();
+    if (!body || typeof body !== 'object' || Array.isArray(body) ||
+        Object.hasOwn(body, 'error') || !Object.hasOwn(body, 'result')) {
+        throw new Error('Invalid session storage response');
+    }
+    return body.result;
 }
 
 /**
@@ -93,25 +106,24 @@ async function _kvRest(path) {
  */
 export async function denylistToken(token) {
     if (!token) return;
-    try {
-        const hash = _hash(token);
-        await _kvRest(`/set/revoked:${hash}/1/EX/${MAX_AGE + 60}`);
-    } catch (e) {
-        console.error('[auth] denylist error:', e.message);
-    }
+    const hash = _hash(token);
+    const result = await _kvRest(`/set/revoked:${hash}/1/EX/${MAX_AGE + 60}`);
+    if (result !== 'OK') throw new Error('Session revocation was not acknowledged');
 }
 
 /**
- * Returns true if the token has been explicitly revoked via logout.
- * Fails open (returns false) on KV errors to avoid locking out valid sessions.
+ * true: revoked; false: confirmed not revoked; null: verification unavailable.
+ * Callers must authorize only when the result is strictly false.
  */
 export async function isRevoked(token) {
     if (!token) return false;
     try {
         const hash   = _hash(token);
         const result = await _kvRest(`/get/revoked:${hash}`);
-        return result === '1';
+        if (result === null) return false;
+        if (result === '1') return true;
+        return null;
     } catch {
-        return false;
+        return null;
     }
 }

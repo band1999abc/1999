@@ -14,7 +14,7 @@
 
 import { readAnalyticsDays, getFirstDate } from './_analytics_store.js';
 import { getAchievementDates }              from './_milestones_store.js';
-import { COOKIE_NAME, verifyToken, parseCookies, isRevoked } from './_auth.js';
+import { extractToken, verifyToken, isRevoked } from './_auth.js';
 import { readFileSync } from 'fs';
 import { join }         from 'path';
 
@@ -367,11 +367,11 @@ function buildTimeline(diaries, lives, achievedDates, windowDays = 90) {
 
 export default async function handler(req, res) {
     // Auth
-    const cookies = parseCookies(req.headers.cookie || '');
-    const token   = (req.headers.authorization || '').replace(/^Bearer\s+/i, '')
-                  || cookies[COOKIE_NAME] || '';
-    if (!token || !verifyToken(token))  return res.status(401).json({ error: 'Unauthorized' });
-    if (await isRevoked(token))         return res.status(401).json({ error: 'Unauthorized' });
+    const token = extractToken(req);
+    if (verifyToken(token) === null) return res.status(401).json({ error: 'Unauthorized' });
+    const revoked = await isRevoked(token);
+    if (revoked === null) return res.status(503).json({ error: 'Session verification unavailable' });
+    if (revoked !== false) return res.status(401).json({ error: 'Unauthorized' });
     if (req.method !== 'GET')           return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {

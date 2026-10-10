@@ -43,14 +43,8 @@
     }
 
     function authFetch(url, opts) {
-        opts = opts || {};
-        opts.headers = Object.assign({}, opts.headers || {});
-        var token = sessionStorage.getItem('admin_token') || '';
-        if (token) opts.headers.Authorization = 'Bearer ' + token;
-        return fetch(url, opts).then(function (response) {
-            if (response.status === 401) window.location.replace('/afterhours/login');
-            return response;
-        });
+        if (window._adminAuthFetch) return window._adminAuthFetch(url, opts);
+        return Promise.reject(new Error('認証スクリプトを読み込めませんでした。'));
     }
 
     function jsonOrError(response) {

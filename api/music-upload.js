@@ -51,8 +51,13 @@ export default async function handler(req, res) {
     }
 
     const token = extractToken(req);
-    const authed = verifyToken(token) !== null && !(await isRevoked(token));
+    const valid = verifyToken(token) !== null;
+    const revoked = valid ? await isRevoked(token) : true;
+    const authed = valid && revoked === false;
     const isBlobCallback = body?.type === 'blob.upload-completed';
+    if (revoked === null && !isBlobCallback) {
+        return res.status(503).json({ error: 'Session verification unavailable' });
+    }
     if (!authed && !isBlobCallback) {
         return res.status(401).json({ error: 'Unauthorized' });
     }

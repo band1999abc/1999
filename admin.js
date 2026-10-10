@@ -25,6 +25,32 @@
     const DASH_URL    = '/afterhours';
 
     const page = document.body.dataset.page;
+    const gated = page === 'afterhours' || (page && page.startsWith('afterhours-'));
+    let finishGate;
+    const gateReady = gated
+        ? new Promise(resolve => { finishGate = resolve; })
+        : Promise.resolve(true);
+    const originalInert = new Map();
+    let gateConfirmed = !gated;
+    let gateObserver;
+
+    function lockManagement() {
+        for (const child of document.body.children) {
+            if (child.id === 'auth-status' || child.tagName === 'SCRIPT' || child.tagName === 'STYLE') continue;
+            if (!originalInert.has(child)) originalInert.set(child, child.inert);
+            child.inert = true;
+        }
+    }
+
+    if (gated) {
+        document.body.classList.add('auth-hidden');
+        lockManagement();
+        // Also lock roots added by page scripts while authentication is pending.
+        gateObserver = new MutationObserver(function () {
+            if (!gateConfirmed) lockManagement();
+        });
+        gateObserver.observe(document.body, { childList: true });
+    }
 
     /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -40,8 +66,15 @@
      * @param {boolean} [noRedirectOn401] — set true for the gate check itself
      */
     async function authFetch(url, opts, noRedirectOn401) {
+        // Page scripts must not send management requests until the gate succeeds.
+        if (!noRedirectOn401 && (!(await gateReady) || !gateConfirmed || window._adminGateBootFailed)) {
+            return new Response(JSON.stringify({ error: 'Session verification unavailable' }), {
+                status: 503, headers: { 'Content-Type': 'application/json' },
+            });
+        }
         const token = getToken();
         opts = opts || {};
+        opts.cache = 'no-store';
         opts.headers = Object.assign({}, opts.headers || {});
         if (token) opts.headers['Authorization'] = 'Bearer ' + token;
         const res = await fetch(url, opts);
@@ -62,9 +95,11 @@
                 const res = await fetch('/api/auth');
                 if (res.ok) {
                     window.location.replace(DASH_URL);
+                } else if (res.status !== 401 && errorEl) {
+                    errorEl.textContent = '認証状態を確認できませんでした。しばらくしてから再試行してください。';
                 }
             } catch {
-                // network error — stay on login page
+                if (errorEl) errorEl.textContent = '認証状態を確認できませんでした。しばらくしてから再試行してください。';
             }
         })();
 
@@ -93,10 +128,12 @@
                         sessionStorage.setItem(SESSION_KEY, data.token);
                     }
                     window.location.href = DASH_URL;
-                } else {
+                } else if (res.status === 401) {
                     errorEl.textContent = 'The password is incorrect.';
                     input.value = '';
                     input.focus();
+                } else {
+                    errorEl.textContent = '認証状態を確認できませんでした。しばらくしてから再試行してください。';
                 }
             } catch {
                 errorEl.textContent = 'Unable to connect. Please try again.';
@@ -108,23 +145,60 @@
 
     /* ── Gated pages (dashboard + sub-pages) ─────────────────────── */
 
-    if (page === 'afterhours' || page === 'afterhours-diary' || page === 'afterhours-live' || page === 'afterhours-analytics' || page === 'afterhours-music' || page === 'afterhours-messages' || page === 'afterhours-weather-phrases' || page === 'afterhours-members') {
+    if (page === 'afterhours' || page === 'afterhours-diary' || page === 'afterhours-live' || page === 'afterhours-analytics' || page === 'afterhours-music' || page === 'afterhours-messages' || page === 'afterhours-weather-phrases' || page === 'afterhours-members' || page === 'afterhours-insights' || page === 'afterhours-milestones') {
+
+        function showAuthError(messageText, buttonText, onRetry) {
+            finishGate(false);
+            gateConfirmed = false;
+            // Keep the management UI hidden; reveal only a separate status panel.
+            document.body.classList.add('auth-hidden');
+            lockManagement();
+            gateObserver.observe(document.body, { childList: true });
+            document.getElementById('auth-status')?.remove();
+            const panel = document.createElement('div');
+            panel.id = 'auth-status';
+            panel.style.cssText = 'visibility:visible;position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;';
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.animation = 'none';
+            card.style.transform = 'none';
+            const message = document.createElement('p');
+            message.setAttribute('role', 'alert');
+            message.textContent = messageText || '認証状態を確認できませんでした。しばらくしてから再試行してください。';
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'admin-btn';
+            retry.textContent = buttonText || '再試行';
+            retry.addEventListener('click', onRetry || function () { window.location.reload(); });
+            card.append(message, retry);
+            panel.appendChild(card);
+            document.body.appendChild(panel);
+            retry.focus();
+        }
 
         // Always call the server — honours both Bearer token AND cookie fallback
         (async function gate() {
             try {
                 const res = await authFetch('/api/auth', {}, /* noRedirect */ true);
-                if (!res.ok) {
+                if (res.status === 401) {
+                    finishGate(false);
                     sessionStorage.removeItem(SESSION_KEY);
                     window.location.replace(LOGIN_URL);
                     return;
                 }
+                if (!res.ok) { showAuthError(); return; }
+                const data = await res.json();
+                if (!data || data.ok !== true) { showAuthError(); return; }
+                if (window._adminGateBootFailed) { finishGate(false); return; }
                 // Auth confirmed — reveal the page
+                gateConfirmed = true;
+                gateObserver.disconnect();
+                for (const [element, inert] of originalInert) element.inert = inert;
                 document.body.classList.remove('auth-hidden');
+                finishGate(true);
                 // Show personalized greeting on the dashboard
                 if (page === 'afterhours') {
                     try {
-                        const data = await res.json();
                         const el = document.getElementById('member-greeting');
                         if (el) {
                             el.textContent = data.comment ||
@@ -133,8 +207,7 @@
                     } catch { /* ignore parse errors */ }
                 }
             } catch {
-                // Network hiccup — reveal anyway so the page isn't stuck hidden
-                document.body.classList.remove('auth-hidden');
+                showAuthError();
             }
         })();
 
@@ -143,15 +216,34 @@
         if (signoutBtn) {
             signoutBtn.addEventListener('click', async function () {
                 this.disabled = true;
+                let confirmed = false;
                 try {
-                    await authFetch('/api/auth', {
+                    const pending = authFetch('/api/auth', {
                         method:  'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body:    JSON.stringify({ action: 'logout' })
-                    });
+                    }, true);
+                    // Capture the outgoing credential first, then stop local
+                    // management access while server revocation is pending.
+                    sessionStorage.removeItem(SESSION_KEY);
+                    gateConfirmed = false;
+                    document.body.classList.add('auth-hidden');
+                    lockManagement();
+                    const res = await pending;
+                    const data = await res.json();
+                    confirmed = res.ok && data.ok === true && data.revocationConfirmed === true;
+                } catch {
+                    // Local cleanup must still happen, but do not claim revocation.
                 } finally {
                     sessionStorage.removeItem(SESSION_KEY);
-                    window.location.href = '/';
+                    if (confirmed) {
+                        window.location.href = '/';
+                    } else {
+                        showAuthError(
+                            'この端末の保存トークンは削除しましたが、サーバー側の失効を確認できませんでした。以前のトークンが有効期限まで利用できる可能性があります。',
+                            '公開ページへ', function () { window.location.href = '/'; },
+                        );
+                    }
                 }
             });
         }
@@ -159,5 +251,6 @@
 
     // Expose authFetch for diary-admin.js (same document scope)
     window._adminAuthFetch = authFetch;
+    window._adminGateInitialized = true;
 
 }());

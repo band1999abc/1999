@@ -4,16 +4,19 @@
  * 静的アセット: キャッシュ優先（高速化）
  */
 
-// Drop previously cached internal-file responses when the public-file guard ships.
-const CACHE = '1999-v32';
+// Drop old CSS/JS as well as any previously cached internal-file responses.
+const CACHE = '1999-v36';
 const STATIC_SHELL = [
-  '/style.css?v=39',
-  '/admin.css?v=14',
-  '/admin.js?v=3',
+  '/style.css?v=40',
+  '/admin.css?v=18',
+  '/admin-bootstrap.js?v=1',
+  '/admin.js?v=9',
   '/script.js?v=4',
-  '/music.js?v=3',
-  '/track.js?v=6',
-  '/music-admin.js?v=8',
+  '/music.js?v=5',
+  '/diary.js?v=4',
+  '/live.js?v=7',
+  '/track.js?v=8',
+  '/music-admin.js?v=9',
   '/music-upload-client.bundle.js?v=2',
   '/weather.js',
   '/whale.js?v=2',
@@ -47,7 +50,18 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   const url = e.request.url;
 
-  // API — 常にネットワーク
+  // Cache Storage deletion does not purge HTTP cache. For publication-sensitive
+  // media, bypass any legacy HTTP response as well; never cache or fall back to
+  // stored API media. This protects clients controlled by this updated worker.
+  const parsed = new URL(url);
+  if (parsed.origin === self.location.origin
+      && ['GET', 'HEAD'].includes(e.request.method)
+      && /^\/api\/(?:music-jacket|flyer)\//.test(parsed.pathname)) {
+    e.respondWith(fetch(e.request, { cache: 'no-store' }));
+    return;
+  }
+
+  // Other APIs remain outside the Service Worker's Cache Storage.
   if (url.includes('/api/')) return;
 
   // HTML — ネットワーク優先、失敗時のみキャッシュ

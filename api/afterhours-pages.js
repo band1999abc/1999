@@ -15,7 +15,7 @@
  *   /afterhours/insights   → ?page=insights
  *   /afterhours/music      → ?page=music
  *
- * bump: 2026-09-13a — Members main photo admin page
+ * bump: 2026-10-11a — Guard missing auth scripts and refresh private-media references
  */
 
 import { readFileSync } from 'fs';

@@ -83,7 +83,7 @@ function autoPromote(posts) {
 
 async function diaryList(req, res) {
     let posts = await readJsonArray(DIARY_FILE);
-    if (autoPromote(posts)) {
+    if (!req._revocationUnavailable && autoPromote(posts)) {
         await writeJsonArray(DIARY_FILE, posts).catch(e =>
             console.error('[diary] auto-promote save error:', e)
         );
@@ -220,7 +220,7 @@ function autoPromoteMusic(items) {
 async function musicList(req, res) {
     try {
         let items = await readMusicRecords();
-        if (autoPromoteMusic(items)) {
+        if (!req._revocationUnavailable && autoPromoteMusic(items)) {
             await writeMusicRecords(items);
         }
         if (!isAuthed(req)) items = items.filter(t => t.status === 'published');
@@ -419,7 +419,16 @@ export default async function handler(req, res) {
     // Resolve auth once — includes denylist check — so all sub-handlers can
     // call the synchronous isAuthed(req) without extra async work.
     const _tok   = extractToken(req);
-    req._authed  = verifyToken(_tok) !== null && !(await isRevoked(_tok));
+    const valid = verifyToken(_tok) !== null;
+    const revoked = valid ? await isRevoked(_tok) : true;
+    req._authed = valid && revoked === false;
+    // Public reads remain available, but must not persist scheduled publication
+    // when this request's session revocation lookup could not be confirmed.
+    req._revocationUnavailable = revoked === null;
+    // Anonymous public reads stay available even when session storage is down.
+    if (revoked === null && req.method !== 'GET' && req.method !== 'HEAD') {
+        return res.status(503).json({ error: 'Session verification unavailable' });
+    }
 
     const resource = req.query?.resource;
     const methods  = HANDLERS[resource];

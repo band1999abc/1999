@@ -124,7 +124,7 @@ async function diaryGet(req, res) {
     const { id } = req.query;
     const posts  = await readJsonArray(DIARY_FILE);
 
-    if (autoPromote(posts)) {
+    if (!req._revocationUnavailable && autoPromote(posts)) {
         await writeJsonArray(DIARY_FILE, posts).catch(e =>
             console.error('[diary/id] auto-promote save error:', e)
         );
@@ -315,7 +315,7 @@ function normalizeImages(live) {
     return [];
 }
 
-function serveDataUrl(res, dataUrl) {
+function serveDataUrl(res, dataUrl, cacheablePublicAsset = false) {
     const sep    = ';base64,';
     const sepIdx = dataUrl.indexOf(sep);
     if (!dataUrl.startsWith('data:') || sepIdx < 0)
@@ -323,7 +323,9 @@ function serveDataUrl(res, dataUrl) {
     const mimeType = dataUrl.slice(5, sepIdx);
     const data     = Buffer.from(dataUrl.slice(sepIdx + sep.length), 'base64');
     res.setHeader('Content-Type', mimeType);
-    res.setHeader('Cache-Control', 'public, max-age=86400');
+    // Reversible publication (jackets/flyers) must never create a cacheable
+    // response, even while public. Only permanently public member photos opt in.
+    res.setHeader('Cache-Control', cacheablePublicAsset ? 'public, max-age=86400' : 'private, no-store');
     return res.status(200).send(data);
 }
 
@@ -492,7 +494,7 @@ async function musicGet(req, res) {
     try {
         const { id } = req.query;
         const items  = await readMusicRecords();
-        if (autoPromoteMusic(items)) await writeMusicRecords(items);
+        if (!req._revocationUnavailable && autoPromoteMusic(items)) await writeMusicRecords(items);
         const t = items.find(x => x.id === id);
         if (!t) return res.status(404).json({ error: 'Not found' });
         if (t.status !== 'published' && !isAuthed(req))
@@ -672,7 +674,7 @@ async function membersPhotoGet(req, res) {
     try {
         const dataUrl = await readMembersMainPhoto();
         if (!dataUrl) return res.status(404).send('Not found');
-        return serveDataUrl(res, dataUrl);
+        return serveDataUrl(res, dataUrl, true);
     } catch (e) {
         return membersStorageErrorResponse(res, e, 'member-photo/get');
     }
@@ -1094,7 +1096,14 @@ export default async function handler(req, res) {
     // Resolve auth once — includes denylist check — so all sub-handlers can
     // call the synchronous isAuthed(req) without extra async work.
     const _tok   = extractToken(req);
-    req._authed  = verifyToken(_tok) !== null && !(await isRevoked(_tok));
+    const valid = verifyToken(_tok) !== null;
+    const revoked = valid ? await isRevoked(_tok) : true;
+    req._authed = valid && revoked === false;
+    req._revocationUnavailable = revoked === null;
+    const adminOnlyRead = ['messages', 'weather-phrases'].includes(req.query?.resource);
+    if (revoked === null && (adminOnlyRead || (req.method !== 'GET' && req.method !== 'HEAD'))) {
+        return res.status(503).json({ error: 'Session verification unavailable' });
+    }
 
     const resource = req.query?.resource;
     const methods  = HANDLERS[resource];

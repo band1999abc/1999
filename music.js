@@ -29,7 +29,7 @@
         var href = 'track.html?id=' + encodeURIComponent(t.id);
         var jacket = t.jacket === true
             ? '<img class="song-jacket" src="/api/music-jacket/' + encodeURIComponent(t.id)
-                + '" alt="" loading="lazy" decoding="async">'
+                + '?media=v2" alt="" loading="lazy" decoding="async">'
             : '';
 
         return '<div class="song-item">'
@@ -56,6 +56,7 @@
 
         if (!published.length) {
             // 楽曲がまだない場合
+            listEl.dataset.state = 'empty';
             listEl.innerHTML = '<div class="sub">Now Brewing...</div><hr class="song-line">';
             return;
         }
@@ -69,19 +70,43 @@
         html += '<div class="sub">Now Brewing...</div><hr class="song-line">';
 
         listEl.innerHTML = html;
+        listEl.dataset.state = published.length ? 'success' : 'empty';
     }
 
     // ── API フェッチ ─────────────────────────────────────────────────────────
-    // credentials: 'omit' — admin セッションクッキーを送信しない（公開 API 呼び出し）
-    fetch('/api/music', { credentials: 'same-origin' })
+    function load() {
+        listEl.dataset.state = 'loading';
+        listEl.setAttribute('aria-busy', 'true');
+        listEl.innerHTML = '<div class="sub">読み込み中…</div>';
+        // Public pages must never request draft data using an admin cookie.
+        fetch('/api/music', { credentials: 'omit' })
         .then(function (r) {
             if (!r.ok) throw new Error('API error ' + r.status);
             return r.json();
         })
-        .then(render)
+        .then(function (tracks) {
+            if (!Array.isArray(tracks) || tracks.some(function (t) {
+                return !t || typeof t !== 'object' || Array.isArray(t)
+                    || typeof t.id !== 'string' || !t.id
+                    || typeof t.title !== 'string' || typeof t.status !== 'string';
+            })) throw new Error('Invalid music response');
+            if (!tracks.some(function (t) { return t.status === 'published'; })) {
+                listEl.dataset.state = 'empty';
+            }
+            render(tracks);
+        })
         .catch(function () {
-            // ネットワークエラー時はフォールバック表示
-            listEl.innerHTML = '<div class="sub">Now Brewing...</div><hr class="song-line">';
-        });
+            listEl.dataset.state = 'error';
+            listEl.innerHTML = '<div class="sub" role="alert">楽曲を読み込めませんでした。しばらくしてから再試行してください。</div>';
+            var retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'public-pagination-button';
+            retry.textContent = '再試行';
+            retry.addEventListener('click', load);
+            listEl.appendChild(retry);
+        })
+        .finally(function () { listEl.setAttribute('aria-busy', 'false'); });
+    }
+    load();
 
 }());
