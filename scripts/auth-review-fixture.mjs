@@ -21,7 +21,7 @@ export function signed(data) {
 export function fixture() {
     let mode = 'clear';
     const denied = new Set(), reads = [], writes = [];
-    const image = 'data:image/png;base64,AQ==';
+    const image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
     const records = ['pub', 'draft', 'future'].map(id => ({
         id, title: 'Fixture', body: 'Fixture', date: '2099-01-01',
         releaseDate: '2026-01-01', venue: 'Fixture', jacket: true, flyer: true,
@@ -64,6 +64,12 @@ export function fixture() {
                 : JSON.stringify(records);
             if (op === 'LRANGE') result = [];
             if (op === 'EXISTS') result = 0;
+            // A successful synthetic compare-and-set for scheduled Music publication.
+            if (op === 'EVAL') {
+                assert.equal(command[4], JSON.stringify(records));
+                assert.ok(Array.isArray(JSON.parse(command[5])));
+                result = 1;
+            }
             return { result };
         }));
     };

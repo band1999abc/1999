@@ -84,8 +84,8 @@ test('F4: private images cannot be reused anonymously; legacy cache cleared on l
                 assert.equal((await get(path)).status,404);
                 f.setMode('clear');
             }
-            assert.equal((await get('/api/'+r+'/pub')).cache,'public, max-age=86400');
-            console.log('F4 '+r+' | authenticated draft=200 private,no-store; anonymous=404; published public cache');
+            assert.equal((await get('/api/'+r+'/pub')).cache,'private, no-store');
+            console.log('F4 '+r+' | authenticated draft=200 private,no-store; anonymous=404; published also no-store');
         }
         legacy=true;f.denied.clear();
         const path='/api/music-jacket/draft?legacy=1';

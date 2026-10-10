@@ -159,11 +159,11 @@ try {
         js: await (await caches.match('/admin.js?v=9')).text(),
         css: await (await caches.match('/admin.css?v=18')).text(),
     }));
-    assert.deepEqual(cached.keys, ['1999-v35']);
+    assert.deepEqual(cached.keys, ['1999-v36']);
     assert.ok(cached.js.includes('originalInert'));
     assert.ok(cached.css.includes('body.auth-hidden > :not(#auth-status)'));
     await swContext.close();
-    console.log('PASS auth cache migration v34 -> v35; fresh admin.js v9 and admin.css v18');
+    console.log('PASS auth cache migration v34 -> v36; fresh admin.js v9 and admin.css v18');
 } finally {
     await browser.close();
 }

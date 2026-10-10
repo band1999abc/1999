@@ -5,7 +5,7 @@
  */
 
 // Drop old CSS/JS as well as any previously cached internal-file responses.
-const CACHE = '1999-v35';
+const CACHE = '1999-v36';
 const STATIC_SHELL = [
   '/style.css?v=40',
   '/admin.css?v=18',
@@ -50,7 +50,18 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   const url = e.request.url;
 
-  // API — 常にネットワーク
+  // Cache Storage deletion does not purge HTTP cache. For publication-sensitive
+  // media, bypass any legacy HTTP response as well; never cache or fall back to
+  // stored API media. This protects clients controlled by this updated worker.
+  const parsed = new URL(url);
+  if (parsed.origin === self.location.origin
+      && ['GET', 'HEAD'].includes(e.request.method)
+      && /^\/api\/(?:music-jacket|flyer)\//.test(parsed.pathname)) {
+    e.respondWith(fetch(e.request, { cache: 'no-store' }));
+    return;
+  }
+
+  // Other APIs remain outside the Service Worker's Cache Storage.
   if (url.includes('/api/')) return;
 
   // HTML — ネットワーク優先、失敗時のみキャッシュ
