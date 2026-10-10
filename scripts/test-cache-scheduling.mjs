@@ -1,10 +1,11 @@
 // Isolated fixtures only: no application secrets, real storage or deployed URLs.
 import assert from 'node:assert/strict';
 import { test, before, after } from 'node:test';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fixture, request, run, dummyEnv } from './auth-review-fixture.mjs';
 
 for (const key of Object.keys(process.env))
@@ -71,9 +72,59 @@ before(async () => {
 });
 after(async () => { await browser?.close(); });
 
-async function mediaFixture(resource) {
+// Playwright 1.40 treats a returned Promise as truthy in waitForFunction.
+// Await observations in Node, and reject even if an observation never resolves.
+async function waitUntil(label, observe, matches, { timeoutMs = 10000, intervalMs = 50 } = {}) {
+    const deadline = performance.now() + timeoutMs;
+    let lastValue, stopped = false, timer;
+    const timeoutError = () => Object.assign(
+        new Error(label + ' timed out after ' + timeoutMs + 'ms; last=' + JSON.stringify(lastValue)),
+        { code: 'WAIT_TIMEOUT', lastValue }
+    );
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => { stopped = true; reject(timeoutError()); }, timeoutMs);
+    });
+    const polling = (async () => {
+        while (!stopped) {
+            lastValue = await observe();
+            if (stopped || performance.now() >= deadline) throw timeoutError();
+            if (matches(lastValue)) return lastValue;
+            await delay(intervalMs);
+        }
+    })();
+    try { return await Promise.race([polling, timeout]); }
+    finally { stopped = true; clearTimeout(timer); }
+}
+
+const waitForOldCacheRemoval = (page, timeoutMs = 10000) => waitUntil(
+    'v35 Cache Storage removal',
+    () => page.evaluate(() => caches.keys()),
+    keys => !keys.includes('1999-v35'),
+    { timeoutMs }
+);
+
+// Read the actual previous worker from the immutable PR HEAD; never change Git.
+const previousWorker = execFileSync('git', [
+    'show', 'dedfeb5cd5cd1afcbc37ba7ae1ff1182cfce5858:sw.js',
+], { cwd: new URL('../', import.meta.url), encoding: 'utf8' });
+const currentWorker = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+assert.match(previousWorker, /const CACHE = '1999-v35';/);
+assert.match(currentWorker, /const CACHE = '1999-v36';/);
+const appScript = readFileSync(new URL('../script.js', import.meta.url), 'utf8');
+const registrationOffset = appScript.lastIndexOf('// Service Worker registration');
+assert.ok(registrationOffset >= 0, 'Use the existing application registration code');
+const registrationScript = appScript.slice(registrationOffset);
+
+async function mediaFixture(resource, legacy, retainOldCache = false) {
     const f = fixture();
-    let hits = 0;
+    let hits = 0, updated = false;
+    const workerReads = [];
+    let updatedWorker = currentWorker;
+    if (retainOldCache) {
+        assert.ok(currentWorker.includes('return k !== CACHE;'));
+        // Fault injection in this loopback response ONLY, not the application file.
+        updatedWorker = currentWorker.replace('return k !== CACHE;', 'return false;');
+    }
     const image = Buffer.from(f.image.split(',')[1], 'base64');
     const detail = (await import('../api/[resource]/[id].js')).default;
     const server = createServer(async (req, res) => {
@@ -82,13 +133,15 @@ async function mediaFixture(resource) {
             if (url.pathname === '/') {
                 res.setHeader('Content-Type', 'text/html');
                 res.setHeader('Cache-Control', 'no-store');
-                res.end('<!doctype html><title>Isolated media fixture</title>');
+                res.end('<!doctype html><title>Isolated media fixture</title>' +
+                    (legacy ? '<script>' + registrationScript + '</script>' : ''));
                 return;
             }
             if (url.pathname === '/sw.js') {
                 res.setHeader('Content-Type', 'application/javascript');
                 res.setHeader('Cache-Control', 'no-store');
-                res.end(readFileSync(new URL('../sw.js', import.meta.url)));
+                workerReads.push(legacy && !updated ? '1999-v35' : '1999-v36');
+                res.end(legacy && !updated ? previousWorker : updatedWorker);
                 return;
             }
             if (url.pathname.startsWith('/api/')) {
@@ -96,6 +149,9 @@ async function mediaFixture(resource) {
                 const input = request(req.method,'','',{}, {resource,id:'pub'});
                 input.headers = req.headers;
                 const result = await run(detail, input);
+                // Simulate a previously distributed response, never actual production data.
+                if (legacy && !updated && result.statusCode === 200)
+                    result.headers['cache-control'] = 'public, max-age=86400';
                 res.writeHead(result.statusCode,result.headers);
                 res.end(typeof result.data === 'string' || Buffer.isBuffer(result.data)
                     ? result.data : JSON.stringify(result.data));
@@ -113,10 +169,73 @@ async function mediaFixture(resource) {
         path: '/api/' + resource + '/pub?media=v2',
         makePrivate() { f.records.find(x => x.id === 'pub').status = 'draft'; },
         makePublic() { f.records.find(x => x.id === 'pub').status = 'published'; },
+        releaseUpdate() { updated = true; },
+        workerReads,
         hits() { return hits; },
         close: () => new Promise(resolve => server.close(resolve)),
     };
 }
+
+// Test-only observer: ask the actual controlling worker for its lexical CACHE
+// value. Cache names alone do not prove that the new worker controls this page.
+function observeWorkers(context) {
+    const observers = new Map();
+    const attach = worker => {
+        if (!observers.has(worker)) {
+            observers.set(worker, worker.evaluate(() => {
+                self.addEventListener('message', event => {
+                    if (event.data === 'isolated-audit-version')
+                        event.ports[0].postMessage(CACHE);
+                });
+            }));
+        }
+        return observers.get(worker);
+    };
+    context.on('serviceworker', worker => { attach(worker).catch(() => {}); });
+    return () => Promise.all(context.serviceWorkers().map(attach));
+}
+
+async function controllingVersion(page) {
+    return page.evaluate(() => new Promise(resolve => {
+        const channel = new MessageChannel();
+        const finish = value => {
+            clearTimeout(timer);
+            channel.port1.close();
+            channel.port2.close();
+            resolve(value);
+        };
+        const timer = setTimeout(() => finish(null), 500);
+        channel.port1.onmessage = event => finish(event.data);
+        navigator.serviceWorker.controller?.postMessage(
+            'isolated-audit-version', [channel.port2]
+        );
+    }));
+}
+
+const waitForVersion = (page, expected) => waitUntil(
+    'controlling Worker ' + expected,
+    () => controllingVersion(page),
+    version => version === expected
+);
+
+test('Wait failures: false observations and hung observations must time out', async () => {
+    await assert.rejects(waitUntil('always false', async () => false, value => value === true,
+        { timeoutMs: 150 }), error => error.code === 'WAIT_TIMEOUT' && error.lastValue === false);
+    await assert.rejects(waitUntil('hung observation', () => new Promise(() => {}), () => true,
+        { timeoutMs: 150 }), error => error.code === 'WAIT_TIMEOUT');
+    console.log('PASS intentional wait failures: false Promise and hung observation -> WAIT_TIMEOUT');
+});
+
+test('Playwright waitForFunction timeout is passed as the third argument', async () => {
+    const page = await browser.newPage();
+    try {
+        await assert.rejects(
+            page.waitForFunction(() => false, null, { timeout: 150 }),
+            error => /^page\.waitForFunction: Timeout 150ms exceeded\./.test(error.message)
+        );
+        console.log('PASS intentional Playwright failure: synchronous false -> TimeoutError at 150ms');
+    } finally { await page.close(); }
+});
 
 async function get(page, path) {
     return page.evaluate(async path => {
@@ -136,7 +255,7 @@ async function displayed(page, path) {
 
 for (const resource of ['music-jacket','flyer']) {
     test('F4: same URL published -> draft -> published without SW: ' + resource, async () => {
-        const f = await mediaFixture(resource);
+        const f = await mediaFixture(resource, false);
         const context = await browser.newContext({ serviceWorkers: 'block' });
         const page = await context.newPage();
         try {
@@ -157,4 +276,66 @@ for (const resource of ['music-jacket','flyer']) {
         } finally { await context.close(); await f.close(); }
     });
 
+    test('F4: running v35 -> v36 uses existing registration and bypasses old HTTP cache: ' + resource, async () => {
+        const f = await mediaFixture(resource, true);
+        const context = await browser.newContext({ serviceWorkers: 'allow' });
+        const attachObservers = observeWorkers(context);
+        const page = await context.newPage();
+        try {
+            await page.goto(f.base);
+            await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 10000 });
+            await attachObservers();
+            assert.equal(await waitForVersion(page,'1999-v35'),'1999-v35');
+            assert.equal((await get(page,f.path)).status,200);
+            f.makePrivate();
+            const before = f.hits();
+            assert.equal((await get(page,f.path)).status,200,'Establish real legacy HTTP cache');
+            assert.equal(f.hits(),before,'Routing must not disable the HTTP cache');
+            await page.evaluate(async path => {
+                const stale = await caches.open('1999-v35');
+                await stale.put(path,new Response('STALE-MEDIA'));
+            }, f.path);
+            assert.equal(await page.evaluate(path => caches.match(path).then(Boolean), f.path),true);
+            f.releaseUpdate();
+            // Re-run the existing registration through navigation; no manual update().
+            await page.reload();
+            assert.equal(await waitForVersion(page,'1999-v36'),'1999-v36');
+            await waitForOldCacheRemoval(page);
+            assert.ok(f.workerReads.includes('1999-v35') && f.workerReads.includes('1999-v36'));
+            assert.equal((await get(page,f.path)).status,404,'New SW must bypass legacy HTTP cache at same URL');
+            assert.ok(f.hits() > before);
+            assert.equal(await displayed(page,f.path),false,'Private media must not display after re-acquisition');
+            assert.equal(await page.evaluate(path => caches.match(path).then(Boolean), f.path),false,
+                'API media must not be saved in the new Cache Storage');
+            f.makePublic();
+            assert.deepEqual(await get(page,f.path),{status:200,cache:'private, no-store'});
+            assert.equal(await displayed(page,f.path),true);
+            console.log('PASS F4 '+resource+': controller v35 -> v36; cached 200 -> same URL 404; old Cache Storage removed; public display works');
+        } finally { await context.close(); await f.close(); }
+    });
+
+    test('F4: retained v35 cache must fail the removal wait: ' + resource, async () => {
+        const f = await mediaFixture(resource, true, true);
+        const context = await browser.newContext({ serviceWorkers: 'allow' });
+        const attachObservers = observeWorkers(context);
+        const page = await context.newPage();
+        try {
+            await page.goto(f.base);
+            await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 10000 });
+            await attachObservers();
+            assert.equal(await waitForVersion(page,'1999-v35'),'1999-v35');
+            await page.evaluate(async path => {
+                await (await caches.open('1999-v35')).put(path,new Response('STALE-MEDIA'));
+            }, f.path);
+            f.releaseUpdate();
+            await page.reload();
+            assert.equal(await waitForVersion(page,'1999-v36'),'1999-v36');
+            await assert.rejects(waitForOldCacheRemoval(page,300), error =>
+                error.code === 'WAIT_TIMEOUT' && error.lastValue.includes('1999-v35')
+            );
+            assert.equal(await page.evaluate(path => caches.match(path).then(Boolean),f.path),true,
+                'The failure fixture really must retain the old entry');
+            console.log('PASS intentional deletion failure '+resource+': controller v36 but v35 cache remains -> WAIT_TIMEOUT');
+        } finally { await context.close(); await f.close(); }
+    });
 }
