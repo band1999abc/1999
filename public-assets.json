@@ -47,7 +47,12 @@
     "icon-192.png",
     "icon-512.png",
     "whale_transparent.png",
-    "whale.PNG"
+    "whale.PNG",
+    "site-footer.css",
+    "site-footer.js",
+    "assets/footer/day-desaturated-butterfly-v2.webp",
+    "assets/footer/original-night.webp",
+    "404-layout-fix.css"
   ],
   "pageRoutes": [
     "/live",

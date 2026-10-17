@@ -1,0 +1,81 @@
+/* Footer artwork bleeds across the card's inner padding while its paper texture
+   stays aligned with the card background underneath. */
+.card > .site-footer {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: calc(100% + var(--site-footer-bleed-x, 0px) + var(--site-footer-bleed-right, 0px));
+    margin: 34px 0 -8px calc(-1 * var(--site-footer-bleed-x, 0px));
+    aspect-ratio: 1024 / 531;
+    overflow: hidden;
+    isolation: isolate;
+    background-color: inherit;
+    background-image: inherit;
+    background-size: inherit;
+    background-repeat: inherit;
+    border: 0;
+    color: #716c62;
+    font-size: 12px;
+    line-height: 1;
+    transition: color .5s ease;
+}
+
+.site-footer__art {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 3.5%, #000 96.5%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 3.5%, #000 96.5%, transparent);
+    transition: opacity .5s ease;
+}
+
+.site-footer__art--night {
+    opacity: 0;
+}
+
+.site-footer mask {
+    mask-type: luminance;
+}
+
+.site-footer__mark {
+    position: absolute;
+    z-index: 1;
+    left: 24px;
+    bottom: 14px;
+    color: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: .08em;
+    line-height: 1.2;
+}
+
+body.night .card > .site-footer {
+    color: #8f98ad;
+}
+
+body.night .site-footer__art--day {
+    opacity: 0;
+}
+
+body.night .site-footer__art--night {
+    opacity: 1;
+}
+
+@media (max-width: 360px) {
+    .card > .site-footer {
+        margin-top: 28px;
+        margin-bottom: -4px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-footer,
+    .site-footer__art {
+        transition: none;
+    }
+}
